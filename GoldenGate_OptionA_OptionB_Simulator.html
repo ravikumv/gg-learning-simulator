@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Downstream Extract for Oracle GoldenGate Deployment — Made by VRK</title>
+<style>
+:root{
+  --bg:#ffffff; --panel:#f7f7f9; --panel-alt:#eef0f3; --border:#dfe2e8;
+  --text:#1c1f26; --dim:#5b6270; --dimmer:#8a90a0;
+  --red:#c74634; --red-glow:rgba(199,70,52,.18);
+  --amber:#c9821e; --amber-glow:rgba(201,130,30,.18);
+  --teal:#1f8b83; --teal-glow:rgba(31,139,131,.18);
+  --green:#2f9a5a; --green-glow:rgba(47,154,90,.18);
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  --disp:'Segoe UI Semibold','Avenir Next',ui-sans-serif,system-ui,sans-serif;
+  --body:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  /* dark terminal tokens, used only for the trail-file panel */
+  --term-bg:#14161b; --term-panel:#1c1f26; --term-border:#2e333d;
+  --term-text:#d7dae1; --term-dim:#838a98; --term-dimmer:#5d636f;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--body);}
+body{min-height:100vh;}
+::selection{background:var(--red-glow);}
+
+/* ---------- HEADER ---------- */
+header{
+  padding:22px 24px 16px;border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,#ffffff,#f7f7f9);
+  position:sticky;top:0;z-index:40;
+}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--red);text-transform:uppercase;margin:0 0 6px;}
+h1{font-family:var(--disp);font-size:22px;letter-spacing:.01em;margin:0 0 4px;font-weight:700;}
+.sub{color:var(--dim);font-size:13px;margin:0;}
+
+/* ---------- TABS ---------- */
+.tabbar{display:flex;gap:4px;flex-wrap:wrap;margin-top:16px;}
+.tab{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  padding:9px 13px;border:1px solid var(--border);background:var(--panel);color:var(--dim);
+  border-radius:6px;cursor:pointer;transition:.15s;
+}
+.tab:hover{color:var(--text);border-color:var(--dimmer);}
+.tab.active{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 0 3px var(--red-glow);}
+
+main{max-width:1180px;margin:0 auto;padding:22px 24px 80px;}
+.panel{display:none;}
+.panel.active{display:block;animation:fade .25s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+h2{font-family:var(--disp);font-size:17px;margin:0 0 4px;}
+.desc{color:var(--dim);font-size:13px;line-height:1.55;max-width:820px;margin:0 0 18px;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px;}
+.row{display:flex;gap:16px;flex-wrap:wrap;}
+.col{flex:1;min-width:280px;}
+
+/* ---------- PIPELINE ---------- */
+.pipeline{position:relative;padding:34px 10px 46px;overflow-x:auto;}
+.stages{display:flex;align-items:stretch;gap:0;min-width:640px;position:relative;}
+.stage{
+  flex:1;background:var(--panel-alt);border:1px solid var(--border);border-radius:8px;
+  padding:12px 10px;text-align:center;position:relative;min-width:118px;z-index:2;
+}
+.stage .icon{font-size:20px;display:block;margin-bottom:6px;}
+.stage .label{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--text);font-weight:600;}
+.stage .tag{display:block;font-size:9.5px;color:var(--dim);margin-top:3px;}
+.stage.hot{border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow);}
+.stage.teal{border-color:var(--teal);}
+.stage.hot.teal{box-shadow:0 0 0 3px var(--teal-glow);}
+.connector{flex:0 0 34px;position:relative;align-self:center;height:2px;background:var(--border);margin-top:-30px;}
+.connector::after{content:'▸';position:absolute;right:-6px;top:-9px;color:var(--dimmer);font-size:12px;}
+.packet{
+  position:absolute;top:50%;width:14px;height:14px;border-radius:50%;
+  background:var(--amber);box-shadow:0 0 12px var(--amber-glow);transform:translate(-50%,-50%);
+  transition:left .55s cubic-bezier(.4,0,.2,1);z-index:5;display:none;
+}
+.stage-status{font-family:var(--mono);font-size:10px;color:var(--dimmer);margin-top:6px;min-height:14px;}
+
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px;}
+button.act{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;
+  background:var(--red);color:#fff;border:none;padding:9px 16px;border-radius:6px;cursor:pointer;
+}
+button.act:hover{filter:brightness(1.12);}
+button.act:disabled{background:var(--dimmer);cursor:not-allowed;}
+button.ghost{
+  font-family:var(--mono);font-size:11px;background:transparent;border:1px solid var(--border);
+  color:var(--dim);padding:8px 13px;border-radius:6px;cursor:pointer;
+}
+button.ghost:hover{color:var(--text);border-color:var(--dimmer);}
+
+/* ---------- TRAIL FILE TICKER (signature element — intentionally dark, like a terminal) ---------- */
+.trail-wrap{background:var(--term-bg);border:1px solid var(--term-border);border-radius:10px;overflow:hidden;}
+.trail-head{
+  display:flex;justify-content:space-between;align-items:center;padding:9px 14px;
+  background:var(--term-panel);border-bottom:1px solid var(--term-border);font-family:var(--mono);font-size:11px;
+  color:var(--term-text);
+}
+.trail-head .rba{color:var(--amber);}
+.trail-body{height:220px;overflow-y:auto;font-family:var(--mono);font-size:11.5px;padding:8px 14px;}
+.trail-line{padding:3px 0;border-bottom:1px dashed #262b34;color:var(--term-dim);white-space:pre;}
+.trail-line .op-ins{color:var(--green);}
+.trail-line .op-upd{color:var(--amber);}
+.trail-line .op-del{color:var(--red);}
+.trail-line .meta{color:var(--term-dimmer);}
+.trail-empty{color:var(--term-dimmer);font-style:italic;padding:20px 0;text-align:center;}
+
+/* ---------- TOGGLE (real time capture) ---------- */
+.rtc-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;}
+.rtc-btn{font-family:var(--mono);font-size:12px;padding:10px 20px;background:var(--panel-alt);color:var(--dim);cursor:pointer;letter-spacing:.03em;}
+.rtc-btn.selected.y{background:var(--green);color:#08130c;font-weight:700;}
+.rtc-btn.selected.n{background:var(--red);color:#fff;font-weight:700;}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px;}
+.stat{background:var(--panel-alt);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.stat .n{font-family:var(--disp);font-size:20px;font-weight:700;}
+.stat .l{font-family:var(--mono);font-size:9.5px;color:var(--dim);letter-spacing:.04em;text-transform:uppercase;margin-top:2px;}
+.stat.warn .n{color:var(--red);}
+.stat.good .n{color:var(--green);}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--dim);margin-top:10px;}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+table.rec{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;margin-top:10px;}
+table.rec th{text-align:left;color:var(--dim);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.04em;}
+table.rec td{padding:6px 8px;border-bottom:1px dashed var(--border);color:var(--text);}
+
+/* ---------- CONFIG STEPS ---------- */
+.steplist{list-style:none;margin:0;padding:0;counter-reset:stepnum;}
+.steplist>li{counter-increment:stepnum;position:relative;padding:0 0 20px 34px;border-left:2px solid var(--border);margin-left:11px;}
+.steplist>li:last-child{border-color:transparent;padding-bottom:2px;}
+.steplist>li::before{content:counter(stepnum);position:absolute;left:-11px;top:0;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.steplist h3{font-family:var(--disp);font-size:14px;margin:0 0 6px;}
+.steplist p{color:var(--dim);font-size:12.5px;line-height:1.55;margin:0 0 8px;}
+.codeblock{background:var(--term-bg);border:1px solid var(--term-border);border-radius:8px;padding:10px 13px;overflow-x:auto;}
+.codeblock pre{margin:0;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--term-text);white-space:pre;}
+.codeblock .cm{color:var(--term-dimmer);}
+.config-mode-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;margin-bottom:16px;}
+.section-note{background:var(--panel-alt);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:10px 14px;font-size:12.5px;color:var(--dim);margin:10px 0;}
+
+footer{text-align:center;padding:20px;color:var(--dimmer);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;}
+
+@media (max-width:640px){
+  .stages{flex-direction:column;}
+  .connector{display:none;}
+  .pipeline{padding:20px 4px 30px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Oracle GoldenGate · Learning Hub</p>
+  <h1>Downstream Extract for Oracle GoldenGate Deployment</h1>
+  <p class="sub">Option A vs Option B topologies · Integrated Extract internals · Real-Time Capture Y/N behavior</p>
+  <div class="tabbar" id="tabbar"></div>
+</header>
+
+<main>
+
+  <!-- ============ TAB 1: OVERVIEW ============ -->
+  <section class="panel" id="tab-overview">
+    <h2>Two ways to ship data downstream</h2>
+    <p class="desc">Both options move committed change data from a source Oracle database to a downstream Oracle database using GoldenGate. The difference is <b>where Extract captures from</b>. Pick a card to jump into its live demo.</p>
+
+    <div class="row">
+      <div class="col card">
+        <h2 style="color:var(--red)">Option A — Direct Capture</h2>
+        <p class="desc" style="margin-bottom:8px">Source Oracle DB ▸ Integrated Extract ▸ Trail File ▸ Network ▸ Replicat ▸ Data Lake House. Extract mines the redo stream directly on the source, in-database, via the integrated log mining server.</p>
+        <div class="legend"><span><span class="dot" style="background:var(--red)"></span>Lowest latency path</span><span><span class="dot" style="background:var(--amber)"></span>Adds capture overhead on source</span></div>
+        <div class="controls"><button class="act" onclick="goTab('optA')">Open Option A demo</button></div>
+      </div>
+      <div class="col card">
+        <h2 style="color:var(--teal)">Option B — Downstream Mining Database</h2>
+        <p class="desc" style="margin-bottom:8px">Source Oracle DB ▸ redo/archive log shipping ▸ <b>downstream mining database</b> ▸ Integrated Extract ▸ Trail File ▸ Network ▸ Replicat ▸ target. The mining database holds no source data — it exists only so Extract can mine redo there instead of on production. A cascaded variant lets an Active Data Guard standby forward the redo to the mining database instead of the primary.</p>
+        <div class="legend"><span><span class="dot" style="background:var(--teal)"></span>Zero capture load on source</span><span><span class="dot" style="background:var(--amber)"></span>Latency depends on mining mode</span></div>
+        <div class="controls"><button class="act" onclick="goTab('optB')" style="background:var(--teal)">Open Option B demo</button></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:var(--red)">
+      <h2 style="color:var(--red)">Important: Extract can't capture from ADG directly</h2>
+      <p class="desc" style="margin-bottom:0">Per Oracle's documentation, <b>Extract cannot connect directly to a Data Guard or Active Data Guard standby to capture data</b>. When an ADG standby is in the picture, it only <i>forwards redo</i> to a separate downstream mining database — Extract always mines from that mining database, never from the standby itself.</p>
+    </div>
+
+    <div class="card">
+      <h2>What "Integrated Extract" means in both options</h2>
+      <p class="desc" style="margin-bottom:0">Integrated Capture registers Extract with the database's own log mining server (rather than reading raw redo files itself). The mining server assembles committed changes into Logical Change Records (LCRs) and streams them to Extract, which writes them into a proprietary <b>trail file</b> — the durable, replayable unit GoldenGate ships across the network. See the <i>Integrated Extract & Trail File</i> tab for the record-level walkthrough.</p>
+    </div>
+  </section>
+
+  <!-- ============ TAB 2: OPTION A ============ -->
+  <section class="panel" id="tab-optA">
+    <h2 style="color:var(--red)">Option A — Source ▸ Direct Extract ▸ Target</h2>
+    <p class="desc">Click <b>Run Live Demo</b> to walk one committed transaction from the source database all the way to the downstream database.</p>
+
+    <div class="card pipeline">
+      <div class="stages" id="stagesA">
+        <div class="stage hot" data-i="0"><span class="icon">🗄️</span><span class="label">Source Oracle DB</span><span class="tag">OLTP writes</span><div class="stage-status" id="a-s0"></div></div>
+        <div class="connector"></div>
+        <div class="stage" data-i="1"><span class="icon">🧬</span><span class="label">Integrated Extract</span><span class="tag">in-DB log mining</span><div class="stage-status" id="a-s1"></div></div>
+        <div class="connector"></div>
+        <div class="stage" data-i="2"><span class="icon">📄</span><span class="label">Trail File</span><span class="tag">local .trl</span><div class="stage-status" id="a-s2"></div></div>
+        <div class="connector"></div>
+        <div class="stage" data-i="3"><span class="icon">📡</span><span class="label">TCP/IP Network</span><span class="tag">Data Pump</span><div class="stage-status" id="a-s3"></div></div>
+        <div class="connector"></div>
+        <div class="stage" data-i="4"><span class="icon">🧩</span><span class="label">Replicat</span><span class="tag">apply engine</span><div class="stage-status" id="a-s4"></div></div>
+        <div class="connector"></div>
+        <div class="stage" data-i="5"><span class="icon" id="a-final-icon">🏞️</span><span class="label" id="a-final-label">Data Lake House</span><span class="tag" id="a-final-tag">committed</span><div class="stage-status" id="a-s5"></div></div>
+        <div class="packet" id="packetA"></div>
+      </div>
+      <div class="controls">
+        <button class="act" id="runA" onclick="runDemo('A')">▶ Run Live Demo</button>
+        <button class="ghost" onclick="resetDemo('A')">Reset</button>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--dim)" id="a-clock">elapsed: 0 ms</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:auto">Final target:</span>
+        <div class="rtc-toggle" id="a-target-toggle">
+          <div class="rtc-btn selected y" data-v="oracle" onclick="setFinalTarget('A','oracle')">Data Lake House</div>
+          <div class="rtc-btn" data-v="adb" onclick="setFinalTarget('A','adb')">Autonomous DB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Trail file being written (Option A)</h2>
+      <div class="trail-wrap">
+        <div class="trail-head"><span>./dirdat/aa000001.trl</span><span class="rba" id="a-rba">RBA 0</span></div>
+        <div class="trail-body" id="a-trailbody"><div class="trail-empty">Run the live demo to populate the trail file…</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3: OPTION B ============ -->
+  <section class="panel" id="tab-optB">
+    <h2 style="color:var(--teal)">Option B — Source ▸ Downstream Mining Database ▸ Extract ▸ Target</h2>
+    <p class="desc">Extract never touches production, and it never connects to the standby directly. Redo (or archive logs) is shipped to a separate <b>downstream mining database</b> — which holds no source data — and Extract mines it there. Toggle the two independent variables below and re-run.</p>
+
+    <div class="card pipeline">
+      <div class="stages" id="stagesB">
+        <div class="stage teal hot" data-i="0"><span class="icon">🗄️</span><span class="label">Source Oracle DB</span><span class="tag">OLTP writes</span><div class="stage-status" id="b-s0"></div></div>
+        <div class="connector"></div>
+        <div class="stage teal" data-i="1"><span class="icon">🔁</span><span class="label" id="b-path-label">Redo/Archive Log Shipping</span><span class="tag" id="b-path-tag">direct to mining DB</span><div class="stage-status" id="b-s1"></div></div>
+        <div class="connector"></div>
+        <div class="stage teal" data-i="2"><span class="icon">⛏️</span><span class="label">Downstream Mining DB</span><span class="tag">no source data resident</span><div class="stage-status" id="b-s2"></div></div>
+        <div class="connector"></div>
+        <div class="stage teal" data-i="3"><span class="icon">🧬</span><span class="label">Integrated Extract</span><span class="tag" id="b-mode-tag">Real-Time Mining mode</span><div class="stage-status" id="b-s3"></div></div>
+        <div class="connector"></div>
+        <div class="stage teal" data-i="4"><span class="icon">📄</span><span class="label">Trail File</span><span class="tag">local .trl</span><div class="stage-status" id="b-s4"></div></div>
+        <div class="connector"></div>
+        <div class="stage teal" data-i="5"><span class="icon">📡</span><span class="label">Network</span><span class="tag">Data Pump</span><div class="stage-status" id="b-s5"></div></div>
+        <div class="connector"></div>
+        <div class="stage teal" data-i="6"><span class="icon">🧩</span><span class="label">Replicat</span><span class="tag">apply engine</span><div class="stage-status" id="b-s6"></div></div>
+        <div class="connector"></div>
+        <div class="stage teal" data-i="7"><span class="icon" id="b-final-icon">🏞️</span><span class="label" id="b-final-label">Data Lake House</span><span class="tag" id="b-final-tag">committed</span><div class="stage-status" id="b-s7"></div></div>
+        <div class="packet" id="packetB"></div>
+      </div>
+      <div class="controls">
+        <button class="act" id="runB" onclick="runDemo('B')" style="background:var(--teal)">▶ Run Live Demo</button>
+        <button class="ghost" onclick="resetDemo('B')">Reset</button>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--dim)" id="b-clock">elapsed: 0 ms</span>
+      </div>
+      <div class="controls" style="margin-top:10px">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">Redo path:</span>
+        <div class="rtc-toggle" id="b-path-toggle">
+          <div class="rtc-btn selected y" data-v="direct" onclick="setPath('direct')">Direct from Source</div>
+          <div class="rtc-btn" data-v="adg" onclick="setPath('adg')">Cascaded via ADG Standby</div>
+        </div>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:14px">Mining mode:</span>
+        <div class="rtc-toggle" id="b-mode-toggle">
+          <div class="rtc-btn selected y" data-v="realtime" onclick="setMiningMode('realtime')">Real-Time Mining</div>
+          <div class="rtc-btn" data-v="archive" onclick="setMiningMode('archive')">Archive-Log-Only</div>
+        </div>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:14px">Final target:</span>
+        <div class="rtc-toggle" id="b-target-toggle">
+          <div class="rtc-btn selected y" data-v="oracle" onclick="setFinalTarget('B','oracle')">Data Lake House</div>
+          <div class="rtc-btn" data-v="adb" onclick="setFinalTarget('B','adb')">Autonomous DB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Trail file being written (Option B)</h2>
+      <div class="trail-wrap">
+        <div class="trail-head"><span>./dirdat/bb000001.trl</span><span class="rba" id="b-rba">RBA 0</span></div>
+        <div class="trail-body" id="b-trailbody"><div class="trail-empty">Run the live demo to populate the trail file…</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 4: INTEGRATED EXTRACT DEEP DIVE ============ -->
+  <section class="panel" id="tab-extract">
+    <h2>Integrated Extract & Trail File — record by record</h2>
+    <p class="desc">Fires 3 sample transactions through the log mining server and shows exactly what lands in the trail file. Works for either topology — this is the mechanism Option A and Option B both rely on.</p>
+
+    <div class="card">
+      <div class="controls" style="margin-bottom:12px">
+        <button class="act" onclick="runExtractDeepDive()">▶ Mine next transaction</button>
+        <button class="ghost" onclick="resetExtractDeepDive()">Reset</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="n" id="ed-lcr">0</div><div class="l">LCRs assembled</div></div>
+        <div class="stat"><div class="n" id="ed-trx">0</div><div class="l">Transactions committed</div></div>
+        <div class="stat"><div class="n" id="ed-bytes">0 B</div><div class="l">Trail file size</div></div>
+        <div class="stat"><div class="n" id="ed-rba">0</div><div class="l">Current RBA</div></div>
+      </div>
+      <table class="rec" id="ed-table">
+        <thead><tr><th>RBA</th><th>SCN</th><th>Op</th><th>Table</th><th>Before/After image</th></tr></thead>
+        <tbody id="ed-tbody"><tr><td colspan="5" style="color:var(--dimmer)">No records mined yet.</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>How the log mining server builds an LCR</h2>
+      <ol class="desc" style="padding-left:18px;margin:0">
+        <li>Redo generated by a commit is read from the online redo log buffer / log files.</li>
+        <li>The in-database logmining server reconstructs each row change and assembles it into a Logical Change Record (LCR) — the operation type, table, SCN, and column values.</li>
+        <li>LCRs stream to the Extract process over the database's internal streaming pool (no separate log-reading step, unlike classic capture).</li>
+        <li>Extract writes each LCR as a record into the current trail file, advancing the Relative Byte Address (RBA) and periodically rolling to a new trail file at a configured size.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ TAB 5: REAL-TIME CAPTURE Y/N ============ -->
+  <section class="panel" id="tab-rtc">
+    <h2>Real-Time Capture: Y vs N</h2>
+    <p class="desc">Toggle capture mode and fire the same burst of transactions. Watch how latency to the trail file changes.</p>
+
+    <div class="card">
+      <div class="controls" style="margin-bottom:12px">
+        <div class="rtc-toggle">
+          <div class="rtc-btn selected y" id="rtc-y-btn" onclick="setRTC(true)">Real-Time Capture: Y</div>
+          <div class="rtc-btn" id="rtc-n-btn" onclick="setRTC(false)">Real-Time Capture: N</div>
+        </div>
+        <button class="act" onclick="runRTCDemo()">▶ Fire transaction burst</button>
+        <button class="ghost" onclick="resetRTC()">Reset</button>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <p class="desc" id="rtc-explain" style="margin-bottom:8px"></p>
+          <div class="stat-grid">
+            <div class="stat" id="rtc-lat-card"><div class="n" id="rtc-latency">—</div><div class="l">Observed latency to trail</div></div>
+            <div class="stat"><div class="n" id="rtc-source">Online redo log</div><div class="l">Extract reads from</div></div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="trail-wrap">
+            <div class="trail-head"><span>Capture timeline</span><span class="rba" id="rtc-clock">t = 0 ms</span></div>
+            <div class="trail-body" id="rtc-body"><div class="trail-empty">Fire a transaction burst to compare…</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>The distinction that matters</h2>
+      <div class="row">
+        <div class="col">
+          <h2 style="font-size:14px;color:var(--green)">Real-Time Capture: Y</h2>
+          <p class="desc" style="margin-bottom:0">Extract mines changes continuously as they're generated — from the online redo log / log buffer via the integrated mining server — with no need to wait for a log switch or archival. Latency to the trail file is typically sub-second.</p>
+        </div>
+        <div class="col">
+          <h2 style="font-size:14px;color:var(--red)">Real-Time Capture: N</h2>
+          <p class="desc" style="margin-bottom:0">Extract (or the mining server feeding it) is limited to reading redo only after it has been archived. Changes queue up until the next log switch, so latency tracks the log switch interval rather than the transaction itself.</p>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:10px;margin-bottom:0"><b>On the downstream mining database (Option B)</b>, Oracle names these two modes explicitly: <b>Real-Time Mining mode</b> (processes online or standby redo logs immediately) and <b>Archive-Log-Only mode</b> (waits until logs are archived). This tab's Y/N toggle maps onto that same pair of modes.</p>
+    </div>
+  </section>
+
+  <!-- ============ TAB 6: CONFIGURATION STEPS ============ -->
+  <section class="panel" id="tab-config">
+    <h2>Configuring a Downstream Extract</h2>
+    <p class="desc">A condensed, walkthrough version of Oracle's downstream Extract setup — covering the direct mining-database path and the cascaded Active Data Guard variant. Source: Oracle GoldenGate 26 documentation, <i>Downstream Extract for Oracle GoldenGate Deployment</i>.</p>
+
+    <div class="card">
+      <div class="section-note">A downstream deployment offloads redo mining off the source database onto a separate <b>mining database</b>, which needs no source data — just an equal-or-higher database version, and the same endianness/processor family as the source. It's also the option to reach for when GoldenGate simply can't get a direct connection into the source database.</div>
+
+      <ol class="steplist">
+        <li>
+          <h3>Create the GoldenGate admin user on both databases</h3>
+          <p>A common user is required in the root container of each container database. On 21c and earlier, this is done with PL/SQL; on Oracle AI Database 26ai+ it's handled through the <code>OGG_CAPTURE</code> / <code>OGG_APPLY</code> roles instead.</p>
+          <div class="codeblock"><pre><span class="cm">-- 21c and lower</span>
+CREATE USER c##ggadmin IDENTIFIED BY password CONTAINER = all;
+ALTER USER c##ggadmin SET CONTAINER_DATA = all CONTAINER = current;
+GRANT connect, resource TO c##ggadmin CONTAINER = all;
+
+BEGIN
+  DBMS_GOLDENGATE_AUTH.GRANT_ADMIN_PRIVILEGE(
+    grantee => 'C##GGADMIN', privilege_type => 'CAPTURE',
+    grant_select_privileges => TRUE, container => 'ALL');
+END;
+/</pre></div>
+        </li>
+
+        <li>
+          <h3>Prep the source database</h3>
+          <p>Enable GoldenGate replication and archive logging, and turn on minimal supplemental logging (schema or table-level TRANDATA) since the source is still where the actual DML happens.</p>
+          <div class="codeblock"><pre>ALTER SYSTEM SET ENABLE_GOLDENGATE_REPLICATION = TRUE;
+ALTER DATABASE ARCHIVE LOG;
+ALTER DATABASE FORCE LOGGING;   <span class="cm">-- recommended, source only</span></pre></div>
+        </li>
+
+        <li>
+          <h3>Prep the downstream mining database</h3>
+          <p>Same replication/archive-log settings, plus a streams pool on 21c and lower, and a <b>different</b> DBID / DBNAME / DB_UNIQUE_NAME / GLOBAL_NAME than the source. Password files must be shared/identical between the two.</p>
+          <div class="codeblock"><pre>ALTER SYSTEM SET ENABLE_GOLDENGATE_REPLICATION = TRUE;
+ALTER SYSTEM SET STREAMS_POOL_SIZE = 1G;   <span class="cm">-- 21c and lower</span>
+ALTER DATABASE ARCHIVE LOG;</pre></div>
+        </li>
+
+        <li>
+          <h3>Pick a mining mode: Real-Time vs Archive-Log-Only</h3>
+          <p><b>Real-Time Mining</b> needs standby redo log groups on the mining database — at least one more group than the source has, sized to match the source's largest redo log. Only one real-time Extract per source database is allowed against a given mining database; any others must run Archive-Log-Only.</p>
+          <div class="codeblock"><pre><span class="cm">-- add standby redo logs on the mining database (example: 3 groups)</span>
+ALTER DATABASE ADD STANDBY LOGFILE GROUP 3
+  ('/oracle/dbs/slog3a.rdo','/oracle/dbs/slog3b.rdo') SIZE 500M;
+ALTER DATABASE ADD STANDBY LOGFILE GROUP 4
+  ('/oracle/dbs/slog4a.rdo','/oracle/dbs/slog4b.rdo') SIZE 500M;
+
+<span class="cm">-- redo transport + local archiving of standby logs on mining DB</span>
+ALTER SYSTEM SET LOG_ARCHIVE_CONFIG = 'DG_CONFIG=(CDBNORTH, cdbDSC)';
+ALTER SYSTEM SET FAL_SERVER = 'CDBNORTH_root';
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_2 =
+  'LOCATION=/home/arc_dest/srl_dbms1 VALID_FOR=(STANDBY_LOGFILE,PRIMARY_ROLE)';
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_STATE_2 = ENABLE;</pre></div>
+          <p style="margin-top:8px">For <b>Archive-Log-Only</b> mode, skip the standby logs and instead set up ordinary redo transport from source to mining database:</p>
+          <div class="codeblock"><pre>ALTER SYSTEM SET log_archive_config = 'DG_CONFIG=(CDBNORTH, cdbDSC)';
+ALTER SYSTEM SET log_archive_dest_2 =
+  'SERVICE=cdbDSC_root ASYNC NOREGISTER
+   VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=cdbDSC';</pre></div>
+        </li>
+
+        <li>
+          <h3>Set credentials and Extract parameters</h3>
+          <p>The Extract parameter file needs a mining-database connection (<code>MININGUSERALIAS</code>), a source connection for fetches (<code>FETCHUSERIDALIAS</code>), and the real-time mining switch.</p>
+          <div class="codeblock"><pre>ALTER CREDENTIALSTORE ADD USER c##ggadmin@CDBNORTH_root ALIAS cgg_CDBNORTH DOMAIN OracleGoldenGate PASSWORD password
+ALTER CREDENTIALSTORE ADD USER c##ggadmin@cdbDSC_root  ALIAS cgg_cdbDSC   DOMAIN OracleGoldenGate PASSWORD password
+
+<span class="cm">-- extract parameter file</span>
+EXTRACT EXTDSC
+USERIDALIAS cgg_CDBNORTH
+TRANLOGOPTIONS MININGUSERALIAS cgg_cdbDSC
+TRANLOGOPTIONS INTEGRATEDPARAMS (DOWNSTREAM_REAL_TIME_MINE Y)
+FETCHUSERIDALIAS cgg_CDBNORTH DOMAIN OracleGoldenGate
+EXTTRAIL Downstream/ea
+SOURCECATALOG CDBNORTH_PDB1
+TABLE HR.*;</pre></div>
+        </li>
+
+        <li>
+          <h3>Register and start the Extract</h3>
+          <div class="codeblock"><pre>DBLOGIN USERIDALIAS cgg_CDBNORTH
+MININGDBLOGIN USERIDALIAS cgg_cdbDSC
+
+ADD EXTRACT extdsc, INTEGRATED TRANLOG, BEGIN NOW
+REGISTER EXTRACT extdsc, DATABASE CONTAINER (CDBNORTH_PDB01)
+ADD EXTTRAIL Downstream/ea, EXTRACT extdsc
+START extdsc</pre></div>
+        </li>
+
+        <li>
+          <h3>Optional: cascade through an Active Data Guard standby</h3>
+          <p>Use this when GoldenGate can't reach the source at all. The standby ships redo onward to the mining database, and — critically — <b>Extract still never connects to the standby to capture data</b>; it only uses ADG for read-only metadata fetches, started with the sourceless (<code>NOUSERID</code>) option.</p>
+          <div class="codeblock"><pre><span class="cm">-- on the ADG standby: forward standby redo to the mining database</span>
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_3 =
+  'service=mining_db_service_name ASYNC NOREGISTER
+   VALID_FOR(STANDBY_LOGFILES,STANDBY_ROLES) DB_UNIQUE_NAME=3rd_db_unique_name';
+ALTER SYSTEM SET LOG_ARCHIVE_CONFIG = 'DG_CONFIG=(CDBNORTH, cdbADG_src, cdbDSC)';
+
+<span class="cm">-- extract parameter file, sourceless</span>
+EXTRACT EXTDSC
+NOUSERID
+TRANLOGOPTIONS MININGUSERALIAS cgg_cdbDSC_src DOMAIN OracleGoldenGate
+TRANLOGOPTIONS INTEGRATEDPARAMS (DOWNSTREAM_REAL_TIME_MINE Y)
+FETCHUSERIDALIAS cgg_cdbADG_src DOMAIN OracleGoldenGate
+EXTTRAIL cascade/ea
+TABLE HR.*;
+
+DBLOGIN USERID ggadmin@cdbADG_src, PASSWORD ggadmin
+MININGDBLOGIN USERID ggadmin@cgg_cdbDSC, PASSWORD ggadmin
+ADD EXTRACT exte, INTEGRATED TRANLOG, BEGIN NOW
+REGISTER EXTRACT exte DATABASE</pre></div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="card" style="border-color:var(--red)">
+      <h2 style="color:var(--red)">Constraints worth remembering</h2>
+      <p class="desc" style="margin-bottom:6px">• Source and downstream servers must share endianness and processor family (Linux x86 → Windows x86 works; HP-UX → AIX does not).</p>
+      <p class="desc" style="margin-bottom:6px">• Only one real-time Extract per source database can run against a given mining database — every other Extract against that source must be Archive-Log-Only.</p>
+      <p class="desc" style="margin-bottom:0">• Extract can never connect directly to a Data Guard or Active Data Guard standby to capture data — the standby only forwards redo onward.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>Made by VRK · Oracle GoldenGate Learning Hub · conceptual simulator for training purposes, not a substitute for Oracle documentation</footer>
+
+<script>
+/* ---------------- TAB WIRING ---------------- */
+const TABS = [
+  {id:'overview', label:'Overview'},
+  {id:'optA', label:'Option A'},
+  {id:'optB', label:'Option B'},
+  {id:'extract', label:'Integrated Extract'},
+  {id:'rtc', label:'Real-Time Capture Y/N'},
+  {id:'config', label:'Configuration Steps'},
+];
+const tabbar = document.getElementById('tabbar');
+TABS.forEach(t=>{
+  const b = document.createElement('div');
+  b.className='tab'; b.textContent=t.label; b.id='btn-'+t.id;
+  b.onclick=()=>goTab(t.id);
+  tabbar.appendChild(b);
+});
+function goTab(id){
+  TABS.forEach(t=>{
+    document.getElementById('tab-'+t.id).classList.toggle('active', t.id===id);
+    document.getElementById('btn-'+t.id).classList.toggle('active', t.id===id);
+  });
+}
+goTab('overview');
+
+/* ---------------- HELPERS ---------------- */
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function fmtBytes(n){return n<1024? n+' B' : (n/1024).toFixed(2)+' KB';}
+const SAMPLE_OPS = [
+  {op:'INSERT', table:'SALES.ORDERS', img:'ORDER_ID=88231, STATUS=NEW'},
+  {op:'UPDATE', table:'SALES.CUSTOMERS', img:'CUST_ID=4021, TIER=GOLD'},
+  {op:'DELETE', table:'SALES.CART_ITEMS', img:'CART_ID=9931, ITEM=442'},
+];
+function opClass(op){return op==='INSERT'?'op-ins':op==='UPDATE'?'op-upd':'op-del';}
+
+/* ---------------- OPTION A / B PIPELINE DEMO ---------------- */
+const pipelineState = {A:{running:false, rba:0}, B:{running:false, rba:0}};
+let bPath = 'direct';
+let bMode = 'realtime';
+const finalTarget = {A:'oracle', B:'oracle'};
+
+function setPath(v){
+  bPath = v;
+  document.querySelectorAll('#b-path-toggle .rtc-btn').forEach(el=>el.classList.remove('selected'));
+  document.querySelector(`#b-path-toggle [data-v="${v}"]`).classList.add('selected', v==='direct'?'y':'n');
+  document.getElementById('b-path-label').textContent = v==='direct' ? 'Redo/Archive Log Shipping' : 'ADG Standby ▸ Redo Forwarded';
+  document.getElementById('b-path-tag').textContent = v==='direct' ? 'direct to mining DB' : 'cascaded, offloads primary';
+}
+function setMiningMode(v){
+  bMode = v;
+  document.querySelectorAll('#b-mode-toggle .rtc-btn').forEach(el=>el.classList.remove('selected'));
+  document.querySelector(`#b-mode-toggle [data-v="${v}"]`).classList.add('selected', v==='realtime'?'y':'n');
+  document.getElementById('b-mode-tag').textContent = v==='realtime' ? 'Real-Time Mining mode' : 'Archive-Log-Only mode';
+}
+function setFinalTarget(which, v){
+  finalTarget[which] = v;
+  document.querySelectorAll(`#${which.toLowerCase()}-target-toggle .rtc-btn`).forEach(el=>el.classList.remove('selected'));
+  document.querySelector(`#${which.toLowerCase()}-target-toggle [data-v="${v}"]`).classList.add('selected', v==='oracle'?'y':'n');
+  document.getElementById(which.toLowerCase()+'-final-icon').textContent = v==='oracle' ? '🏞️' : '☁️';
+  document.getElementById(which.toLowerCase()+'-final-label').textContent = v==='oracle' ? 'Data Lake House' : 'Oracle Autonomous Database';
+  document.getElementById(which.toLowerCase()+'-final-tag').textContent = v==='oracle' ? 'committed' : 'committed (ADB)';
+}
+
+function stagePositions(prefix){
+  const stages = document.querySelectorAll(`#stages${prefix} .stage`);
+  const container = document.getElementById(`stages${prefix}`).getBoundingClientRect();
+  return Array.from(stages).map(s=>{
+    const r = s.getBoundingClientRect();
+    return (r.left + r.width/2) - container.left;
+  });
+}
+
+async function runDemo(which){
+  const prefix = which;
+  if(pipelineState[which].running) return;
+  pipelineState[which].running = true;
+  resetDemo(which, true);
+  const runBtn = document.getElementById('run'+which);
+  runBtn.disabled = true;
+  const packet = document.getElementById('packet'+which);
+  packet.style.display = 'block';
+  const positions = stagePositions(which);
+  const nStages = positions.length;
+  const start = Date.now();
+  const clockEl = document.getElementById(which.toLowerCase()+'-clock');
+  const clockTimer = setInterval(()=>{ clockEl.textContent = 'elapsed: '+(Date.now()-start)+' ms'; }, 60);
+
+  const stageLabels = which==='A'
+    ? ['Row committed','Redo mined in-DB','LCR written to trail','Shipped over network','Applied by Replicat','Row visible on target']
+    : ['Row committed',
+       bPath==='direct' ? 'Redo shipped to mining DB' : 'Redo forwarded via ADG standby',
+       'Redo lands on mining DB (no source data)',
+       bMode==='realtime' ? 'Mined live from online/standby redo' : 'Queued until archived',
+       'LCR written to trail','Shipped over network','Applied by Replicat','Row visible on target'];
+
+  const delays = which==='A'
+    ? [300,500,450, 400,500,350]
+    : (()=>{
+        const shipDelay = bPath==='direct' ? 400 : 650;
+        const mineDelay = bMode==='realtime' ? 350 : 1800;
+        return [300, shipDelay, 300, mineDelay, 450,400,500,350];
+      })();
+
+  packet.style.left = positions[0]+'px';
+  for(let i=0;i<nStages;i++){
+    document.getElementById(prefix.toLowerCase()+'-s'+i).textContent = stageLabels[i];
+    document.getElementById('stages'+which).children[i*2] && document.getElementById('stages'+which).children[i*2].classList.add('hot');
+    await sleep(120);
+    packet.style.left = positions[i]+'px';
+    await sleep(delays[i]);
+
+    // when packet reaches the trail file stage, append a record
+    const isTrailStage = (which==='A' && i===2) || (which==='B' && i===4);
+    if(isTrailStage){
+      appendTrailRecord(which);
+    }
+  }
+  clearInterval(clockTimer);
+  clockEl.textContent = 'elapsed: '+(Date.now()-start)+' ms (complete)';
+  runBtn.disabled = false;
+  pipelineState[which].running = false;
+}
+
+function appendTrailRecord(which){
+  const st = pipelineState[which];
+  const sample = SAMPLE_OPS[Math.floor(Math.random()*SAMPLE_OPS.length)];
+  st.rba += 512 + Math.floor(Math.random()*300);
+  const body = document.getElementById(which.toLowerCase()+'-trailbody');
+  if(body.querySelector('.trail-empty')) body.innerHTML='';
+  const line = document.createElement('div');
+  line.className='trail-line';
+  const now = new Date().toISOString().split('T')[1].replace('Z','');
+  line.innerHTML = `<span class="meta">RBA ${st.rba.toString().padStart(7,'0')} ${now}</span>  <span class="${opClass(sample.op)}">${sample.op.padEnd(6)}</span> ${sample.table.padEnd(20)} ${sample.img}`;
+  body.appendChild(line);
+  body.scrollTop = body.scrollHeight;
+  document.getElementById(which.toLowerCase()+'-rba').textContent = 'RBA '+st.rba;
+}
+
+function resetDemo(which, silent){
+  pipelineState[which].rba = 0;
+  const packet = document.getElementById('packet'+which);
+  packet.style.display='none';
+  document.querySelectorAll(`#stages${which} .stage`).forEach((s,idx)=>{
+    if(idx>0) s.classList.remove('hot');
+  });
+  document.querySelectorAll(`#stages${which} .stage-status`).forEach(s=>s.textContent='');
+  const body = document.getElementById(which.toLowerCase()+'-trailbody');
+  body.innerHTML = '<div class="trail-empty">Run the live demo to populate the trail file…</div>';
+  document.getElementById(which.toLowerCase()+'-rba').textContent = 'RBA 0';
+  document.getElementById(which.toLowerCase()+'-clock').textContent = 'elapsed: 0 ms';
+  if(!silent){}
+}
+
+/* ---------------- INTEGRATED EXTRACT DEEP DIVE ---------------- */
+let edState = {lcr:0, trx:0, bytes:0, rba:0};
+function runExtractDeepDive(){
+  const sample = SAMPLE_OPS[edState.trx % SAMPLE_OPS.length];
+  edState.lcr++; edState.trx++;
+  const size = 180 + Math.floor(Math.random()*220);
+  edState.bytes += size;
+  edState.rba += size;
+  document.getElementById('ed-lcr').textContent = edState.lcr;
+  document.getElementById('ed-trx').textContent = edState.trx;
+  document.getElementById('ed-bytes').textContent = fmtBytes(edState.bytes);
+  document.getElementById('ed-rba').textContent = edState.rba;
+  const tbody = document.getElementById('ed-tbody');
+  if(tbody.children.length===1 && tbody.children[0].children.length===1) tbody.innerHTML='';
+  const scn = 1849302 + edState.rba;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${edState.rba}</td><td>${scn}</td><td class="${opClass(sample.op)}">${sample.op}</td><td>${sample.table}</td><td>${sample.img}</td>`;
+  tbody.appendChild(tr);
+}
+function resetExtractDeepDive(){
+  edState = {lcr:0, trx:0, bytes:0, rba:0};
+  document.getElementById('ed-lcr').textContent='0';
+  document.getElementById('ed-trx').textContent='0';
+  document.getElementById('ed-bytes').textContent='0 B';
+  document.getElementById('ed-rba').textContent='0';
+  document.getElementById('ed-tbody').innerHTML='<tr><td colspan="5" style="color:var(--dimmer)">No records mined yet.</td></tr>';
+}
+
+/* ---------------- REAL-TIME CAPTURE Y/N ---------------- */
+let rtcY = true;
+function setRTC(v){
+  rtcY = v;
+  document.getElementById('rtc-y-btn').classList.toggle('selected', v);
+  document.getElementById('rtc-n-btn').classList.toggle('selected', !v);
+  document.getElementById('rtc-source').textContent = v ? 'Online redo log (live)' : 'Archived redo log';
+  document.getElementById('rtc-explain').textContent = v
+    ? 'Real-Time Capture is ON. Extract mines the online redo / log buffer continuously through the integrated mining server — each committed row can reach the trail within milliseconds.'
+    : 'Real-Time Capture is OFF. Extract can only read redo once it has been archived, so committed rows sit unmined until the next log switch fires.';
+  setRTC.init = true;
+}
+setRTC(true);
+
+async function runRTCDemo(){
+  const body = document.getElementById('rtc-body');
+  body.innerHTML='';
+  const clockEl = document.getElementById('rtc-clock');
+  const latEl = document.getElementById('rtc-latency');
+  const latCard = document.getElementById('rtc-lat-card');
+  const start = Date.now();
+  const timer = setInterval(()=>{clockEl.textContent='t = '+(Date.now()-start)+' ms';},50);
+
+  const txCount = 4;
+  const commitTimes = [];
+  for(let i=0;i<txCount;i++){
+    await sleep(300);
+    const t = Date.now()-start;
+    commitTimes.push(t);
+    const line = document.createElement('div');
+    line.className='trail-line';
+    line.innerHTML = `<span class="meta">t=${t}ms</span>  transaction #${i+1} committed on source`;
+    body.appendChild(line); body.scrollTop = body.scrollHeight;
+  }
+
+  if(rtcY){
+    // near-instant mining after each commit
+    for(let i=0;i<txCount;i++){
+      await sleep(120);
+      const t = Date.now()-start;
+      const line = document.createElement('div');
+      line.className='trail-line';
+      line.innerHTML = `<span class="meta">t=${t}ms</span>  <span class="op-ins">MINED</span>  LCR #${i+1} written to trail file (Δ ${t-commitTimes[i]} ms)`;
+      body.appendChild(line); body.scrollTop = body.scrollHeight;
+    }
+    clearInterval(timer);
+    const totalLag = (Date.now()-start) - commitTimes[txCount-1];
+    latEl.textContent = '~'+Math.max(totalLag,80)+' ms';
+    latCard.className='stat good';
+  } else {
+    // queue transactions, then release all at once on a simulated "log switch"
+    const line = document.createElement('div');
+    line.className='trail-line';
+    line.innerHTML = `<span class="meta">t=${Date.now()-start}ms</span>  waiting on log switch / archival before mining can begin…`;
+    body.appendChild(line); body.scrollTop = body.scrollHeight;
+    await sleep(2200);
+    const switchT = Date.now()-start;
+    for(let i=0;i<txCount;i++){
+      await sleep(90);
+      const t = Date.now()-start;
+      const line2 = document.createElement('div');
+      line2.className='trail-line';
+      line2.innerHTML = `<span class="meta">t=${t}ms</span>  <span class="op-upd">MINED</span>  LCR #${i+1} written to trail file (Δ ${t-commitTimes[i]} ms, released at log switch)`;
+      body.appendChild(line2); body.scrollTop = body.scrollHeight;
+    }
+    clearInterval(timer);
+    const totalLag = (Date.now()-start) - commitTimes[0];
+    latEl.textContent = '~'+totalLag+' ms (batched)';
+    latCard.className='stat warn';
+  }
+}
+function resetRTC(){
+  document.getElementById('rtc-body').innerHTML = '<div class="trail-empty">Fire a transaction burst to compare…</div>';
+  document.getElementById('rtc-clock').textContent='t = 0 ms';
+  document.getElementById('rtc-latency').textContent='—';
+  document.getElementById('rtc-lat-card').className='stat';
+}
+</script>
+</body>
+</html>
