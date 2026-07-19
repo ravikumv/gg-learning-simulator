@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<!--
+  Oracle GoldenGate Interactive Learning Simulator — Landing Dashboard
+  Owner: Ravikumar Vasudevan | Version: 1.0.1
+  Neutral slate/indigo light theme — white background, no Oracle Redwood styling.
+  Self-contained, no external CDN dependencies. Links to four learning modules.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="author" content="Ravikumar Vasudevan"/>
+<meta name="version" content="1.0.1"/>
+<title>Oracle GoldenGate Interactive Learning Simulator</title>
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --page-bg:#F7F8FA;
+    --panel:#FFFFFF;
+    --panel-alt:#F3F4F6;
+    --border:#E2E4E9;
+    --border-strong:#D2D5DC;
+    --text:#1A1D22;
+    --dim:#5B6472;
+    --dimmer:#8A90A0;
+    --red:#4F46E5;
+    --red-dark:#3E37B8;
+    --red-light:#EEECFD;
+    --red-glow:rgba(79,70,229,.14);
+    --amber:#B45309;
+    --amber-bg:#FEF3C7;
+    --amber-border:#FCD34D;
+    --teal:#0E7C86;
+    --teal-bg:#E3F4F5;
+    --teal-border:#B6E1E3;
+    --blue:#1D5FA6;
+    --blue-bg:#EBF2FB;
+    --blue-border:#A8C8EE;
+    --green:#197A3B;
+    --green-bg:#EBF7EE;
+    --green-border:#A3D9B0;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+    --disp:-apple-system,'Segoe UI Semibold','Avenir Next',ui-sans-serif,system-ui,sans-serif;
+    --body:-apple-system,'Segoe UI',ui-sans-serif,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--page-bg);color:var(--text);font-family:var(--body);}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--red-glow);}
+
+  /* ---------- TOP BAR ---------- */
+  header.topbar{
+    background:linear-gradient(180deg,#ffffff,#fbfbfc);
+    border-bottom:3px solid var(--red);
+    padding:20px 32px;
+  }
+  .topbar-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand .mark{
+    width:38px;height:38px;border-radius:9px;background:var(--red);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);
+    font-weight:700;font-size:14px;letter-spacing:.02em;flex-shrink:0;
+  }
+  .brand .titles h1{font-family:var(--disp);font-size:19px;font-weight:700;margin:0;letter-spacing:.01em;}
+  .brand .titles p{margin:2px 0 0;color:var(--dim);font-size:12.5px;}
+  .topbar-meta{font-family:var(--mono);font-size:11px;color:var(--dimmer);text-align:right;}
+
+  /* ---------- HERO ---------- */
+  .hero{max-width:1180px;margin:0 auto;padding:40px 32px 8px;}
+  .hero .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--red);margin:0 0 10px;font-weight:600;
+  }
+  .hero h2{font-family:var(--disp);font-size:30px;margin:0 0 12px;font-weight:700;letter-spacing:-.01em;line-height:1.25;}
+  .hero p.lead{color:var(--dim);font-size:14.5px;line-height:1.65;max-width:760px;margin:0 0 6px;}
+
+  /* ---------- STATS STRIP ---------- */
+  .stats{max-width:1180px;margin:22px auto 0;padding:0 32px;display:flex;gap:14px;flex-wrap:wrap;}
+  .stat{
+    background:var(--panel-alt);border:1px solid var(--border);border-radius:10px;
+    padding:12px 16px;font-family:var(--mono);font-size:12px;color:var(--dim);
+    display:flex;gap:8px;align-items:baseline;
+  }
+  .stat b{font-family:var(--disp);font-size:16px;color:var(--text);font-weight:700;}
+
+  /* ---------- MODULE GRID ---------- */
+  .grid-wrap{max-width:1180px;margin:0 auto;padding:32px 32px 60px;}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;}
+  @media (max-width:860px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    overflow:hidden;display:flex;flex-direction:column;
+    transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    position:relative;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(20,20,30,.08);border-color:var(--border-strong);}
+  .card .card-head{
+    padding:20px 22px 16px;border-bottom:1px solid var(--border);
+    display:flex;align-items:flex-start;gap:14px;
+  }
+  .card .icon{
+    width:44px;height:44px;border-radius:10px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+  }
+  .icon.fundamentals{background:var(--red-light);color:var(--red);}
+  .icon.mining{background:var(--amber-bg);color:var(--amber);}
+  .icon.multicloud{background:var(--blue-bg);color:var(--blue);}
+  .icon.lakehouse{background:var(--teal-bg);color:var(--teal);}
+
+  .card .module-no{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--dimmer);margin:0 0 4px;
+  }
+  .card h3{font-family:var(--disp);font-size:17px;margin:0;font-weight:700;line-height:1.35;}
+  .card .card-body{padding:16px 22px 8px;flex:1;}
+  .card .card-body p{color:var(--dim);font-size:13px;line-height:1.6;margin:0 0 12px;}
+
+  .tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
+  .tag{
+    font-family:var(--mono);font-size:10.5px;padding:4px 9px;border-radius:100px;
+    border:1px solid var(--border-strong);background:var(--panel-alt);color:var(--dim);
+  }
+
+  .card .card-foot{padding:16px 22px 22px;display:flex;gap:8px;flex-wrap:wrap;}
+  .btn-open{
+    display:inline-flex;align-items:center;gap:8px;flex:1;justify-content:space-between;min-width:130px;
+    background:var(--red);color:#fff;font-family:var(--disp);font-weight:600;font-size:13px;
+    padding:11px 14px;border-radius:8px;border:none;cursor:pointer;transition:background .15s;
+  }
+  .btn-open:hover{background:var(--red-dark);}
+  .btn-open .arrow{transition:transform .15s;}
+  .card:hover .btn-open .arrow{transform:translateX(3px);}
+  .btn-download{
+    display:inline-flex;align-items:center;gap:8px;flex:1;justify-content:center;min-width:130px;
+    background:var(--panel);color:var(--text);font-family:var(--disp);font-weight:600;font-size:13px;
+    padding:11px 14px;border-radius:8px;border:1px solid var(--border-strong);cursor:pointer;
+    transition:background .15s,border-color .15s;
+  }
+  .btn-download:hover{background:var(--panel-alt);border-color:var(--dimmer);}
+
+  .card.fundamentals .card-head{border-top:3px solid var(--red);}
+  .card.mining .card-head{border-top:3px solid var(--amber);}
+  .card.multicloud .card-head{border-top:3px solid var(--blue);}
+  .card.lakehouse .card-head{border-top:3px solid var(--teal);}
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    max-width:1180px;margin:0 auto;padding:0 32px 40px;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+    font-family:var(--mono);font-size:11px;color:var(--dimmer);
+    border-top:1px solid var(--border);padding-top:18px;
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="mark">GG</div>
+      <div class="titles">
+        <h1>Oracle GoldenGate Interactive Learning Simulator</h1>
+        <p>Hands-on module dashboard · Extract, Replicat &amp; Trail File Concepts</p>
+      </div>
+    </div>
+    <div class="topbar-meta">v1.0.1 · Owner: Ravikumar Vasudevan</div>
+  </div>
+</header>
+
+<section class="hero">
+  <p class="eyebrow">Module Dashboard</p>
+  <h2>Choose a learning module to begin</h2>
+  <p class="lead">Four self-contained interactive simulators covering core Oracle GoldenGate concepts — from
+  supplemental logging fundamentals through mining database topologies, multi-cloud deployment, and
+  medallion-architecture data lake house delivery. Each module opens independently in a new page.</p>
+</section>
+
+<div class="stats">
+  <div class="stat">📦 <b>4</b> Modules</div>
+  <div class="stat">🧪 <b>Interactive</b> Simulators</div>
+  <div class="stat">🎨 <b>Self-Contained</b> HTML</div>
+</div>
+
+<div class="grid-wrap">
+  <div class="grid">
+
+    <!-- Module 1: Fundamentals -->
+    <div class="card fundamentals">
+      <div class="card-head">
+        <div class="icon fundamentals">📝</div>
+        <div>
+          <p class="module-no">Module 01 · Fundamentals</p>
+          <h3>GoldenGate Fundamentals</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Understand the concept of Supplemental Logging and <code>ADD TRANDATA</code> — how GoldenGate
+        captures before/after column images from redo via LogMiner, and why supplemental logging is the
+        foundation of reliable Extract capture.</p>
+        <div class="tag-row">
+          <span class="tag">ADD TRANDATA</span>
+          <span class="tag">LogMiner</span>
+          <span class="tag">Demo Mode</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://claude.ai/public/artifacts/55ff28ab-5342-44e1-8ebc-6dc9049d0551" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+        <a class="btn-download" href="gg_supplemental_logging_simulator.html" download target="_blank" rel="noopener">⬇ Open Offline</a>
+      </div>
+    </div>
+
+    <!-- Module 2: Mining Database -->
+    <div class="card mining">
+      <div class="card-head">
+        <div class="icon mining">⛏️</div>
+        <div>
+          <p class="module-no">Module 02 · Topology</p>
+          <h3>GoldenGate Mining Database</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Explore Integrated Extract capture topologies — Option A (direct capture) versus Option B
+        (downstream mining database) — including redo transport paths and why Active Data Guard standbys
+        require the downstream mining architecture.</p>
+        <div class="tag-row">
+          <span class="tag">Option A / B</span>
+          <span class="tag">Integrated Extract</span>
+          <span class="tag">Trail Files</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://claude.ai/public/artifacts/ad41f36b-7395-4256-b981-8186d572dbb5" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+        <a class="btn-download" href="GoldenGate_OptionA_OptionB_Simulator.html" download target="_blank" rel="noopener">⬇ Open Offline</a>
+      </div>
+    </div>
+
+    <!-- Module 3: Multi-cloud -->
+    <div class="card multicloud">
+      <div class="card-head">
+        <div class="icon multicloud">☁️</div>
+        <div>
+          <p class="module-no">Module 03 · Deployment</p>
+          <h3>GoldenGate Multi-Cloud</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>See how Oracle Database@Azure and the OCI GoldenGate managed service deploy inside an Azure
+        region using Multicloud Partner Region, Resource Anchor, and Network Anchor — plus Extract/Replicat
+        configuration across the two clouds.</p>
+        <div class="tag-row">
+          <span class="tag">Database@Azure</span>
+          <span class="tag">Resource Anchor</span>
+          <span class="tag">OCI GoldenGate</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://claude.ai/public/artifacts/65df8d2d-c727-4f7e-9f06-4e92efb828f6" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+        <a class="btn-download" href="gg-databaseAzure-replication-simulator.html" download target="_blank" rel="noopener">⬇ Open Offline</a>
+      </div>
+    </div>
+
+    <!-- Module 4: Data Lake House -->
+    <div class="card lakehouse">
+      <div class="card-head">
+        <div class="icon lakehouse">🏞️</div>
+        <div>
+          <p class="module-no">Module 04 · Architecture</p>
+          <h3>GoldenGate Data Lake House</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Walk through Medallion Architecture delivery — GoldenGate Replicat landing changes in the
+        Bronze layer across Snowflake, Iceberg, ADLS Gen2, Fabric, and AIDP — with independent Silver/Gold
+        transforms and a Gold-layer business report.</p>
+        <div class="tag-row">
+          <span class="tag">Bronze / Silver / Gold</span>
+          <span class="tag">Multi-Target Replicat</span>
+          <span class="tag">BI Report</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://claude.ai/public/artifacts/e6bded48-3958-4209-a5f7-b22866a9864b" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+        <a class="btn-download" href="Oracle_GoldenGate_for_Medallion_Architecture_Dashboard.html" download target="_blank" rel="noopener">⬇ Open Offline</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>Oracle GoldenGate Interactive Learning Simulator · v1.0.1</span>
+  <span>Owner: Ravikumar Vasudevan</span>
+</footer>
+
+</body>
+</html>
