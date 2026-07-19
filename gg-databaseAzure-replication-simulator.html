@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Oracle Database@Azure — GoldenGate Extract/Replicat Configuration Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#FFFFFF;
+    --panel:#F4F6F9;
+    --panel2:#EAEDF3;
+    --line:#D8DEE8;
+    --text:#151B26;
+    --sub:#5B6472;
+    --src:#A8622E;
+    --tgt:#1C6FD1;
+    --gg:#9A7A16;
+    --apply:#0F9D64;
+    --danger:#C0402C;
+    --locked:#B7C0CE;
+    --mono:'IBM Plex Mono',monospace;
+    --disp:'Space Grotesk',sans-serif;
+    --body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);}
+  a{color:var(--tgt);}
+  .app{max-width:1200px;margin:0 auto;padding:28px 20px 80px;}
+
+  header.top{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:24px;}
+  .brand{display:flex;flex-direction:column;gap:6px;max-width:780px;}
+  .brand .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);}
+  .brand h1{font-family:var(--disp);font-size:24px;margin:0;font-weight:600;line-height:1.3;}
+  .brand h1 .a{color:var(--src);}
+  .brand h1 .b{color:var(--tgt);}
+  .brand p.sub{margin:0;color:var(--sub);font-size:13.5px;}
+  .pill-row{display:flex;gap:8px;flex-wrap:wrap;align-self:flex-start;}
+  .pill{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:100px;border:1px solid var(--line);color:var(--sub);background:var(--panel);}
+  .pill b{color:var(--text);}
+
+  nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto;}
+  nav.tabs button{font-family:var(--mono);font-size:12.5px;background:transparent;border:none;color:var(--sub);padding:12px 15px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+  nav.tabs button.active{color:var(--text);border-bottom-color:var(--tgt);}
+  nav.tabs button:hover{color:var(--text);}
+
+  section.view{display:none;}
+  section.view.active{display:block;animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  h2.section-title{font-family:var(--disp);font-size:19px;margin:0 0 4px;font-weight:600;}
+  p.section-desc{color:var(--sub);font-size:13.5px;margin:0 0 20px;max-width:780px;}
+
+  .grid{display:grid;gap:14px;}
+  .grid.cols-2{grid-template-columns:1fr 1fr;}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  @media(max-width:820px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr;}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;}
+  .card h3{margin:0 0 10px;font-family:var(--disp);font-size:14.5px;font-weight:600;display:flex;gap:8px;align-items:center;}
+  .card h3 .dot{width:7px;height:7px;border-radius:50%;background:var(--tgt);}
+  .card p,.card ul{font-size:13px;line-height:1.7;color:#333B48;margin:0 0 8px;}
+  .card ul{padding-left:18px;}
+  .card ul li b{color:var(--text);}
+  code.inline{font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);padding:1px 6px;border-radius:4px;font-size:12px;color:var(--gg);}
+  pre.code-block{font-family:var(--mono);font-size:11.5px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;line-height:1.6;color:#1B5E3C;margin:8px 0 0;}
+  pre.code-block .c{color:var(--sub);}
+
+  .checklist{list-style:none;margin:0;padding:0;font-size:13px;}
+  .checklist li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);}
+  .checklist li:last-child{border-bottom:none;}
+  .checklist .chk{width:16px;height:16px;flex:none;margin-top:2px;border-radius:4px;border:1px solid var(--apply);position:relative;}
+  .checklist .chk::after{content:'';position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--apply);border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .checklist .txt{color:#333B48;line-height:1.55;}
+  .checklist .txt b{color:var(--text);}
+
+  /* ---------- Architecture ---------- */
+  .arch-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;overflow-x:auto;}
+  .arch-row{display:flex;gap:10px;min-width:1020px;align-items:stretch;}
+  .zone{flex:1;border:1px dashed var(--line);border-radius:10px;padding:14px;position:relative;}
+  .zone .zone-label{position:absolute;top:-10px;left:12px;background:var(--panel);padding:0 8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);}
+  .zone.srcz{border-color:#E3C4A4;}
+  .zone.ggz{border-color:#E6D69C;}
+  .zone.tgtz{border-color:#B9D6F5;}
+  .box{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;}
+  .box:last-child{margin-bottom:0;}
+  .box .t{font-family:var(--mono);font-weight:600;font-size:11.5px;display:flex;align-items:center;gap:6px;}
+  .box .t .sw{width:6px;height:6px;border-radius:50%;}
+  .box .d{color:var(--sub);font-size:11px;margin-top:3px;line-height:1.5;}
+  .arrow-col{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;min-width:64px;}
+  .arrow-col .lbl{font-family:var(--mono);font-size:9px;color:var(--sub);text-align:center;line-height:1.4;}
+
+  /* ---------- Guided steps ---------- */
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:14px;position:relative;}
+  .step.locked{opacity:.45;}
+  .step .step-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .step .step-num{width:26px;height:26px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;flex:none;}
+  .step.done .step-num{background:var(--apply);border-color:var(--apply);color:#04140E;}
+  .step .step-title{font-family:var(--disp);font-weight:600;font-size:14.5px;}
+  .step .step-status{margin-left:auto;font-family:var(--mono);font-size:10.5px;padding:4px 9px;border-radius:100px;border:1px solid var(--line);color:var(--sub);}
+  .step.done .step-status{color:var(--apply);border-color:var(--apply);}
+  .step-body{font-size:13px;color:#333B48;line-height:1.7;}
+  .conn-row{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;}
+  .conn-field{font-family:var(--mono);font-size:11.5px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:170px;}
+  .conn-field .k{color:var(--sub);display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+  .conn-field .v{color:var(--text);}
+
+  .type-select{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+  .type-btn{font-family:var(--mono);font-size:11px;border:1px solid var(--line);background:var(--panel2);color:var(--sub);padding:8px 12px;border-radius:8px;cursor:pointer;text-align:left;min-width:170px;}
+  .type-btn b{display:block;color:var(--text);font-family:var(--disp);font-size:12.5px;margin-bottom:2px;}
+  .type-btn.active{border-color:var(--gg);background:rgba(154,122,22,.08);}
+  .type-btn.active b{color:var(--gg);}
+  .type-note{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.6;}
+  .type-note b{color:var(--text);}
+
+  button.btn{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 16px;border-radius:8px;cursor:pointer;}
+  button.btn.primary{background:var(--gg);border-color:var(--gg);color:#1A1400;font-weight:600;}
+  button.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ---------- Live pipeline ---------- */
+  .pipeline-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;position:relative;overflow-x:auto;}
+  .pipeline{position:relative;height:190px;min-width:1080px;}
+  .stage{position:absolute;top:50%;transform:translateY(-50%);width:108px;text-align:center;}
+  .stage .icon{width:60px;height:60px;margin:0 auto 6px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9.5px;color:var(--sub);line-height:1.25;}
+  .stage .name{font-family:var(--mono);font-size:10px;color:var(--text);}
+  .stage .sub{font-family:var(--mono);font-size:8.5px;color:var(--sub);}
+  .apply-viz{position:absolute;left:790px;top:50%;transform:translateY(-50%);width:150px;height:110px;}
+  .lane{height:19px;border:1px solid var(--line);border-radius:5px;background:var(--panel2);position:relative;display:flex;align-items:center;padding:0 7px;font-family:var(--mono);font-size:8.5px;color:var(--sub);margin-bottom:5px;}
+  .lane:last-child{margin-bottom:0;}
+  .lane .lfill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--apply),transparent);opacity:.3;width:0%;border-radius:5px;transition:width .3s;}
+  .kernel-box{border:1px solid var(--tgt);border-radius:10px;background:rgba(28,111,209,.06);height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;}
+  .kernel-box .klabel{font-family:var(--mono);font-size:9.5px;color:var(--tgt);text-align:center;}
+  .kernel-subthreads{display:flex;gap:6px;}
+  .kthread{width:15px;height:15px;border-radius:4px;background:var(--panel2);border:1px solid var(--line);}
+  .kthread.active{background:var(--apply);box-shadow:0 0 8px var(--apply);}
+  .particle{position:absolute;top:50%;width:9px;height:9px;border-radius:3px;margin-top:-4.5px;box-shadow:0 0 8px currentColor;transition:left 1s linear, top .4s ease, background .3s;z-index:6;}
+
+  .metric-row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+  .metric{font-family:var(--mono);font-size:11px;border:1px solid var(--line);background:var(--panel2);padding:7px 12px;border-radius:8px;color:var(--sub);min-width:120px;}
+  .metric b{display:block;color:var(--text);font-size:14px;font-weight:600;}
+
+  .log-panel{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;height:150px;overflow-y:auto;font-family:var(--mono);font-size:11.5px;line-height:1.8;}
+  .log-panel .row{display:flex;gap:10px;}
+  .log-panel .ts{color:var(--sub);flex:none;}
+  .log-panel .tag{flex:none;font-weight:600;}
+  .log-panel .tag.src{color:var(--src);}
+  .log-panel .tag.gg{color:var(--gg);}
+  .log-panel .tag.tgt{color:var(--tgt);}
+  .log-panel .msg{color:#333B48;}
+
+  footer.note{margin-top:36px;font-size:12px;color:var(--sub);border-top:1px solid var(--line);padding-top:16px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Interactive reference &amp; simulator</span>
+      <h1><span class="a">Oracle 19c CDB</span> → GoldenGate → <span class="b">Oracle Database 26ai</span></h1>
+      <p class="sub">Walk through the actual steps: connect to the source, configure and start Extract, watch the trail file fill, connect to the target, configure and start Replicat, then run real data replication off that trail — with every Replicat internal type available to compare.</p>
+    </div>
+    <div class="pill-row">
+      <span class="pill">Platform: <b>Database@Azure</b></span>
+      <span class="pill">Replication: <b>OCI GoldenGate deployment</b></span>
+      <span class="pill">Target: <b>Oracle Database 26ai</b></span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-view="arch" class="active">Architecture</button>
+    <button data-view="prereq">Prerequisites</button>
+    <button data-view="concepts">Concepts</button>
+    <button data-view="sim">Connect, Configure &amp; Replicate</button>
+    <button data-view="topology">Network / Anchor Topology</button>
+  </nav>
+
+  <!-- ============ 01 ARCHITECTURE ============ -->
+  <section class="view active" id="arch">
+    <h2 class="section-title">Where everything actually runs</h2>
+    <p class="section-desc">Oracle Database@Azure hosts the databases; the GoldenGate deployment itself runs as an OCI-managed service, bridged into your Azure subscription through Resource Anchors and Network Anchors — it is not a VM you provision and patch, and it is not literally inside either database's compute.</p>
+
+    <div class="arch-wrap">
+      <div class="arch-row">
+        <div class="zone srcz">
+          <span class="zone-label">Database@Azure · Source Region</span>
+          <div class="box"><div class="t"><span class="sw" style="background:var(--src)"></span>Oracle 19c CDB</div><div class="d">CDB$ROOT + source PDB, on Exadata Database Service or Autonomous Database, provisioned/managed from the Azure portal.</div></div>
+          <div class="box"><div class="t"><span class="sw" style="background:var(--src)"></span>Redo / Logmining Server</div><div class="d">Kernel-side mining infrastructure that Integrated Extract registers with.</div></div>
+        </div>
+
+        <div class="arrow-col">
+          <svg width="40" height="20"><line x1="0" y1="10" x2="34" y2="10" stroke="#E3B341" stroke-width="2"/><polygon points="34,4 40,10 34,16" fill="#E3B341"/></svg>
+          <div class="lbl">private<br>connection</div>
+        </div>
+
+        <div class="zone ggz">
+          <span class="zone-label">GoldenGate Deployment — runs physically inside your Azure region</span>
+          <div class="box"><div class="t"><span class="sw" style="background:var(--gg)"></span>GoldenGate Deployment (e.g. GGSAZ_ORCL)</div><div class="d">Service Manager, Extract, Distribution, Receiver, Replicat, and the Deployment Console all run as <b>one deployment</b>, on OCI compute that Oracle provisions to sit physically inside the Azure region/zone you chose (a "Multicloud Partner Region" &amp; "Partner Availability Zone" that maps 1:1 to a real Azure region, e.g. East US). It is created and administered from the <b>OCI Console</b> only.</div></div>
+          <div class="box"><div class="t"><span class="sw" style="background:var(--gg)"></span>Resource Anchor + Network Anchor</div><div class="d">Resource Anchor links an Azure Resource Group to the OCI Compartment that will hold the deployment. Network Anchor maps a delegated Azure VNet subnet into that compartment's networking, so the deployment gets a private IP inside your VNet — this is what lets replication traffic stay entirely on the Azure backbone.</div></div>
+          <div class="box"><div class="t"><span class="sw" style="background:var(--gg)"></span>Trail files</div><div class="d">Written to the deployment's own managed storage — that storage is part of the same OCI compute footprint described above, so in practice it lives inside the Azure region alongside the deployment, not on either database's own storage.</div></div>
+        </div>
+
+        <div class="arrow-col">
+          <svg width="40" height="20"><line x1="0" y1="10" x2="34" y2="10" stroke="#E3B341" stroke-width="2"/><polygon points="34,4 40,10 34,16" fill="#E3B341"/></svg>
+          <div class="lbl">private<br>connection</div>
+        </div>
+
+        <div class="zone tgtz">
+          <span class="zone-label">Database@Azure · Target Region</span>
+          <div class="box"><div class="t"><span class="sw" style="background:var(--tgt)"></span>Oracle Database 26ai</div><div class="d">Target CDB$ROOT + PDB, opened READ WRITE, own service name, on Exadata Database Service or Autonomous Database.</div></div>
+          <div class="box"><div class="t"><span class="sw" style="background:var(--tgt)"></span>Inbound apply path</div><div class="d">Replicat (any type — tab 04) applies committed rows here.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:16px;">
+      <div class="card"><h3><span class="dot" style="background:var(--gg)"></span>So — Azure or OCI? Both, by design.</h3><p>It is <b>OCI GoldenGate software</b>, but Oracle provisions the compute for it <b>inside the Azure region</b> you pick — the "Multicloud Partner Region / Partner Availability Zone" fields you choose during creation are literally naming a real Azure region and zone (e.g. East US, Zone 1). It isn't a remote OCI region you tunnel to. You just create and manage it from the OCI Console, and it's billed through your Azure subscription (ORACLEDBATAZURE) using Azure credits.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--src)"></span>One deployment, cross-region</h3><p>A single deployment can serve as both the Extract host and the Replicat host for a source/target pair even when the two databases sit in different Azure regions (e.g. source in UK, target in US East) — as long as the VNets/VCNs for both regions are peered, so all replication traffic still stays on the Azure backbone.</p></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3><span class="dot" style="background:var(--gg)"></span>References used for this architecture</h3>
+      <ul>
+        <li>Oracle Docs — <a href="https://docs.oracle.com/en-us/iaas/Content/database-at-azure/azucr-create-goldengate.html" target="_blank" rel="noopener">GoldenGate on Oracle AI Database@Azure — Create</a> (deployment, connection, and NSG creation steps, all from the OCI Console)</li>
+        <li>Oracle Data Integration Blog — <a href="https://blogs.oracle.com/dataintegration/how-to-provision-oci-goldengate-within-oracle-databaseazure" target="_blank" rel="noopener">How to Provision Oracle GoldenGate on Oracle Database@Azure</a> (Resource Anchor / Network Anchor walkthrough, deployment runs "in the Azure East US (Zone 1) region")</li>
+        <li>Oracle Data Integration Blog — <a href="https://blogs.oracle.com/dataintegration/part-2-configuring-realtime-data-replication-with-goldengate-within-oracle-databaseazure" target="_blank" rel="noopener">Part 2: Configuring Real-Time Data Replication with GoldenGate in Oracle Database@Azure</a> (connections, TRANDATA, checkpoint table, Extract/Replicat setup, end-to-end test)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 02 PREREQUISITES ============ -->
+  <section class="view" id="prereq">
+    <h2 class="section-title">Prerequisites checklist</h2>
+    <p class="section-desc">What has to be true before Extract and Replicat can be started for real.</p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--src)"></span>Source — 19c CDB</h3>
+        <ul class="checklist">
+          <li><span class="chk"></span><span class="txt">ARCHIVELOG + FORCE LOGGING enabled at the CDB.</span></li>
+          <li><span class="chk"></span><span class="txt"><code class="inline">ENABLE_GOLDENGATE_REPLICATION=TRUE</code> set in CDB$ROOT.</span></li>
+          <li><span class="chk"></span><span class="txt">Supplemental logging enabled on replicated tables.</span></li>
+          <li><span class="chk"></span><span class="txt">Common GG admin user (<code class="inline">C##GGADMIN</code>) granted via <code class="inline">DBMS_GOLDENGATE_AUTH</code>.</span></li>
+          <li><span class="chk"></span><span class="txt">Source registered as a Connection inside the GoldenGate deployment (wallet/credential-based, via a private endpoint).</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--tgt)"></span>Target — Oracle Database 26ai</h3>
+        <ul class="checklist">
+          <li><span class="chk"></span><span class="txt"><code class="inline">ENABLE_GOLDENGATE_REPLICATION=TRUE</code> at target CDB$ROOT.</span></li>
+          <li><span class="chk"></span><span class="txt">Target GG admin/apply user granted privileges; checkpoint table pre-created.</span></li>
+          <li><span class="chk"></span><span class="txt">Target PDB open READ WRITE with a dedicated service name.</span></li>
+          <li><span class="chk"></span><span class="txt">Target object structures already present (via Data Pump/initial load) before CDC starts.</span></li>
+          <li><span class="chk"></span><span class="txt">Target registered as a Connection inside the GoldenGate deployment.</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--gg)"></span>GoldenGate deployment</h3>
+        <ul class="checklist">
+          <li><span class="chk"></span><span class="txt">Resource Anchor and Network Anchor created in Azure, linking to an OCI compartment.</span></li>
+          <li><span class="chk"></span><span class="txt">Deployment provisioned (Development/Test: 1 OCPU; Production: 4 OCPUs with autoscaling recommended).</span></li>
+          <li><span class="chk"></span><span class="txt">Vault/Secrets policies configured for credential storage.</span></li>
+          <li><span class="chk"></span><span class="txt">Replicat type decided (tab 04) — Coordinated needs manual range design; Classic/Parallel/Integrated do not.</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--src)"></span>Networking</h3>
+        <ul class="checklist">
+          <li><span class="chk"></span><span class="txt">VNets hosting both Database@Azure instances peered/reachable from the Network Anchor's delegated subnet.</span></li>
+          <li><span class="chk"></span><span class="txt">Traffic path confirmed to stay entirely within the Azure backbone (no public internet hop).</span></li>
+          <li><span class="chk"></span><span class="txt">Monitoring wired up across both the Azure and OCI consoles.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 CONCEPTS ============ -->
+  <section class="view" id="concepts">
+    <h2 class="section-title">Core concepts</h2>
+    <p class="section-desc">Three things happen, in order, for every change: capture, transport, apply.</p>
+    <div class="grid cols-3">
+      <div class="card"><h3><span class="dot" style="background:var(--src)"></span>Capture</h3><p>Integrated Extract mines redo through the CDB's Logmining Server and writes Logical Change Records (LCRs) to a local trail file — container-tagged (CON_ID) so multitenant source changes stay attributable to the right PDB.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--gg)"></span>Transport</h3><p>The Distribution Server on the deployment reads that trail and ships it — over the private Azure-backbone path enabled by the Network Anchor — to a Receiver Server, which writes an equivalent trail for Replicat to consume.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--tgt)"></span>Apply</h3><p>Replicat reads the trail and commits rows into Oracle Database 26ai. This is where Classic, Coordinated, Parallel Non-Integrated, and Integrated Replicat genuinely differ — same trail in, completely different apply mechanics (tab 04).</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 04 CONNECT / CONFIGURE / REPLICATE ============ -->
+  <section class="view" id="sim">
+    <h2 class="section-title">Connect, configure, and replicate</h2>
+    <p class="section-desc">Work through the steps in order — each one unlocks the next, the way a real setup does.</p>
+
+    <!-- STEP 1 -->
+    <div class="step" id="step1">
+      <div class="step-head"><div class="step-num">1</div><div class="step-title">Source connection — Oracle 19c CDB</div><div class="step-status" id="status1">not connected</div></div>
+      <div class="step-body">
+        <div class="conn-row">
+          <div class="conn-field"><span class="k">Connection type</span><span class="v">Oracle Database</span></div>
+          <div class="conn-field"><span class="k">Host / service</span><span class="v">cdb19-src.adb.azure.oraclecloud.com</span></div>
+          <div class="conn-field"><span class="k">Container</span><span class="v">CDB$ROOT → PDB1</span></div>
+          <div class="conn-field"><span class="k">Auth</span><span class="v">Wallet (TLS), C##GGADMIN</span></div>
+        </div>
+        <button class="btn primary" id="btnConnSrc">Test source connection</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step locked" id="step2">
+      <div class="step-head"><div class="step-num">2</div><div class="step-title">Configure &amp; start Extract</div><div class="step-status" id="status2">locked</div></div>
+      <div class="step-body">
+        <pre class="code-block"><span class="c">-- registered against the source connection from Step 1</span>
+ADD TRANDATA pdb1.sales.orders;
+
+EXTRACT ext19c
+USERIDALIAS c##ggadmin DOMAIN OracleGoldenGate
+EXTTRAIL et
+TRANLOGOPTIONS INTEGRATEDPARAMS (max_sga_size 256)
+TABLE pdb1.sales.orders;</pre>
+        <button class="btn primary" id="btnStartExtract" style="margin-top:10px;">Register &amp; start Extract</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step locked" id="step3">
+      <div class="step-head"><div class="step-num">3</div><div class="step-title">Trail file — local to the GoldenGate deployment</div><div class="step-status" id="status3">locked</div></div>
+      <div class="step-body">
+        <p>Once Extract starts, it begins appending LCRs to trail <code class="inline">et</code> on the deployment's storage. Records here are: <b id="trailCount">0</b>.</p>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step locked" id="step4">
+      <div class="step-head"><div class="step-num">4</div><div class="step-title">Target connection — Oracle Database 26ai</div><div class="step-status" id="status4">locked</div></div>
+      <div class="step-body">
+        <div class="conn-row">
+          <div class="conn-field"><span class="k">Connection type</span><span class="v">Oracle Database</span></div>
+          <div class="conn-field"><span class="k">Host / service</span><span class="v">db26ai-tgt.adb.azure.oraclecloud.com</span></div>
+          <div class="conn-field"><span class="k">Container</span><span class="v">CDB$ROOT → PDB_TGT</span></div>
+          <div class="conn-field"><span class="k">Auth</span><span class="v">Wallet (TLS), GGADMIN_TGT</span></div>
+        </div>
+        <button class="btn primary" id="btnConnTgt">Test target connection</button>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step locked" id="step5">
+      <div class="step-head"><div class="step-num">5</div><div class="step-title">Configure &amp; start Replicat</div><div class="step-status" id="status5">locked</div></div>
+      <div class="step-body">
+        <p>Pick a Replicat type — this changes how the apply stage behaves in Step 6.</p>
+        <div class="type-select" id="typeSelect">
+          <button class="type-btn active" data-type="classic"><b>Classic</b>single thread, FIFO</button>
+          <button class="type-btn" data-type="coordinated"><b>Coordinated</b>static, manual ranges</button>
+          <button class="type-btn" data-type="parallel"><b>Parallel (Non-Integrated)</b>dynamic, dependency-aware</button>
+          <button class="type-btn" data-type="integrated"><b>Integrated</b>DB kernel apply engine</button>
+          <button class="type-btn" data-type="integrated_parallel"><b>Parallel (Integrated)</b>kernel apply, explicit parallelism</button>
+        </div>
+        <div class="type-note" id="typeNote"></div>
+        <pre class="code-block" id="repCode"></pre>
+        <button class="btn primary" id="btnStartReplicat" style="margin-top:10px;">Add checkpoint table &amp; start Replicat</button>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step locked" id="step6">
+      <div class="step-head"><div class="step-num">6</div><div class="step-title">Run data replication</div><div class="step-status" id="status6">locked</div></div>
+      <div class="step-body">
+        <div class="type-select" id="pathSelect" style="margin-top:4px;">
+          <button class="type-btn active" data-path="A"><b>Option A — Two deployments</b>Distribution → Interconnect → Receiver → target trail</button>
+          <button class="type-btn" data-path="B"><b>Option B — One deployment</b>Replicat reads the local trail directly, no Distribution/Receiver hop</button>
+        </div>
+        <p class="type-note" id="pathNote"></p>
+        <button class="btn primary" id="startBtn" disabled>▶ Run replication from trail file</button>
+        <button class="btn" id="resetBtn">↺ Reset simulator</button>
+        <div class="metric-row">
+          <div class="metric">SCN (source)<b id="mScn">3,201,884</b></div>
+          <div class="metric">Applied txns<b id="mApplied">0</b></div>
+          <div class="metric">End-to-end lag<b id="mLag">0 ms</b></div>
+          <div class="metric">Replicat mode<b id="mMode">Classic</b></div>
+        </div>
+        <div class="pipeline-wrap">
+          <div class="pipeline" id="pipeline">
+            <div class="stage" id="stageSource" style="left:0px;"><div class="icon">CDB<br>PDB1</div><div class="name">Source Table</div><div class="sub">SALES.ORDERS</div></div>
+            <div class="stage" id="stageExtract" style="left:130px;"><div class="icon" id="iconExtract">INT<br>EXT</div><div class="name">Extract</div><div class="sub">Logmining Server</div></div>
+            <div class="stage" id="stageTrail" style="left:260px;"><div class="icon" id="iconTrail">TRAIL<br>(et)</div><div class="name">Local Trail</div><div class="sub">GG deployment</div></div>
+            <div class="stage" id="stageDist" style="left:390px;"><div class="icon" id="iconDist">DIST<br>SVR</div><div class="name">Distribution</div><div class="sub">reads trail</div></div>
+            <div class="stage" id="stageRecv" style="left:520px;"><div class="icon" id="iconRecv">RECV<br>SVR</div><div class="name">Receiver</div><div class="sub">Azure backbone</div></div>
+            <div class="stage" id="stageRT" style="left:650px;"><div class="icon" id="iconRT">TRAIL<br>(rt)</div><div class="name">Target Trail</div><div class="sub">read by Replicat</div></div>
+            <div class="apply-viz" id="applyViz"></div>
+            <div class="stage" id="stageTarget" style="right:0px;left:auto;"><div class="icon" id="iconTarget">26ai</div><div class="name">Target Table</div><div class="sub">SALES.ORDERS</div></div>
+          </div>
+        </div>
+        <div class="log-panel" id="logPanel" style="margin-top:14px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 TOPOLOGY ============ -->
+  <section class="view" id="topology">
+    <h2 class="section-title">Network / Anchor topology</h2>
+    <p class="section-desc">The mechanics behind "reachable from Azure, running in OCI."</p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--gg)"></span>Resource Anchor</h3>
+        <ul>
+          <li>A logical bridge between an Azure Resource Group and an OCI Compartment.</li>
+          <li>Keeps access, policy, and organizational alignment consistent across both clouds.</li>
+          <li>Required before an OCI GoldenGate deployment can be provisioned for Database@Azure.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--src)"></span>Network Anchor</h3>
+        <ul>
+          <li>Maps an Azure VNet's delegated subnet into the OCI networking used by the GoldenGate deployment.</li>
+          <li>Keeps replication traffic on the Azure backbone rather than crossing the public internet.</li>
+          <li>The deployment is placed in a <b>Multicloud Partner Region / Partner Availability Zone</b> tied to this anchor.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--tgt)"></span>Where you operate from</h3>
+        <ul>
+          <li>Deployment provisioning is currently initiated from the <b>OCI Console only</b> (Oracle Database → GoldenGate → Deployments), even though it's billed/organized under your Azure subscription via the anchors.</li>
+          <li>Example from Oracle's own walkthrough: a deployment named <code class="inline">GGSAZ_ORCL</code> provisioned with Multicloud Partner Region <b>East US</b>, Partner Availability Zone <b>Zone 1</b> — meaning it runs in the Azure East US (Ashburn) region.</li>
+          <li>Day-to-day Extract/Replicat configuration happens through the per-deployment <b>Deployment Console</b> (Launch Console button), not the OCI Console itself.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--gg)"></span>Cross-region considerations</h3>
+        <ul>
+          <li>If source and target Database@Azure instances are in different Azure regions (e.g. source in UK, target in East US), the two VNets/VCNs must be peered first — one GoldenGate deployment can then still serve as both Extract and Replicat host.</li>
+          <li>Same-region deployments give the lowest latency; cross-region adds a small, generally predictable latency premium, still fully inside the Azure backbone.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--src)"></span>Connection &amp; config workflow (as actually done)</h3>
+        <ul>
+          <li>Create a <b>Connection</b> per database (wallet + password secret + GGADMIN credentials), then <b>Assign</b> both connections to the deployment and <b>Test Connection</b> on each.</li>
+          <li>Unlock the <code class="inline">GGADMIN</code> user on both databases and run <code class="inline">ALTER PLUGGABLE DATABASE ADD SUPPLEMENTAL LOG DATA;</code> on the source.</li>
+          <li>In the Deployment Console: add <b>TRANDATA</b> on the source connection, add a <b>Checkpoint</b> table on the target connection, then create the Extract and Replicat processes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">Educational simulator, built from Oracle's own documentation and walkthroughs: <a href="https://docs.oracle.com/en-us/iaas/Content/database-at-azure/azucr-create-goldengate.html" target="_blank" rel="noopener">GoldenGate on Oracle AI Database@Azure — Create</a>, <a href="https://blogs.oracle.com/dataintegration/how-to-provision-oci-goldengate-within-oracle-databaseazure" target="_blank" rel="noopener">How to Provision Oracle GoldenGate on Oracle Database@Azure</a>, and <a href="https://blogs.oracle.com/dataintegration/part-2-configuring-realtime-data-replication-with-goldengate-within-oracle-databaseazure" target="_blank" rel="noopener">Part 2: Configuring Real-Time Data Replication</a>. Console screens, field names, and region availability move quickly in this space — re-check the links above before relying on exact steps.</footer>
+</div>
+
+<script>
+  // ---- Tabs ----
+  const tabs = document.querySelectorAll('nav.tabs button');
+  const views = document.querySelectorAll('section.view');
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabs.forEach(b=>b.classList.remove('active'));
+      views.forEach(v=>v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.view).classList.add('active');
+    });
+  });
+
+  // ---- Guided step unlocking ----
+  function unlock(stepId, statusText){
+    const el = document.getElementById(stepId);
+    el.classList.remove('locked');
+  }
+  function markDone(stepId, statusId, text){
+    document.getElementById(stepId).classList.add('done');
+    document.getElementById(statusId).textContent = text;
+  }
+
+  document.getElementById('btnConnSrc').addEventListener('click', ()=>{
+    markDone('step1','status1','connected');
+    unlock('step2');
+    document.getElementById('status2').textContent = 'ready to configure';
+  });
+
+  document.getElementById('btnStartExtract').addEventListener('click', ()=>{
+    markDone('step2','status2','running');
+    unlock('step3');
+    document.getElementById('status3').textContent = 'capturing';
+    unlock('step4');
+    document.getElementById('status4').textContent = 'not connected';
+    let count = 0;
+    const trailCount = document.getElementById('trailCount');
+    const iv = setInterval(()=>{
+      count += Math.floor(Math.random()*3)+1;
+      trailCount.textContent = count;
+      if(count>40) clearInterval(iv);
+    }, 400);
+  });
+
+  document.getElementById('btnConnTgt').addEventListener('click', ()=>{
+    markDone('step4','status4','connected');
+    unlock('step5');
+    document.getElementById('status5').textContent = 'ready to configure';
+  });
+
+  document.getElementById('btnStartReplicat').addEventListener('click', ()=>{
+    markDone('step5','status5','running');
+    unlock('step6');
+    document.getElementById('status6').textContent = 'ready';
+    document.getElementById('startBtn').disabled = false;
+  });
+
+  // ---- Replicat type definitions ----
+  const TYPES = {
+    classic: {
+      label:'Classic', title:'Classic Replicat',
+      note:'Single process, single DB session, applies transactions strictly in source commit order. Simplest to reason about; throughput bounded by one session.',
+      code:`REPLICAT rep26ai
+USERIDALIAS ggadmin_tgt DOMAIN OracleGoldenGate
+ASSUMETARGETDEFS
+MAP pdb1.sales.orders, TARGET pdb_tgt.sales.orders;`,
+      lanes:1, kernel:false
+    },
+    coordinated: {
+      label:'Coordinated', title:'Coordinated Replicat',
+      note:'Coordinator + a fixed number of threads, each bound to a manually declared range (e.g. primary-key range). Ordering preserved only within a range; ranges must match real data distribution or throughput skews.',
+      code:`REPLICAT rep26ai
+USERIDALIAS ggadmin_tgt DOMAIN OracleGoldenGate
+COORDINATED APPLY 3
+MAP pdb1.sales.orders, TARGET pdb_tgt.sales.orders
+  RANGE (1,3), KEYRANGE (1,3000);`,
+      lanes:3, kernel:false, staticLabels:['PK 1–3000','PK 3001–6000','PK 6001+']
+    },
+    parallel: {
+      label:'Parallel', title:'Parallel Replicat (Non-Integrated)',
+      note:'Coordinator auto-computes transaction dependencies at runtime and dynamically hash-partitions independent transactions across N worker threads — no manual range design. Each thread opens its own native DB session and issues ordinary SQL directly (non-integrated).',
+      code:`REPLICAT rep26ai
+USERIDALIAS ggadmin_tgt DOMAIN OracleGoldenGate
+REPLICAT PARALLEL
+APPLY PARALLELISM (min 2, max 4)
+MAP pdb1.sales.orders, TARGET pdb_tgt.sales.orders;`,
+      lanes:4, kernel:false
+    },
+    integrated: {
+      label:'Integrated', title:'Integrated Replicat',
+      note:'Replicat hands LCRs to the database\u2019s own inbound apply engine inside the kernel — the DB manages apply and conflict handling natively, at its own default (typically low) internal concurrency. You don\u2019t configure thread counts directly.',
+      code:`REPLICAT rep26ai
+USERIDALIAS ggadmin_tgt DOMAIN OracleGoldenGate
+DBOPTIONS INTEGRATEDPARAMS (parallelism 1)
+MAP pdb1.sales.orders, TARGET pdb_tgt.sales.orders;`,
+      lanes:0, kernel:true
+    },
+    integrated_parallel: {
+      label:'Parallel (Integrated)', title:'Parallel Replicat — Integrated',
+      note:'Same kernel-managed inbound apply engine as Integrated Replicat, but with an explicit apply parallelism degree requested via INTEGRATEDPARAMS. The database still owns dependency detection and conflict handling internally — GoldenGate just tells it how many concurrent apply servers to use, which is the combination most Database@Azure deployments use for real, high-volume CDC.',
+      code:`REPLICAT rep26ai
+USERIDALIAS ggadmin_tgt DOMAIN OracleGoldenGate
+DBOPTIONS INTEGRATEDPARAMS (parallelism 4)
+MAP pdb1.sales.orders, TARGET pdb_tgt.sales.orders;`,
+      lanes:0, kernel:true, kernelThreads:4
+    }
+  };
+
+  let currentType = 'classic';
+  const applyViz = document.getElementById('applyViz');
+  const typeNote = document.getElementById('typeNote');
+  const repCode = document.getElementById('repCode');
+  const mMode = document.getElementById('mMode');
+
+  function renderType(){
+    const t = TYPES[currentType];
+    typeNote.innerHTML = `<b>${t.title}:</b> ${t.note}`;
+    repCode.textContent = t.code;
+    mMode.textContent = t.label;
+  }
+
+  function renderApplyViz(){
+    const t = TYPES[currentType];
+    applyViz.innerHTML='';
+    if(t.kernel){
+      const n = t.kernelThreads || 1;
+      let subs = '';
+      for(let i=0;i<n;i++) subs += '<div class="kthread"></div>';
+      applyViz.innerHTML = `
+        <div class="kernel-box">
+          <div class="klabel">DB INBOUND<br>APPLY ENGINE</div>
+          <div class="kernel-subthreads" id="kSubs">${subs}</div>
+          <div class="klabel" style="font-size:8.5px;color:var(--sub);">${n>1? n+' concurrent apply servers':'single apply server'}</div>
+        </div>`;
+      return;
+    }
+    for(let i=0;i<t.lanes;i++){
+      const lane = document.createElement('div');
+      lane.className='lane'; lane.id='lane'+i;
+      const labelText = t.staticLabels ? t.staticLabels[i] : ('T'+i+' (hash)');
+      lane.innerHTML = `<span style="position:relative;z-index:1;">${labelText}</span>`;
+      applyViz.appendChild(lane);
+    }
+  }
+
+  function selectType(type){
+    currentType = type;
+    document.querySelectorAll('#typeSelect .type-btn').forEach(b=>b.classList.toggle('active', b.dataset.type===type));
+    renderType();
+    renderApplyViz();
+  }
+  document.querySelectorAll('#typeSelect .type-btn').forEach(b=>b.addEventListener('click', ()=>selectType(b.dataset.type)));
+  selectType('classic');
+
+  // ---- Path (Option A / B) toggle ----
+  let pipelinePath = 'A';
+  const PATH_NOTES = {
+    A: 'Option A models two GoldenGate deployments (or one deployment replicating across regions): Extract writes a local trail, the Distribution Server ships it over the Interconnect, and a Receiver Server writes a target-side trail that Replicat reads.',
+    B: 'Option B models one GoldenGate deployment serving both databases directly: Replicat reads the same local trail Extract writes, with no Distribution Server, Receiver Server, or second trail in between — the simplest topology when source and target are both reachable from a single deployment.'
+  };
+  const pathNote = document.getElementById('pathNote');
+  const pipelineEl = document.getElementById('pipeline');
+  const midStages = ['stageDist','stageRecv','stageRT'];
+
+  function layoutPipeline(){
+    const showMid = pipelinePath === 'A';
+    midStages.forEach(id=>{ document.getElementById(id).style.display = showMid ? '' : 'none'; });
+    applyViz.style.left = showMid ? '790px' : '390px';
+    document.getElementById('stageTarget').style.left = 'auto';
+    document.getElementById('stageTarget').style.right = '0px';
+    pipelineEl.style.minWidth = showMid ? '1080px' : '760px';
+    pathNote.textContent = PATH_NOTES[pipelinePath];
+  }
+
+  document.querySelectorAll('#pathSelect .type-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      pipelinePath = b.dataset.path;
+      document.querySelectorAll('#pathSelect .type-btn').forEach(x=>x.classList.toggle('active', x===b));
+      layoutPipeline();
+    });
+  });
+  layoutPipeline();
+
+  // ---- Replication run ----
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const logPanel = document.getElementById('logPanel');
+  const mScn = document.getElementById('mScn');
+  const mApplied = document.getElementById('mApplied');
+  const mLag = document.getElementById('mLag');
+  const pipeline = document.getElementById('pipeline');
+
+  let scn = 3201884, applied = 0, running = false;
+
+  function log(tag, tagClass, msg){
+    const row = document.createElement('div');
+    row.className='row';
+    const ts = new Date().toLocaleTimeString('en-GB');
+    row.innerHTML = `<span class="ts">${ts}</span><span class="tag ${tagClass}">${tag}</span><span class="msg">${msg}</span>`;
+    logPanel.appendChild(row);
+    logPanel.scrollTop = logPanel.scrollHeight;
+  }
+  function pulse(id, color){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.transition='box-shadow .2s, border-color .2s';
+    el.style.borderColor = color;
+    el.style.boxShadow = `0 0 14px ${color}`;
+    setTimeout(()=>{ el.style.borderColor=''; el.style.boxShadow=''; }, 380);
+  }
+  function makeParticle(){
+    const p = document.createElement('div');
+    p.className='particle';
+    p.style.background = 'var(--src)'; p.style.color = 'var(--src)';
+    pipeline.appendChild(p);
+    return p;
+  }
+
+  async function runTransaction(id){
+    const startTime = performance.now();
+    const t = TYPES[currentType];
+    const p = makeParticle();
+    p.style.left='0px'; p.style.top='50%';
+
+    log('EXT','src', `LCR captured (txn#${id}) at SCN ${scn}`);
+    await new Promise(r=>{p.style.transition='left 450ms linear';p.style.left='130px';setTimeout(r,450);});
+    pulse('iconExtract','#C87F42');
+    await new Promise(r=>{p.style.left='260px';setTimeout(r,450);});
+    pulse('iconTrail','#E3B341');
+    scn += Math.floor(Math.random()*40)+10;
+    mScn.textContent = scn.toLocaleString();
+
+    p.style.background='var(--gg)'; p.style.color='var(--gg)';
+    if(pipelinePath === 'A'){
+      await new Promise(r=>{p.style.left='390px';setTimeout(r,450);});
+      pulse('iconDist','#E3B341');
+      log('DIST','gg', `txn#${id} shipped over the Azure backbone (Network Anchor)`);
+      await new Promise(r=>{p.style.left='520px';setTimeout(r,450);});
+      pulse('iconRecv','#E3B341');
+      await new Promise(r=>{p.style.left='650px';setTimeout(r,450);});
+      pulse('iconRT','#3AA0FF');
+    } else {
+      log('REP','gg', `txn#${id} read directly off local trail (et) — same deployment, no network hop`);
+    }
+
+    p.style.background='var(--tgt)'; p.style.color='var(--tgt)';
+    const pipeWidth = pipeline.clientWidth;
+    const applyLeft = pipelinePath === 'A' ? 790 : 390, applyRight = pipeWidth-140;
+
+    if(t.kernel){
+      log('REP','tgt', `txn#${id} handed to DB inbound apply engine`);
+      await new Promise(r=>{p.style.transition='left 400ms linear';p.style.left=(applyLeft+35)+'px';setTimeout(r,400);});
+      const subs = document.querySelectorAll('#kSubs .kthread');
+      const sub = subs[id % subs.length];
+      if(sub){ sub.classList.add('active'); setTimeout(()=>sub.classList.remove('active'),450); }
+      p.style.opacity='0';
+      await new Promise(r=>setTimeout(r,450));
+      p.style.left=(applyRight+35)+'px'; p.style.opacity='1';
+      await new Promise(r=>setTimeout(r,50));
+    } else {
+      const laneIdx = t.lanes>0 ? (id % t.lanes) : 0;
+      log('REP','tgt', `txn#${id} routed to ${t.staticLabels ? t.staticLabels[laneIdx] : ('thread T'+laneIdx)}`);
+      await new Promise(r=>{p.style.transition='left 400ms linear';p.style.left=(applyLeft+25)+'px';setTimeout(r,400);});
+      const lane = document.getElementById('lane'+laneIdx);
+      if(lane){
+        let fill = lane.querySelector('.lfill');
+        if(!fill){ fill=document.createElement('div'); fill.className='lfill'; lane.appendChild(fill); }
+        fill.style.width='100%';
+        setTimeout(()=>{ fill.style.width='0%'; }, 400);
+      }
+      const laneY = t.lanes>1 ? (laneIdx - (t.lanes-1)/2) * 24 : 0;
+      await new Promise(r=>{p.style.transition='left 380ms linear, top .3s ease';p.style.top=`calc(50% + ${laneY}px)`;p.style.left=(applyLeft+80)+'px';setTimeout(r,380);});
+      await new Promise(r=>{p.style.transition='left 380ms linear, top .3s ease';p.style.top='50%';p.style.left=(applyRight+25)+'px';setTimeout(r,380);});
+    }
+
+    await new Promise(r=>{p.style.transition='left 350ms linear';p.style.left=(pipeWidth-45)+'px';setTimeout(r,350);});
+    pulse('iconTarget','#3AA0FF');
+    applied++; mApplied.textContent = applied;
+    mLag.textContent = Math.round(performance.now()-startTime)+' ms';
+    log('REP','tgt', `txn#${id} committed on Oracle Database 26ai`);
+    setTimeout(()=>p.remove(),250);
+  }
+
+  async function startRun(){
+    if(running) return;
+    running = true; startBtn.disabled = true;
+    const t = TYPES[currentType];
+    log('EXT','src','Extract EXT19C reading redo via Logmining Server');
+    log('REP','tgt', t.kernel ? 'Integrated Replicat handing off to DB inbound apply engine' : `Replicat coordinator initialized — mode: ${t.title}`);
+    const count = 8;
+    for(let i=1;i<=count;i++){
+      runTransaction(i);
+      const gap = t.lanes<=1 && !t.kernel ? 850 : (t.kernel ? 480 : 360);
+      await new Promise(r=>setTimeout(r, gap));
+    }
+    setTimeout(()=>{ startBtn.disabled=false; running=false; log('REP','tgt','Run complete — steady-state lag reached'); }, 3200);
+  }
+
+  function resetSim(){
+    running = false; scn = 3201884; applied = 0;
+    mScn.textContent = scn.toLocaleString();
+    mApplied.textContent = '0'; mLag.textContent = '0 ms';
+    logPanel.innerHTML='';
+    document.querySelectorAll('.particle').forEach(p=>p.remove());
+    document.querySelectorAll('.lfill').forEach(f=>f.style.width='0%');
+    startBtn.disabled = false;
+  }
+
+  startBtn.addEventListener('click', startRun);
+  resetBtn.addEventListener('click', resetSim);
+</script>
+</body>
+</html>
