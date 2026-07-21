@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle GoldenGate REST API — Concept &amp; Live Demo Simulator</title>
+<style>
+  :root{
+    --oracle-red:#C74634;
+    --oracle-red-dark:#a83a2a;
+    --redwood-bg:#ffffff;
+    --redwood-panel:#fbfaf9;
+    --redwood-border:#e3ded8;
+    --ink:#312d2a;
+    --ink-soft:#6b645d;
+    --get:#2f7d32;
+    --post:#1565c0;
+    --patch:#e08e00;
+    --delete:#c62828;
+    --mono: 'SF Mono','Consolas','Menlo',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    background:var(--redwood-bg); color:var(--ink);
+  }
+  /* header */
+  .topbar{
+    background:linear-gradient(135deg,#fff 0%,#fdf4f2 100%);
+    border-bottom:3px solid var(--oracle-red);
+    padding:18px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand-mark{
+    width:44px;height:44px;border-radius:10px;background:var(--oracle-red);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;
+    box-shadow:0 3px 8px rgba(199,70,52,.35);
+  }
+  .brand h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px;}
+  .brand p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft);}
+  .meta{font-size:11px;color:var(--ink-soft); text-align:right; line-height:1.5;}
+  .meta b{color:var(--oracle-red);}
+
+  /* tabs */
+  .tabnav{
+    display:flex; gap:2px; background:var(--redwood-panel); border-bottom:1px solid var(--redwood-border);
+    padding:0 24px; overflow-x:auto;
+  }
+  .tabnav button{
+    appearance:none;border:none;background:transparent;padding:14px 18px;font-size:13.5px;font-weight:600;
+    color:var(--ink-soft); cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap;
+    transition:all .15s;
+  }
+  .tabnav button:hover{color:var(--oracle-red);}
+  .tabnav button.active{color:var(--oracle-red); border-bottom-color:var(--oracle-red);}
+
+  .page{display:none; padding:28px; max-width:1180px; margin:0 auto;}
+  .page.active{display:block;}
+
+  h2.section-title{font-size:22px;margin:0 0 6px;}
+  p.section-sub{color:var(--ink-soft); margin:0 0 22px; font-size:14px; max-width:820px;}
+
+  .card{
+    background:var(--redwood-panel); border:1px solid var(--redwood-border); border-radius:10px;
+    padding:20px 22px; margin-bottom:16px;
+  }
+  .card h3{margin:0 0 8px; font-size:15.5px; display:flex; align-items:center; gap:8px;}
+  .card p{margin:0; font-size:13.5px; line-height:1.65; color:#4a453f;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+  .pill{display:inline-block; font-size:10.5px; font-weight:700; padding:2px 9px; border-radius:20px; letter-spacing:.4px;}
+  .pill.get{background:#e7f5e8;color:var(--get);}
+  .pill.post{background:#e8f0fb;color:var(--post);}
+  .pill.patch{background:#fdf0d9;color:var(--patch);}
+  .pill.delete{background:#fbe6e5;color:var(--delete);}
+  .pill.put{background:#f1e7fb;color:#6a3fb5;}
+
+  code, .code{font-family:var(--mono); font-size:12.5px;}
+  .path{font-family:var(--mono); font-size:12.5px; color:var(--ink);}
+
+  /* architecture diagram */
+  .arch{
+    display:flex; flex-direction:column; gap:10px; align-items:center; margin:18px 0;
+  }
+  .arch-row{display:flex; gap:14px; flex-wrap:wrap; justify-content:center;}
+  .arch-box{
+    background:#fff; border:2px solid var(--oracle-red); border-radius:10px; padding:12px 16px;
+    font-size:12.5px; font-weight:700; text-align:center; min-width:150px; color:var(--oracle-red-dark);
+  }
+  .arch-box small{display:block; font-weight:500; color:var(--ink-soft); margin-top:4px; font-size:10.5px;}
+  .arch-arrow{color:var(--ink-soft); font-size:20px;}
+  .arch-child{
+    background:var(--redwood-panel); border:1px solid var(--redwood-border); border-radius:8px;
+    padding:9px 12px; font-size:11.5px; font-weight:600; min-width:130px; text-align:center;
+  }
+  .arch-child small{display:block;font-weight:400;color:var(--ink-soft);font-size:10px;margin-top:3px;}
+
+  /* use case cards */
+  .usecase{
+    border-left:4px solid var(--oracle-red); background:var(--redwood-panel);
+    border-radius:0 8px 8px 0; padding:14px 16px;
+  }
+  .usecase h4{margin:0 0 6px; font-size:14px;}
+  .usecase p{margin:0; font-size:13px; color:#4a453f; line-height:1.6;}
+  .usecase .tag{font-size:10.5px; color:var(--oracle-red); font-weight:700; text-transform:uppercase; letter-spacing:.4px;}
+
+  /* API explorer */
+  .explorer{display:grid; grid-template-columns:280px 1fr; gap:18px;}
+  @media(max-width:900px){.explorer{grid-template-columns:1fr;}}
+  .cat-list{border:1px solid var(--redwood-border); border-radius:10px; overflow:hidden; height:fit-content;}
+  .cat-item{
+    padding:11px 14px; font-size:13px; font-weight:600; cursor:pointer; border-bottom:1px solid var(--redwood-border);
+    background:#fff; color:var(--ink);
+  }
+  .cat-item:last-child{border-bottom:none;}
+  .cat-item:hover{background:var(--redwood-panel);}
+  .cat-item.active{background:var(--oracle-red); color:#fff;}
+  .endpoint-panel{border:1px solid var(--redwood-border); border-radius:10px; padding:18px 20px; background:#fff;}
+  .ep-row{
+    display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--redwood-border);
+    cursor:pointer;
+  }
+  .ep-row:last-child{border-bottom:none;}
+  .ep-row:hover .path{color:var(--oracle-red);}
+  .ep-name{font-size:12.5px; color:var(--ink-soft); min-width:150px;}
+  .detail-box{
+    margin-top:14px; background:#1e1c1a; color:#e7e2da; border-radius:8px; padding:14px 16px; font-family:var(--mono);
+    font-size:12px; line-height:1.7; display:none; white-space:pre-wrap; word-break:break-all;
+  }
+  .detail-box.show{display:block;}
+  .json-key{color:#7fc7ff;} .json-str{color:#c3e88d;} .json-num{color:#f78c6c;} .json-bool{color:#ff9cac;}
+
+  /* live demo terminal */
+  .demo-layout{display:grid; grid-template-columns:300px 1fr; gap:20px;}
+  @media(max-width:900px){.demo-layout{grid-template-columns:1fr;}}
+  .scenario-btn{
+    display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:8px; border-radius:8px;
+    border:1px solid var(--redwood-border); background:#fff; cursor:pointer; font-size:13px; font-weight:600;
+  }
+  .scenario-btn:hover{border-color:var(--oracle-red);}
+  .scenario-btn.active{background:var(--oracle-red); color:#fff; border-color:var(--oracle-red);}
+  .scenario-btn .sc-sub{display:block; font-weight:400; font-size:11px; color:var(--ink-soft); margin-top:2px;}
+  .scenario-btn.active .sc-sub{color:#ffe1dc;}
+
+  .terminal{
+    background:#161513; border-radius:10px; padding:18px 20px; min-height:420px;
+    font-family:var(--mono); font-size:12.5px; color:#d9d4cc; overflow-x:auto;
+  }
+  .term-topbar{display:flex; gap:6px; margin-bottom:14px;}
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.r{background:#ff5f56;} .dot.y{background:#ffbd2e;} .dot.g{background:#27c93f;}
+  .term-line{margin-bottom:4px; white-space:pre-wrap; word-break:break-all;}
+  .prompt{color:#6fd66f;}
+  .comment{color:#7d7669;}
+  .run-btn{
+    margin-top:14px; background:var(--oracle-red); color:#fff; border:none; padding:10px 22px; border-radius:6px;
+    font-weight:700; font-size:13px; cursor:pointer;
+  }
+  .run-btn:disabled{opacity:.5; cursor:default;}
+  .run-btn:hover:not(:disabled){background:var(--oracle-red-dark);}
+  .status-line{margin-top:10px; font-size:12px; color:var(--ink-soft);}
+
+  footer{padding:18px 28px; text-align:center; font-size:11px; color:var(--ink-soft); border-top:1px solid var(--redwood-border);}
+
+  /* MONITOR SIMULATOR */
+  .mon-toolbar{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:var(--redwood-panel);
+    border:1px solid var(--redwood-border); border-radius:10px; padding:14px 18px; margin-bottom:18px;
+  }
+  .mon-toolbar label{font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-right:6px;}
+  .mon-toolbar select{
+    font-family:inherit; font-size:12.5px; padding:6px 10px; border-radius:6px; border:1px solid var(--redwood-border);
+  }
+  .mon-toggle{
+    border:none; padding:9px 20px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;
+    background:var(--get); color:#fff;
+  }
+  .mon-toggle.stopped{background:var(--oracle-red);}
+  .mon-endpoint-note{font-size:11.5px; color:var(--ink-soft); margin-left:auto;}
+  .mon-endpoint-note code{font-family:var(--mono); color:var(--oracle-red-dark);}
+
+  .alert-banner{
+    display:none; background:#fdeceb; border:1px solid #f3b8b1; color:#8a2d22; border-radius:8px;
+    padding:11px 16px; margin-bottom:16px; font-size:13px; font-weight:600; align-items:center; gap:8px;
+  }
+  .alert-banner.show{display:flex;}
+
+  .proc-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; margin-bottom:20px;}
+  .proc-card{
+    border:1px solid var(--redwood-border); border-radius:10px; padding:14px 16px; background:#fff;
+    transition:border-color .3s, background .3s;
+  }
+  .proc-card.abended{border-color:var(--delete); background:#fef7f6;}
+  .proc-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;}
+  .proc-name{font-size:13.5px; font-weight:700;}
+  .proc-type{font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.3px;}
+  .status-dot{width:9px;height:9px;border-radius:50%; display:inline-block; margin-right:6px;}
+  .status-dot.running{background:var(--get);}
+  .status-dot.abended{background:var(--delete);}
+  .status-dot.stopped{background:#b7b0a8;}
+  .proc-metric{font-size:11.5px; color:#4a453f; display:flex; justify-content:space-between; margin-top:4px;}
+  .proc-metric b{font-family:var(--mono); font-weight:600;}
+  .spark{width:100%; height:26px; margin-top:8px;}
+
+  .chart-card{border:1px solid var(--redwood-border); border-radius:10px; padding:16px 18px; background:#fff; margin-bottom:18px;}
+  .chart-card h3{margin:0 0 10px; font-size:14px;}
+  #lagChart{width:100%; height:140px; display:block;}
+
+  .call-log{
+    background:#161513; border-radius:10px; padding:14px 18px; font-family:var(--mono); font-size:11.5px;
+    color:#d9d4cc; height:230px; overflow-y:auto;
+  }
+  .call-log .term-line{margin-bottom:3px;}
+  .call-log .ok{color:#6fd66f;}
+  .call-log .warn{color:#ffb454;}
+  .call-log .err{color:#ff6b64;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">GG</div>
+    <div>
+      <h1>Oracle GoldenGate REST API</h1>
+      <p>Concept, Architecture &amp; Live Demo Simulator</p>
+    </div>
+  </div>
+  <div class="meta">v1.0.0 &nbsp;•&nbsp; based on GoldenGate 26ai Microservices REST API<br>
+  Owner: <b>ravikumar.v.v@oracle.com</b></div>
+</div>
+
+<div class="tabnav" id="tabnav">
+  <button class="active" data-page="overview">Overview</button>
+  <button data-page="architecture">Architecture</button>
+  <button data-page="wheretouse">Where To Use It</button>
+  <button data-page="explorer">API Explorer</button>
+  <button data-page="demo">Live Demo Simulator</button>
+  <button data-page="monitor">Monitor Simulator</button>
+</div>
+
+<!-- OVERVIEW -->
+<div class="page active" id="overview">
+  <h2 class="section-title">What is the GoldenGate REST API?</h2>
+  <p class="section-sub">Every microservice in the GoldenGate Microservices Architecture (MA) — Service Manager, Administration Service, Distribution Service, Receiver Service, and Performance Metrics Service — publishes its own REST API. Anything you can do through the web UI or AdminClient is, under the hood, a REST call to one of these services.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>🔌 It's the control plane, not a bolt-on</h3>
+      <p>AdminClient — the modern replacement for classic GGSCI — doesn't talk to Extract/Replicat directly. It issues REST calls against the Administration Service's <code>/services/{version}/...</code> endpoints. The REST API <i>is</i> the interface; AdminClient, the HTML5 web UI, and OCI GoldenGate's console are all just clients of it.</p>
+    </div>
+    <div class="card">
+      <h3>🧩 One base path, many services</h3>
+      <p>Each deployment exposes its services on their own ports/paths, all following the same versioned pattern: <span class="path">/services/{version}/&lt;resource&gt;</span>. JSON is the payload format throughout, and HTTPS with basic auth or client certificates is the standard security model.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Why automate through the REST API instead of AdminClient scripting?</h3>
+    <p>AdminClient scripts are still shell-bound and host-specific. The REST API lets any language (Python, Java, Go, PowerShell) or any platform (CI/CD runner, Kubernetes operator, ServiceNow workflow, monitoring agent) drive GoldenGate the same way — asynchronously, remotely, and without needing OGG_HOME on the caller's machine. Long-running actions (like creating a deployment) return a background request you poll via <span class="path">/services/{version}/requests/{request}</span> instead of blocking a session.</p>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <h3>🟢 Discoverable</h3>
+      <p>Call <span class="path">GET /services</span> to list supported API versions, then <span class="path">GET /services/{version}/metadata-catalog</span> for a full self-describing catalog of every resource the deployment exposes.</p>
+    </div>
+    <div class="card">
+      <h3>🔐 Secured per-role</h3>
+      <p>Users are bound to roles (Administrator, Operator, Security, User) via <span class="path">/services/{version}/authorizations</span>. The same endpoint enforces exactly the same permission model as the UI and AdminClient.</p>
+    </div>
+    <div class="card">
+      <h3>📊 Metrics-native</h3>
+      <p>The Performance Metrics Service exposes dozens of endpoints under <span class="path">/mpoints/{item}/...</span> — trail I/O, queue stats, replicat batching, network throughput — built for dashboards, not screen-scraping.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHITECTURE -->
+<div class="page" id="architecture">
+  <h2 class="section-title">Where the REST API sits in the MA stack</h2>
+  <p class="section-sub">The Service Manager is the single entry point per host; it fronts one or more deployments, and each deployment's services expose their own REST surface underneath it.</p>
+
+  <div class="arch">
+    <div class="arch-box">Service Manager<br><small>watchdog · one per host · /services/{version}/deployments</small></div>
+    <div class="arch-arrow">▼</div>
+    <div class="arch-row">
+      <div class="arch-box">Deployment: FINANCE_PROD<br><small>/services/{version}/deployments/{deployment}</small></div>
+      <div class="arch-box">Deployment: RETAIL_QA<br><small>one Service Manager → many deployments</small></div>
+    </div>
+    <div class="arch-arrow">▼</div>
+    <div class="arch-row">
+      <div class="arch-child">Administration Service<br><small>extracts · replicats · trails · credentials</small></div>
+      <div class="arch-child">Distribution Service<br><small>/sources/{distpath}</small></div>
+      <div class="arch-child">Receiver Service<br><small>/targets/{path}</small></div>
+      <div class="arch-child">Performance Metrics<br><small>/mpoints/{item}/...</small></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Administration Service</h3>
+      <p>The workhorse for automation: create/patch/delete Extracts and Replicats, issue start/stop commands, manage trails, supplemental-logging (trandata), credentials, encryption keys, and heartbeat tables. This is the service AdminClient talks to for almost every command you'd have typed into classic GGSCI.</p>
+    </div>
+    <div class="card">
+      <h3>Distribution &amp; Receiver Services</h3>
+      <p>Distribution Service owns the source-side path that ships trail data off-box (<span class="path">/sources/{distpath}</span>); Receiver Service owns the target-side collector that accepts it (<span class="path">/targets/{path}</span>). Together they replace the classic data-pump/collector pair with REST-managed paths.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Performance Metrics Service (PMSRVR)</h3>
+    <p>Every Extract, Replicat, and Distribution/Receiver path reports into PMSRVR. It's a separate collection layer from the Administration Service — pulling status doesn't touch the process control path, so dashboards polling metrics endpoints don't add load to the thing they're monitoring.</p>
+  </div>
+</div>
+
+<!-- WHERE TO USE -->
+<div class="page" id="wheretouse">
+  <h2 class="section-title">Where teams actually use the GoldenGate REST API</h2>
+  <p class="section-sub">Anywhere GoldenGate needs to be driven by something other than a human clicking through a console.</p>
+
+  <div class="grid2">
+    <div class="usecase"><span class="tag">CI/CD</span>
+      <h4>Pipeline-driven deployment promotion</h4>
+      <p>A release pipeline calls <span class="path">POST /deployments/{deployment}</span> and <span class="path">POST /extracts/{extract}</span> to stand up an identical Extract/Replicat topology in QA, then tears it down after the test run — no manual GGSCI/AdminClient session needed.</p>
+    </div>
+    <div class="usecase"><span class="tag">Monitoring &amp; ITSM</span>
+      <h4>Feeding Grafana, Splunk, or ServiceNow</h4>
+      <p>A poller hits <span class="path">GET /extracts/{extract}/info/status</span> and the PMSRVR lag/throughput endpoints on a schedule, pushing results into existing dashboards or auto-opening an incident when lag crosses a threshold.</p>
+    </div>
+    <div class="usecase"><span class="tag">Multi-cloud orchestration</span>
+      <h4>OCI GoldenGate inside Azure/AWS regions</h4>
+      <p>Provisioning automation for OCI GoldenGate's managed service (including deployments physically hosted inside an Azure region via Multicloud Resource Anchor) uses the same REST surface behind the console to create deployments and wire up connections.</p>
+    </div>
+    <div class="usecase"><span class="tag">Self-service portals</span>
+      <h4>Internal "request a replication path" UI</h4>
+      <p>A lightweight internal web app lets application teams request new source→target paths; the backend translates the form into REST calls (create connection, add trandata, create Extract/Replicat/path) instead of giving every requester AdminClient access.</p>
+    </div>
+    <div class="usecase"><span class="tag">Disaster recovery automation</span>
+      <h4>Scripted failover runbooks</h4>
+      <p>A DR runbook calls the REST API to pause Replicats, validate checkpoints via <span class="path">/replicats/{replicat}/info/checkpoints</span>, and resume against a new target — repeatable and auditable instead of a manual checklist.</p>
+    </div>
+    <div class="usecase"><span class="tag">AI / chat-ops</span>
+      <h4>Natural-language operational assistants</h4>
+      <p>The 26ai Admin Server AI Management endpoints (<span class="path">/aiservice/models</span>) let an assistant translate "why is REPFABRIC1 behind" into the right status/log/metrics calls and summarize the result for an operator.</p>
+    </div>
+  </div>
+</div>
+
+<!-- API EXPLORER -->
+<div class="page" id="explorer">
+  <h2 class="section-title">API Explorer</h2>
+  <p class="section-sub">A categorized reference of real GoldenGate 26ai REST endpoints. Click any row for a sample request and response.</p>
+  <div class="explorer">
+    <div class="cat-list" id="catList"></div>
+    <div class="endpoint-panel">
+      <div id="epList"></div>
+      <div class="detail-box" id="epDetail"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE DEMO -->
+<div class="page" id="demo">
+  <h2 class="section-title">Live Demo Simulator</h2>
+  <p class="section-sub">Pick an operational scenario, then run it. This simulates the request/response cycle a script or dashboard would perform against the Administration Service and Performance Metrics Service.</p>
+  <div class="demo-layout">
+    <div id="scenarioList"></div>
+    <div>
+      <div class="terminal" id="terminal">
+        <div class="term-topbar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="term-line comment"># Select a scenario on the left, then click Run</div>
+      </div>
+      <button class="run-btn" id="runBtn" disabled>▶ Run Request</button>
+      <div class="status-line" id="statusLine"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MONITOR SIMULATOR -->
+<div class="page" id="monitor">
+  <h2 class="section-title">GoldenGate Monitor Simulator</h2>
+  <p class="section-sub">A worked example of a monitoring tool built entirely on the REST API: it polls <span class="path">/extracts/{extract}/info/status</span>, <span class="path">/replicats/{replicat}/info/status</span>, and the Performance Metrics Service's <span class="path">/mpoints/{item}/heartbeat</span> on an interval — the same pattern you'd wire into Grafana, Splunk, or a custom ops dashboard.</p>
+
+  <div class="mon-toolbar">
+    <div>
+      <button class="mon-toggle stopped" id="monToggle">▶ Start Monitoring</button>
+    </div>
+    <div>
+      <label for="monInterval">Poll interval</label>
+      <select id="monInterval">
+        <option value="4000">4s</option>
+        <option value="2000" selected>2s</option>
+        <option value="1000">1s</option>
+      </select>
+    </div>
+    <div class="mon-endpoint-note">Polling <code>GET .../info/status</code> + <code>GET .../mpoints/{item}/heartbeat</code> per process each cycle</div>
+  </div>
+
+  <div class="alert-banner" id="alertBanner">⚠ <span id="alertText"></span></div>
+
+  <div class="proc-grid" id="procGrid"></div>
+
+  <div class="chart-card">
+    <h3>Average replication lag across all processes (last 30 polls)</h3>
+    <canvas id="lagChart" width="1100" height="140"></canvas>
+  </div>
+
+  <div class="card" style="padding:16px 18px 18px;">
+    <h3 style="margin-bottom:10px;">REST Call Activity Log</h3>
+    <div class="call-log" id="callLog">
+      <div class="term-line comment"># Click "Start Monitoring" to begin polling the simulated deployment</div>
+    </div>
+  </div>
+</div>
+
+<footer>Oracle GoldenGate REST API Simulator — endpoint paths reflect the published Oracle GoldenGate 26ai Microservices REST API catalog. Educational/demo tool, not connected to a live deployment.</footer>
+
+<script>
+// ---------- TAB NAV ----------
+document.getElementById('tabnav').addEventListener('click', e=>{
+  if(e.target.tagName!=='BUTTON') return;
+  document.querySelectorAll('.tabnav button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(e.target.dataset.page).classList.add('active');
+});
+
+// ---------- API EXPLORER DATA ----------
+const API_CATALOG = {
+  "Service Manager / Deployments": [
+    {name:"List Deployments", method:"get", path:"/services/{version}/deployments",
+     req:"GET /services/v2/deployments", res:{deployments:[{name:"FINANCE_PROD",status:"running",port:9101},{name:"RETAIL_QA",status:"running",port:9102}]}},
+    {name:"Create a Deployment", method:"post", path:"/services/{version}/deployments/{deployment}",
+     req:"POST /services/v2/deployments/RETAIL_QA", res:{name:"RETAIL_QA",status:"creating",requestId:"req-88213"}},
+    {name:"Retrieve Deployment", method:"get", path:"/services/{version}/deployments/{deployment}",
+     res:{name:"FINANCE_PROD",status:"running",oggHome:"/u01/ogg/deployments/finance_prod",version:"26.1.0.0"}},
+    {name:"Update a Deployment", method:"patch", path:"/services/{version}/deployments/{deployment}",
+     res:{name:"FINANCE_PROD",status:"updated"}},
+    {name:"Remove a Deployment", method:"delete", path:"/services/{version}/deployments/{deployment}",
+     res:{name:"RETAIL_QA",status:"deleted"}}
+  ],
+  "Administration Service / Extracts": [
+    {name:"List Extracts", method:"get", path:"/services/{version}/extracts",
+     res:{extracts:[{name:"EXTFIN1",status:"running"},{name:"EXTFIN2",status:"stopped"}]}},
+    {name:"Create Extract", method:"post", path:"/services/{version}/extracts/{extract}",
+     req:"POST /services/v2/extracts/EXTFIN1\n{\n  \"processType\": \"integrated\",\n  \"registration\": {\n    \"connectionName\": \"FIN_SRC_CONN\"\n  },\n  \"begin\": \"now\"\n}",
+     res:{name:"EXTFIN1",processType:"integrated",status:"stopped"}},
+    {name:"Retrieve Status", method:"get", path:"/services/{version}/extracts/{extract}/info/status",
+     res:{name:"EXTFIN1",status:"running",lagAtChkpt:"00:00:02",timeSinceChkpt:"00:00:01"}},
+    {name:"Issue Command (start/stop)", method:"post", path:"/services/{version}/extracts/{extract}/command",
+     req:"POST /services/v2/extracts/EXTFIN1/command\n{ \"command\": \"start\" }", res:{name:"EXTFIN1",command:"start",result:"accepted"}},
+    {name:"Retrieve Checkpoints", method:"get", path:"/services/{version}/extracts/{extract}/info/checkpoints",
+     res:{name:"EXTFIN1",trail:"/u01/ogg/dirdat/aa",seqno:142,rba:88420112}},
+    {name:"Retrieve Report", method:"get", path:"/services/{version}/extracts/{extract}/info/reports/{report}",
+     res:{report:"EXTFIN1.rpt",size:"18KB",lastModified:"2026-07-15T22:04:11Z"}},
+    {name:"Delete Extract", method:"delete", path:"/services/{version}/extracts/{extract}", res:{name:"EXTFIN1",status:"deleted"}}
+  ],
+  "Administration Service / Replicats": [
+    {name:"List Replicats", method:"get", path:"/services/{version}/replicats",
+     res:{replicats:[{name:"REPSF1",status:"running"},{name:"REPICE1",status:"running"},{name:"REPADLS1",status:"abended"}]}},
+    {name:"Create Replicat", method:"post", path:"/services/{version}/replicats/{replicat}",
+     req:"POST /services/v2/replicats/REPSF1\n{\n  \"processType\": \"parallelnonintegrated\",\n  \"targetConnectionName\": \"SNOWFLAKE_CONN\",\n  \"source\": {\"fileName\": \"/u01/ogg/dirdat/bb\"}\n}",
+     res:{name:"REPSF1",processType:"parallelnonintegrated",status:"stopped"}},
+    {name:"Retrieve Status", method:"get", path:"/services/{version}/replicats/{replicat}/info/status",
+     res:{name:"REPADLS1",status:"abended",lastError:"OGG-01296: table not found in target metadata cache"}},
+    {name:"Issue Command (start/stop)", method:"post", path:"/services/{version}/replicats/{replicat}/command",
+     req:"POST /services/v2/replicats/REPADLS1/command\n{ \"command\": \"start\" }", res:{name:"REPADLS1",command:"start",result:"accepted"}},
+    {name:"Retrieve Checkpoints", method:"get", path:"/services/{version}/replicats/{replicat}/info/checkpoints",
+     res:{name:"REPSF1",trail:"/u01/ogg/dirdat/bb",seqno:141,rba:77310044}},
+    {name:"Delete Replicat", method:"delete", path:"/services/{version}/replicats/{replicat}", res:{name:"REPADLS1",status:"deleted"}}
+  ],
+  "Administration Service / Trails & Credentials": [
+    {name:"List Trails", method:"get", path:"/services/{version}/trails", res:{trails:[{name:"aa",type:"extract"},{name:"bb",type:"replicat"}]}},
+    {name:"Create Trail", method:"post", path:"/services/{version}/trails/{trail}", res:{name:"cc",status:"created"}},
+    {name:"List Domains", method:"get", path:"/services/{version}/credentials", res:{domains:["OracleGoldenGate","OracleAppsDefault"]}},
+    {name:"Create Alias", method:"post", path:"/services/{version}/credentials/{domain}/{alias}",
+     req:"POST /services/v2/credentials/OracleGoldenGate/fin_src\n{\n  \"userId\": \"ggadmin\",\n  \"password\": \"********\"\n}",
+     res:{domain:"OracleGoldenGate",alias:"fin_src",status:"created"}},
+    {name:"Manage Table Supplemental Logging", method:"post", path:"/services/{version}/connections/{connection}/trandata/table",
+     req:"POST /services/v2/connections/FIN_SRC_CONN/trandata/table\n{ \"schema\": \"FINSCHEMA\", \"table\": \"LEDGER\" }",
+     res:{schema:"FINSCHEMA",table:"LEDGER",trandata:"enabled"}}
+  ],
+  "Distribution & Receiver Service": [
+    {name:"Get list of distribution paths", method:"get", path:"/services/{version}/sources", res:{paths:[{name:"DPFIN1",status:"running"}]}},
+    {name:"Create Distribution Path", method:"post", path:"/services/{version}/sources/{distpath}",
+     res:{name:"DPFIN1",status:"created",target:"azure-receiver-01:9107"}},
+    {name:"Retrieve Path Statistics", method:"get", path:"/services/{version}/sources/{distpath}/stats",
+     res:{name:"DPFIN1",bytesSent:184213004,recordsSent:920144}},
+    {name:"Get list of Collector Paths", method:"get", path:"/services/{version}/targets", res:{paths:[{name:"RCVFIN1",status:"running"}]}},
+    {name:"Retrieve Receiver Progress", method:"get", path:"/services/{version}/targets/{path}/progress",
+     res:{name:"RCVFIN1",currentSeqno:142,currentRba:88420112}}
+  ],
+  "Performance Metrics Service": [
+    {name:"Retrieve Process Information", method:"get", path:"/services/{version}/mpoints/processes",
+     res:{processes:[{name:"EXTFIN1",type:"extract",status:"running"},{name:"REPSF1",type:"replicat",status:"running"}]}},
+    {name:"Retrieve Output Trail File Statistics", method:"get", path:"/services/{version}/mpoints/{item}/trailOutput",
+     res:{name:"EXTFIN1",trail:"aa",bytesWritten:220481022}},
+    {name:"Retrieve Heartbeat timings", method:"get", path:"/services/{version}/mpoints/{item}/heartbeat",
+     res:{name:"REPSF1",lastHeartbeatLagMs:820}},
+    {name:"Retrieve Process Status Changes", method:"get", path:"/services/{version}/monitoring/{item}/statusChanges",
+     res:{name:"REPADLS1",changes:[{from:"running",to:"abended",at:"2026-07-16T09:12:03Z"}]}}
+  ],
+  "Common / Catalog & Users": [
+    {name:"Retrieve API Versions", method:"get", path:"/services", res:{versions:["v1","v2"]}},
+    {name:"Retrieve Catalog", method:"get", path:"/services/{version}/metadata-catalog", res:{resources:["deployments","extracts","replicats","trails","credentials","sources","targets","mpoints"]}},
+    {name:"List Users", method:"get", path:"/services/{version}/authorizations/{role}", res:{role:"Administrator",users:["ravikumar.v"]}},
+    {name:"Retrieve Information (current user)", method:"get", path:"/services/{version}/currentuser", res:{userId:"ravikumar.v",role:"Administrator"}}
+  ]
+};
+
+function jsonHighlight(obj){
+  let s = JSON.stringify(obj, null, 2);
+  s = s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  s = s.replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:');
+  s = s.replace(/: "([^"]*)"/g, ': <span class="json-str">"$1"</span>');
+  s = s.replace(/: (\d+(\.\d+)?)/g, ': <span class="json-num">$1</span>');
+  s = s.replace(/: (true|false)/g, ': <span class="json-bool">$1</span>');
+  return s;
+}
+
+const catList = document.getElementById('catList');
+const epList = document.getElementById('epList');
+const epDetail = document.getElementById('epDetail');
+const categories = Object.keys(API_CATALOG);
+
+function renderCats(){
+  catList.innerHTML = categories.map((c,i)=>`<div class="cat-item ${i===0?'active':''}" data-cat="${i}">${c}</div>`).join('');
+}
+function renderEndpoints(catIdx){
+  const items = API_CATALOG[categories[catIdx]];
+  epDetail.classList.remove('show');
+  epList.innerHTML = items.map((it,i)=>`
+    <div class="ep-row" data-cat="${catIdx}" data-idx="${i}">
+      <span class="pill ${it.method}">${it.method}</span>
+      <div style="flex:1">
+        <div class="ep-name">${it.name}</div>
+        <div class="path">${it.path}</div>
+      </div>
+    </div>`).join('');
+}
+catList.addEventListener('click', e=>{
+  const el = e.target.closest('.cat-item'); if(!el) return;
+  document.querySelectorAll('.cat-item').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderEndpoints(+el.dataset.cat);
+});
+epList.addEventListener('click', e=>{
+  const row = e.target.closest('.ep-row'); if(!row) return;
+  const it = API_CATALOG[categories[+row.dataset.cat]][+row.dataset.idx];
+  const reqLine = it.req || (it.method.toUpperCase()+" "+it.path.replace("{version}","v2"));
+  epDetail.innerHTML = `<div class="comment"># Sample request</div>${reqLine.replace(/\n/g,'<br>')}\n\n<div class="comment"># Sample response</div>${jsonHighlight(it.res)}`;
+  epDetail.classList.add('show');
+});
+renderCats();
+renderEndpoints(0);
+
+// ---------- LIVE DEMO SIMULATOR ----------
+const SCENARIOS = [
+  {
+    title:"List active deployments",
+    sub:"Service Manager · GET",
+    steps:[
+      {line:"$ curl -s -u ggadmin:*** https://ggms-host:9100/services/v2/deployments", type:"cmd"},
+      {line:"# Service Manager returns every deployment it is watching over", type:"comment", delay:400},
+      {json:{deployments:[
+        {name:"FINANCE_PROD",status:"running",servicesUp:4},
+        {name:"RETAIL_QA",status:"running",servicesUp:4},
+        {name:"AIDP_STAGE",status:"stopped",servicesUp:0}
+      ]}}
+    ]
+  },
+  {
+    title:"Check Extract status",
+    sub:"Administration Service · GET",
+    steps:[
+      {line:"$ curl -s -u ggadmin:*** https://finance_prod-host:9101/services/v2/extracts/EXTFIN1/info/status", type:"cmd"},
+      {json:{name:"EXTFIN1",processType:"integrated",status:"running",lagAtChkpt:"00:00:02",timeSinceChkpt:"00:00:01",checkpointTrail:"/u01/ogg/dirdat/aa",checkpointSeqno:142}}
+    ]
+  },
+  {
+    title:"Start a stopped Replicat",
+    sub:"Administration Service · POST /command",
+    steps:[
+      {line:"$ curl -s -X POST -u ggadmin:*** \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"command\":\"start\"}' \\\n  https://finance_prod-host:9101/services/v2/replicats/REPADLS1/command", type:"cmd"},
+      {line:"# Administration Service accepts the command asynchronously", type:"comment", delay:400},
+      {json:{name:"REPADLS1",command:"start",result:"accepted",requestId:"req-91820"}},
+      {line:"$ curl -s -u ggadmin:*** https://finance_prod-host:9101/services/v2/requests/req-91820", type:"cmd", delay:600},
+      {json:{requestId:"req-91820",status:"completed",result:"REPADLS1 status: running"}}
+    ]
+  },
+  {
+    title:"Enable supplemental logging",
+    sub:"Administration Service · POST /trandata/table",
+    steps:[
+      {line:"$ curl -s -X POST -u ggadmin:*** \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"schema\":\"FINSCHEMA\",\"table\":\"LEDGER\"}' \\\n  https://finance_prod-host:9101/services/v2/connections/FIN_SRC_CONN/trandata/table", type:"cmd"},
+      {json:{schema:"FINSCHEMA",table:"LEDGER",trandata:"enabled",addedColumns:["ROWID","PK"]}}
+    ]
+  },
+  {
+    title:"Poll replication lag for a dashboard",
+    sub:"Performance Metrics Service · GET",
+    steps:[
+      {line:"$ curl -s -u monitor:*** https://finance_prod-host:9103/services/v2/mpoints/REPSF1/heartbeat", type:"cmd"},
+      {json:{name:"REPSF1",lastHeartbeatLagMs:820,sourceTimestamp:"2026-07-16T10:41:02Z",targetTimestamp:"2026-07-16T10:41:02.82Z"}},
+      {line:"# Feed lastHeartbeatLagMs into Grafana / trigger alert if > 30000ms", type:"comment", delay:400}
+    ]
+  },
+  {
+    title:"Create a new Distribution Path (multi-cloud)",
+    sub:"Distribution Service · POST",
+    steps:[
+      {line:"$ curl -s -X POST -u ggadmin:*** \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"source\":\"aa\",\"target\":\"azure-receiver-01:9107\"}' \\\n  https://finance_prod-host:9102/services/v2/sources/DPFIN1", type:"cmd"},
+      {json:{name:"DPFIN1",status:"created",protocol:"https",target:"azure-receiver-01:9107"}}
+    ]
+  }
+];
+
+const scenarioListEl = document.getElementById('scenarioList');
+const terminal = document.getElementById('terminal');
+const runBtn = document.getElementById('runBtn');
+const statusLine = document.getElementById('statusLine');
+let currentScenario = null;
+
+function renderScenarios(){
+  scenarioListEl.innerHTML = SCENARIOS.map((s,i)=>`
+    <div class="scenario-btn" data-idx="${i}">${s.title}<span class="sc-sub">${s.sub}</span></div>`).join('');
+}
+scenarioListEl.addEventListener('click', e=>{
+  const el = e.target.closest('.scenario-btn'); if(!el) return;
+  document.querySelectorAll('.scenario-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  currentScenario = SCENARIOS[+el.dataset.idx];
+  terminal.innerHTML = `<div class="term-topbar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    <div class="term-line comment"># Ready to run: ${currentScenario.title}</div>`;
+  runBtn.disabled = false;
+  statusLine.textContent = "";
+});
+renderScenarios();
+
+function appendLine(html){
+  const div = document.createElement('div');
+  div.className = 'term-line';
+  div.innerHTML = html;
+  terminal.appendChild(div);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+async function runScenario(){
+  if(!currentScenario) return;
+  runBtn.disabled = true;
+  statusLine.textContent = "Running...";
+  terminal.innerHTML = `<div class="term-topbar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>`;
+  for(const step of currentScenario.steps){
+    await new Promise(r=>setTimeout(r, step.delay || 550));
+    if(step.type==='cmd'){
+      appendLine(`<span class="prompt">${escapeHtml(step.line).replace(/\n/g,'<br>')}</span>`);
+    } else if(step.type==='comment'){
+      appendLine(`<span class="comment">${escapeHtml(step.line)}</span>`);
+    } else if(step.json){
+      appendLine(jsonHighlight(step.json).replace(/\n/g,'<br>'));
+    }
+  }
+  statusLine.textContent = "Request complete.";
+  runBtn.disabled = false;
+}
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+runBtn.addEventListener('click', runScenario);
+
+// ---------- MONITOR SIMULATOR ----------
+const MON_PROCESSES = [
+  {name:"EXTFIN1", type:"extract", baseline:900,  status:"running", history:[]},
+  {name:"EXTFIN2", type:"extract", baseline:1400, status:"running", history:[]},
+  {name:"REPSF1",  type:"replicat", baseline:1800, status:"running", history:[]},
+  {name:"REPICE1", type:"replicat", baseline:2100, status:"running", history:[]},
+  {name:"REPADLS1",type:"replicat", baseline:1600, status:"running", history:[]},
+  {name:"REPFABRIC1", type:"replicat", baseline:2400, status:"running", history:[]},
+  {name:"REPAIDP1", type:"replicat", baseline:1300, status:"running", history:[]}
+];
+const ABEND_ERRORS = [
+  "OGG-01296: table not found in target metadata cache",
+  "OGG-02771: target connection reset by peer",
+  "OGG-00446: checkpoint file write failure"
+];
+
+let monTimer = null;
+let monRunning = false;
+let avgLagHistory = [];
+const procGrid = document.getElementById('procGrid');
+const monToggle = document.getElementById('monToggle');
+const monInterval = document.getElementById('monInterval');
+const alertBanner = document.getElementById('alertBanner');
+const alertText = document.getElementById('alertText');
+const callLog = document.getElementById('callLog');
+const lagChart = document.getElementById('lagChart');
+const lagCtx = lagChart.getContext('2d');
+
+function renderProcGrid(){
+  procGrid.innerHTML = MON_PROCESSES.map((p,i)=>`
+    <div class="proc-card ${p.status==='abended'?'abended':''}" id="proc-${i}">
+      <div class="proc-head">
+        <div>
+          <div class="proc-name"><span class="status-dot ${p.status}"></span>${p.name}</div>
+          <div class="proc-type">${p.type}</div>
+        </div>
+      </div>
+      <div class="proc-metric"><span>status</span><b class="stat-val">${p.status}</b></div>
+      <div class="proc-metric"><span>lag</span><b class="lag-val">${p.status==='running'? (p.baseline)+' ms' : '—'}</b></div>
+      <canvas class="spark" id="spark-${i}" width="220" height="26"></canvas>
+    </div>`).join('');
+}
+renderProcGrid();
+
+function drawSpark(idx){
+  const p = MON_PROCESSES[idx];
+  const c = document.getElementById('spark-'+idx);
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  const data = p.history.slice(-24);
+  if(data.length<2) return;
+  const max = Math.max(...data, 10);
+  const min = Math.min(...data, 0);
+  const range = (max-min)||1;
+  ctx.beginPath();
+  ctx.strokeStyle = p.status==='abended' ? '#c62828' : '#C74634';
+  ctx.lineWidth = 1.5;
+  data.forEach((v,i)=>{
+    const x = (i/(data.length-1))*c.width;
+    const y = c.height - ((v-min)/range)*c.height;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+
+function drawLagChart(){
+  lagCtx.clearRect(0,0,lagChart.width,lagChart.height);
+  const data = avgLagHistory.slice(-30);
+  if(data.length<2) return;
+  const max = Math.max(...data, 100);
+  const min = 0;
+  const range = (max-min)||1;
+  const w = lagChart.width, h = lagChart.height, pad=10;
+  // gridlines
+  lagCtx.strokeStyle = '#eee7e1'; lagCtx.lineWidth=1;
+  for(let g=0; g<=3; g++){
+    const y = pad + (h-2*pad)*g/3;
+    lagCtx.beginPath(); lagCtx.moveTo(0,y); lagCtx.lineTo(w,y); lagCtx.stroke();
+  }
+  lagCtx.beginPath();
+  lagCtx.strokeStyle = '#C74634'; lagCtx.lineWidth = 2;
+  data.forEach((v,i)=>{
+    const x = pad + (i/(data.length-1))*(w-2*pad);
+    const y = h - pad - ((v-min)/range)*(h-2*pad);
+    i===0 ? lagCtx.moveTo(x,y) : lagCtx.lineTo(x,y);
+  });
+  lagCtx.stroke();
+  // fill
+  lagCtx.lineTo(w-pad,h-pad); lagCtx.lineTo(pad,h-pad); lagCtx.closePath();
+  lagCtx.fillStyle = 'rgba(199,70,52,0.08)'; lagCtx.fill();
+}
+
+function logLine(html){
+  const div = document.createElement('div');
+  div.className = 'term-line';
+  div.innerHTML = html;
+  callLog.appendChild(div);
+  callLog.scrollTop = callLog.scrollHeight;
+  while(callLog.childNodes.length > 60) callLog.removeChild(callLog.firstChild);
+}
+
+function monTick(){
+  let totalLag = 0, runningCount = 0;
+  MON_PROCESSES.forEach((p,i)=>{
+    // small chance to abend a healthy process; small chance to recover an abended one
+    if(p.status==='running' && Math.random()<0.025){
+      p.status='abended';
+      p.lastError = ABEND_ERRORS[Math.floor(Math.random()*ABEND_ERRORS.length)];
+      logLine(`<span class="err">GET .../${p.type}s/${p.name}/info/status → 200 OK  {"status":"abended"}</span>`);
+      alertText.textContent = `${p.name} abended — ${p.lastError}. Auto-recovery scenario: a monitor would call POST /${p.type}s/${p.name}/command {"command":"start"} to restart it.`;
+      alertBanner.classList.add('show');
+    } else if(p.status==='abended' && Math.random()<0.3){
+      p.status='running';
+      logLine(`<span class="ok">POST .../${p.type}s/${p.name}/command {"command":"start"} → 202 Accepted</span>`);
+      logLine(`<span class="ok">GET .../${p.type}s/${p.name}/info/status → 200 OK  {"status":"running"}</span>`);
+    } else if(p.status==='running'){
+      const jitter = (Math.random()-0.4)*p.baseline*0.3;
+      const lag = Math.max(50, Math.round(p.baseline + jitter));
+      p.currentLag = lag;
+      p.history.push(lag);
+      totalLag += lag; runningCount++;
+      logLine(`<span class="ok">GET .../mpoints/${p.name}/heartbeat → 200 OK  {"lastHeartbeatLagMs":${lag}}</span>`);
+    } else {
+      logLine(`<span class="warn">GET .../${p.type}s/${p.name}/info/status → 200 OK  {"status":"abended"}</span>`);
+    }
+    // update card
+    const card = document.getElementById('proc-'+i);
+    if(card){
+      card.className = 'proc-card '+(p.status==='abended'?'abended':'');
+      card.querySelector('.status-dot').className = 'status-dot '+p.status;
+      card.querySelector('.stat-val').textContent = p.status;
+      card.querySelector('.lag-val').textContent = p.status==='running' ? p.currentLag+' ms' : '—';
+    }
+    drawSpark(i);
+  });
+  if(runningCount>0){
+    avgLagHistory.push(Math.round(totalLag/runningCount));
+    drawLagChart();
+  }
+}
+
+function startMonitor(){
+  monRunning = true;
+  monToggle.textContent = '■ Stop Monitoring';
+  monToggle.classList.remove('stopped');
+  logLine('<span class="comment"># Monitoring started — polling every '+(monInterval.value/1000)+'s</span>');
+  monTick();
+  monTimer = setInterval(monTick, +monInterval.value);
+}
+function stopMonitor(){
+  monRunning = false;
+  monToggle.textContent = '▶ Start Monitoring';
+  monToggle.classList.add('stopped');
+  clearInterval(monTimer);
+  logLine('<span class="comment"># Monitoring stopped</span>');
+}
+monToggle.addEventListener('click', ()=> monRunning ? stopMonitor() : startMonitor());
+monInterval.addEventListener('change', ()=>{
+  if(monRunning){ clearInterval(monTimer); monTimer = setInterval(monTick, +monInterval.value); }
+});
+</script>
+</body>
+</html>
