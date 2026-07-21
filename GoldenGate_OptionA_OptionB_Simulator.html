@@ -148,6 +148,23 @@ footer{text-align:center;padding:20px;color:var(--dimmer);font-family:var(--mono
   .pipeline{padding:20px 4px 30px;}
 }
 </style>
+<script>
+/* Basic deterrents against casual view-source / copying.
+   NOTE: This does not provide real security — any determined visitor can
+   still access the page source via browser dev tools, curl, or other means. */
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('keydown', function(e){
+  var k = e.key ? e.key.toUpperCase() : '';
+  if (
+    k === 'F12' ||
+    (e.ctrlKey && k === 'U') ||
+    (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
+    (e.metaKey && e.altKey && (k === 'I' || k === 'J' || k === 'C'))
+  ) {
+    e.preventDefault();
+  }
+});
+</script>
 </head>
 <body>
 
