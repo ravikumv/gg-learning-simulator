@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle GoldenGate | 3-Site Bi-Directional Replication &amp; Auto-CDR Simulator</title>
+<style>
+  :root{
+    --redwood:#C74634;
+    --redwood-dark:#9a3527;
+    --ink:#1f2430;
+    --ink-soft:#54596b;
+    --paper:#ffffff;
+    --panel:#f7f7f9;
+    --line:#e2e2e8;
+    --good:#1c7c4c;
+    --bad:#b3261e;
+    --radius:10px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    background:var(--panel);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    background:var(--paper);
+    border-bottom:3px solid var(--redwood);
+    padding:18px 20px 14px;
+  }
+  header h1{ margin:0 0 4px; font-size:1.35rem; letter-spacing:-0.01em; }
+  header h1 span.tag{
+    display:inline-block; background:var(--redwood); color:#fff;
+    font-size:0.6rem; font-weight:700; letter-spacing:0.06em;
+    padding:2px 7px; border-radius:5px; vertical-align:middle;
+    margin-left:8px; transform:translateY(-2px);
+  }
+  header p{ margin:0; color:var(--ink-soft); font-size:0.85rem; }
+  nav.tabs{
+    display:flex; overflow-x:auto; background:var(--paper);
+    border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50;
+    scrollbar-width:none;
+  }
+  nav.tabs::-webkit-scrollbar{display:none;}
+  nav.tabs button{
+    flex:0 0 auto; background:none; border:none; padding:12px 14px;
+    font-size:0.82rem; font-weight:600; color:var(--ink-soft); cursor:pointer;
+    border-bottom:3px solid transparent; white-space:nowrap;
+  }
+  nav.tabs button.active{ color:var(--redwood); border-bottom-color:var(--redwood); }
+  main{ max-width:920px; margin:0 auto; padding:16px 14px 60px; }
+  section.view{display:none;}
+  section.view.active{display:block;}
+  .card{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-bottom:14px;
+  }
+  .card h2{
+    font-size:1rem; margin:0 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  .card h2 .num{
+    background:var(--redwood); color:#fff; width:22px;height:22px; border-radius:50%;
+    font-size:0.7rem; display:flex;align-items:center;justify-content:center; flex:0 0 auto;
+  }
+  .card p{ font-size:0.88rem; line-height:1.5; color:var(--ink); margin:0 0 8px;}
+  .card ul{ margin:6px 0; padding-left:20px; font-size:0.85rem; line-height:1.55;}
+  .card li{margin-bottom:4px;}
+  code, .code{
+    font-family:"SF Mono",Menlo,Consolas,monospace; background:#f1f1f4;
+    border:1px solid var(--line); border-radius:6px; padding:1px 6px;
+    font-size:0.78rem; color:var(--redwood-dark);
+  }
+  pre.code-block{
+    background:#1b1e27; color:#d6e2ff; font-family:"SF Mono",Menlo,Consolas,monospace;
+    font-size:0.72rem; line-height:1.5; padding:12px; border-radius:8px;
+    overflow-x:auto; margin:8px 0;
+  }
+  table.matrix{ width:100%; border-collapse:collapse; font-size:0.76rem; }
+  table.matrix th, table.matrix td{ border:1px solid var(--line); padding:6px 7px; text-align:center; }
+  table.matrix th{background:#f1f1f4; font-size:0.68rem;}
+  table.matrix td:first-child, table.matrix th:first-child{text-align:left; font-weight:600;}
+  .yes{color:var(--good); font-weight:700;}
+  .no{color:var(--bad); font-weight:700;}
+  .partial{color:#a15c00; font-weight:700;}
+
+  /* Architecture diagram */
+  .diagram-wrap{ background:#0f1117; border-radius:10px; padding:14px 8px 20px; overflow-x:auto; }
+  .site-box{ fill:#1b1e27; stroke:#3a3f52; stroke-width:1; }
+  .site-label{ font:700 12px sans-serif; fill:#fff; }
+  .proc-label{ font:600 8.5px monospace; fill:#c9d4ff; }
+  .edge-label{ font:600 7px sans-serif; fill:#8b93ab; }
+
+  /* Live simulator */
+  .sim-sites{ display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:12px; }
+  @media(min-width:700px){ .sim-sites{grid-template-columns:1fr 1fr 1fr;} }
+  .sim-site{ border-radius:10px; padding:12px; color:#fff; position:relative; overflow:hidden; }
+  .sim-site.a{ background:linear-gradient(135deg,#2563eb,#1d4ed8);}
+  .sim-site.b{ background:linear-gradient(135deg,#7c3aed,#6023c7);}
+  .sim-site.c{ background:linear-gradient(135deg,#c74634,#9a3527);}
+  .sim-site h3{ margin:0 0 8px; font-size:0.85rem; }
+  .sim-site .row-card{
+    background:rgba(255,255,255,0.14); border-radius:7px; padding:8px 9px;
+    font-size:0.72rem; font-family:"SF Mono",Menlo,Consolas,monospace;
+    line-height:1.5; margin-bottom:8px; min-height:58px;
+  }
+  .sim-site .row-card.tomb{ background:rgba(0,0,0,0.28); font-style:italic; opacity:0.85; }
+  .sim-site .ts{opacity:0.85;}
+  .btn-row{ display:flex; gap:5px; }
+  .sim-site button{
+    flex:1; border:none; background:rgba(255,255,255,0.92); color:#1f2430;
+    font-weight:700; font-size:0.68rem; padding:7px 4px; border-radius:6px; cursor:pointer;
+  }
+  .sim-site button:disabled{ opacity:0.35; cursor:not-allowed; }
+  .sim-site button:active:not(:disabled){transform:scale(0.97);}
+  .sim-site.flash::after{
+    content:""; position:absolute; inset:0; background:#fff; opacity:0;
+    animation:flashfx 0.6s ease; pointer-events:none;
+  }
+  @keyframes flashfx{ 0%{opacity:0.55;} 100%{opacity:0;} }
+
+  .scenario-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  select#scenarioSelect{
+    flex:1 1 220px; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    font-size:0.8rem; background:#fff; color:var(--ink);
+  }
+  .sim-controls{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .sim-controls button.main-action{
+    flex:1 1 auto; background:var(--redwood); color:#fff; border:none;
+    padding:10px 12px; border-radius:8px; font-weight:700; font-size:0.8rem; cursor:pointer;
+  }
+  .sim-controls button.secondary{
+    flex:1 1 auto; background:#fff; border:1px solid var(--line); padding:10px 12px;
+    border-radius:8px; font-weight:700; font-size:0.8rem; cursor:pointer; color:var(--ink);
+  }
+  #simLog{
+    background:#12141c; color:#d6e2ff; font-family:"SF Mono",Menlo,Consolas,monospace;
+    font-size:0.7rem; line-height:1.6; border-radius:9px; padding:12px;
+    height:280px; overflow-y:auto;
+  }
+  #simLog .win{color:#5adf9a; font-weight:700;}
+  #simLog .lose{color:#ff8a80; font-weight:700;}
+  #simLog .noop{color:#8b93ab; font-style:italic;}
+  #simLog .info{color:#8b93ab;}
+  #simLog .tag{color:#ffd479;}
+  #simLog .hdr{color:#fff; font-weight:700;}
+  .trace{
+    border-left:2px solid #3a3f52; margin:6px 0 10px 2px; padding:4px 0 4px 10px;
+  }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:0.7rem; color:var(--ink-soft); margin-top:8px; }
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  footer{ text-align:center; color:var(--ink-soft); font-size:0.7rem; padding:20px 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>GoldenGate 3-Site Bi-Directional Replication<span class="tag">ACTIVE-ACTIVE</span></h1>
+  <p>Architecture, prerequisites, Automatic Conflict Detection &amp; Resolution (ACDR), Replicat selection, and a live conflict simulator</p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="active" data-view="arch">1. Architecture</button>
+  <button data-view="prereq">2. Prerequisites</button>
+  <button data-view="acdr">3. ACDR Concept</button>
+  <button data-view="replicat">4. Replicat Type</button>
+  <button data-view="sim">5. Live Simulator</button>
+</nav>
+
+<main>
+
+  <!-- ============ 1. ARCHITECTURE ============ -->
+  <section class="view active" id="view-arch">
+    <div class="card">
+      <h2><span class="num">i</span>What "3-site bi-directional" means</h2>
+      <p>This is an <strong>active-active (multi-master) mesh</strong>: three databases &mdash; Site A, Site B, Site C &mdash; each accept live application writes on the <em>same</em> shared tables, and each site's changes are replicated to <em>both</em> of the other two sites. Unlike a hub-and-spoke or Option A/B mining topology, there is no single source of truth: every site is simultaneously a source and a target.</p>
+      <p>Because all three sites can be written to concurrently, this topology requires two things a simple one-way Extract&rarr;Replicat pair does not: <strong>loop prevention</strong> (so a change doesn't get re-captured and bounced back to where it came from) and <strong>conflict detection &amp; resolution</strong> (so two near-simultaneous changes to the same row don't leave the sites permanently out of sync).</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">ii</span>Full-mesh process topology</h2>
+      <p>Oracle GoldenGate enforces a hard rule used throughout this simulator suite: <strong>one Replicat group delivers to exactly one target</strong>. For a 3-way mesh that means each site runs one local Extract and <strong>two</strong> outbound Data Pumps (one per peer), and receives <strong>two</strong> inbound Replicats (one per peer source trail) &mdash; six directional legs in total, not one shared Replicat fan-in.</p>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 640 460" width="100%" style="max-width:640px;display:block;margin:0 auto;">
+          <g id="siteA">
+            <rect class="site-box" x="20" y="20" width="180" height="120" rx="10"/>
+            <text class="site-label" x="34" y="42">SITE A &mdash; Chicago</text>
+            <text class="proc-label" x="34" y="62">EXTIA  (Integrated Extract)</text>
+            <text class="proc-label" x="34" y="78">PMPA_B &rarr; trail to B</text>
+            <text class="proc-label" x="34" y="94">PMPA_C &rarr; trail to C</text>
+            <text class="proc-label" x="34" y="112">REPB_A  (from B)</text>
+            <text class="proc-label" x="34" y="128">REPC_A  (from C)</text>
+          </g>
+          <g id="siteB">
+            <rect class="site-box" x="440" y="20" width="180" height="120" rx="10"/>
+            <text class="site-label" x="454" y="42">SITE B &mdash; London</text>
+            <text class="proc-label" x="454" y="62">EXTIB  (Integrated Extract)</text>
+            <text class="proc-label" x="454" y="78">PMPB_A &rarr; trail to A</text>
+            <text class="proc-label" x="454" y="94">PMPB_C &rarr; trail to C</text>
+            <text class="proc-label" x="454" y="112">REPA_B  (from A)</text>
+            <text class="proc-label" x="454" y="128">REPC_B  (from C)</text>
+          </g>
+          <g id="siteC">
+            <rect class="site-box" x="230" y="310" width="180" height="120" rx="10"/>
+            <text class="site-label" x="244" y="332">SITE C &mdash; Singapore</text>
+            <text class="proc-label" x="244" y="352">EXTIC  (Integrated Extract)</text>
+            <text class="proc-label" x="244" y="368">PMPC_A &rarr; trail to A</text>
+            <text class="proc-label" x="244" y="384">PMPC_B &rarr; trail to B</text>
+            <text class="proc-label" x="244" y="402">REPA_C  (from A)</text>
+            <text class="proc-label" x="244" y="418">REPB_C  (from B)</text>
+          </g>
+          <line x1="200" y1="60" x2="440" y2="60" stroke="#3a3f52" stroke-width="1.5"/>
+          <line x1="440" y1="100" x2="200" y2="100" stroke="#3a3f52" stroke-width="1.5"/>
+          <line x1="110" y1="140" x2="290" y2="310" stroke="#3a3f52" stroke-width="1.5"/>
+          <line x1="330" y1="310" x2="150" y2="140" stroke="#3a3f52" stroke-width="1.5"/>
+          <line x1="530" y1="140" x2="360" y2="310" stroke="#3a3f52" stroke-width="1.5"/>
+          <line x1="380" y1="310" x2="500" y2="140" stroke="#3a3f52" stroke-width="1.5"/>
+          <text class="edge-label" x="270" y="53">A &rarr; B trail</text>
+          <text class="edge-label" x="270" y="113">B &rarr; A trail</text>
+          <text class="edge-label" x="130" y="235" transform="rotate(60 130 235)">A &rarr; C</text>
+          <text class="edge-label" x="200" y="235" transform="rotate(-60 200 235)">C &rarr; A</text>
+          <text class="edge-label" x="470" y="235" transform="rotate(-60 470 235)">B &rarr; C</text>
+          <text class="edge-label" x="410" y="235" transform="rotate(60 410 235)">C &rarr; B</text>
+        </svg>
+      </div>
+      <p style="margin-top:8px;">Each Extract tags the transactions it captures (<code>SETTAG</code>). Every Extract is configured with <code>TRANLOGOPTIONS EXCLUDETAG</code> for the tag values written by <em>local</em> Replicats, so replicated data arriving from a peer and applied locally is never re-captured and sent back &mdash; this is what stops the 3-site mesh from ping-ponging changes in an endless loop.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">iii</span>Why 3 sites is harder than 2</h2>
+      <ul>
+        <li><strong>6 directional legs instead of 2</strong> &mdash; process count and monitoring surface roughly triples versus a 2-site active-active pair.</li>
+        <li><strong>Conflict windows multiply</strong> &mdash; a row can be touched at A, B, and C nearly simultaneously, not just at two points.</li>
+        <li><strong>Sequence/identity collisions</strong> &mdash; auto-incrementing keys generated independently at 3 sites will collide unless each site is given a reserved, non-overlapping range or an identity strategy that encodes the site.</li>
+        <li><strong>DDL propagation ordering</strong> &mdash; a DDL change issued at one site must reach the other two before conflicting DML against the new structure arrives, which is why DDL changes in an active-active mesh are typically applied off-peak and one site at a time.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 2. PREREQUISITES ============ -->
+  <section class="view" id="view-prereq">
+    <div class="card">
+      <h2><span class="num">1</span>Database-level prerequisites (all 3 sites)</h2>
+      <ul>
+        <li>Database in <code>ARCHIVELOG</code> mode with <code>FORCE LOGGING</code> enabled.</li>
+        <li>Supplemental logging enabled at the database level, plus <code>ADD TRANDATA</code> (AdminClient) on every replicated table, capturing the primary key / unique index columns at minimum.</li>
+        <li>Every replicated table must carry a <strong>primary key or a unique index</strong> &mdash; this is a hard requirement for Auto CDR (<code>ADD_AUTO_CDR</code> will not operate on a table without one).</li>
+        <li>The <code>LOGALLSUPCOLS</code> Extract parameter set (default with integrated Extract) so all columns enabled for CDR comparison are actually written to the trail.</li>
+        <li>Time synchronization (NTP) across all 3 hosts &mdash; the default Auto CDR resolution method compares row timestamps, so clock drift directly causes wrong-winner resolutions.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">2</span>GoldenGate Microservices prerequisites</h2>
+      <ul>
+        <li>Deployment and Service Manager installed at all 3 sites; database registered with the deployment.</li>
+        <li>Integrated capture mode for Extract &mdash; required for Auto CDR, and mandatory anyway if any site is a multitenant/PDB database.</li>
+        <li>A conflict-safe key/sequence strategy agreed up front &mdash; e.g. reserved sequence cache ranges per site, or a site-tagged identity column &mdash; since GoldenGate itself does not arbitrate primary-key generation collisions.</li>
+        <li><code>SETTAG</code> configured on each Replicat and matching <code>TRANLOGOPTIONS EXCLUDETAG</code> on the local Extract, to prevent apply-loop re-capture (see Architecture tab).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">3</span>Enabling ACDR itself</h2>
+      <p>Auto CDR is enabled per table via a database package call &mdash; run on <strong>every</strong> participating site for that table:</p>
+      <pre class="code-block">EXEC DBMS_GOLDENGATE_ADM.ADD_AUTO_CDR(
+       schema_name => 'APP',
+       table_name  => 'CUSTOMER_ACCT');</pre>
+      <p>This single call, run identically at Site A, Site B, and Site C, does three things at once: enables supplemental logging on all CDR-relevant columns, installs the conflict-detection comparison logic, and activates the default Latest-Timestamp resolution method &mdash; no manual <code>COMPARECOLS</code>/<code>RESOLVECONFLICT</code> parameters needed in the Replicat parameter file.</p>
+    </div>
+  </section>
+
+  <!-- ============ 3. ACDR CONCEPT ============ -->
+  <section class="view" id="view-acdr">
+    <div class="card">
+      <h2><span class="num">i</span>What ACDR actually is</h2>
+      <p><strong>Automatic Conflict Detection and Resolution (ACDR)</strong> is an Oracle-Database-side feature (from Oracle Database 12.2 / GoldenGate 12.3.0.1 onward, refined through 21c) that manages conflict detection and resolution for you, via <code>DBMS_GOLDENGATE_ADM.ADD_AUTO_CDR</code>. It's distinct from &mdash; and replaces the need for &mdash; the older, manual approach: hand-writing <code>COMPARECOLS</code> and <code>RESOLVECONFLICT</code> clauses directly in the Replicat parameter file. That manual mechanism still exists and is still called Oracle GoldenGate CDR, but for a new active-active build ACDR is the recommended path.</p>
+      <p>Under the covers, GoldenGate represents each captured change as a row Logical Change Record (LCR) containing the operation type plus before/after column images. A hidden system column, <code>CDRTS$ROW</code>, stores the timestamp of the last change applied to that row so an incoming LCR can be compared against it at apply time.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">ii</span>Conflict types ACDR detects</h2>
+      <table class="matrix">
+        <tr><th>Conflict type</th><th>When it fires</th></tr>
+        <tr><td>INSERTROWEXISTS</td><td>Incoming INSERT, but a row with that key already exists locally</td></tr>
+        <tr><td>UPDATEROWEXISTS</td><td>Incoming UPDATE, but the local row's current values differ from what the source expected (classic lost-update)</td></tr>
+        <tr><td>UPDATEROWMISSING</td><td>Incoming UPDATE, but the target row no longer exists locally</td></tr>
+        <tr><td>DELETEROWEXISTS</td><td>Incoming DELETE, but the local row has since changed</td></tr>
+        <tr><td>DELETEROWMISSING</td><td>Incoming DELETE, target row already gone</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">iii</span>Default resolution: Latest Timestamp</h2>
+      <p>With the default method, the row carrying the <strong>later</strong> <code>CDRTS$ROW</code> timestamp wins and is applied (or kept); the earlier one loses and is discarded. Set <code>record_conflicts =&gt; TRUE</code> on <code>ADD_AUTO_CDR</code> to have every WIN/LOSS decision logged for audit, which the Live Simulator tab visualizes.</p>
+      <p>This is why NTP synchronization across all 3 sites (called out in Prerequisites) isn't optional &mdash; a few seconds of clock drift can make an objectively older change look newer and silently overwrite a legitimate later edit.</p>
+    </div>
+  </section>
+
+  <!-- ============ 4. REPLICAT TYPE ============ -->
+  <section class="view" id="view-replicat">
+    <div class="card">
+      <h2><span class="num">i</span>The rule</h2>
+      <p><strong>Auto CDR only operates when Replicat is running in an "integrated flavor."</strong> That means either <strong>Integrated Replicat</strong>, or <strong>Parallel Replicat operating in integrated mode</strong> (sometimes written iPR). Classic/non-integrated Replicat and non-integrated Parallel Replicat cannot enforce Auto CDR at all &mdash; the feature depends on the inbound server the integrated modes use to construct and apply LCRs.</p>
+      <p>Oracle's general apply-mode guidance is to default to (non-integrated) Parallel Replicat for raw throughput <em>unless a specific feature requires otherwise</em> &mdash; and Auto CDR is exactly that exception for an active-active build.</p>
+    </div>
+    <div class="card">
+      <h2><span class="num">ii</span>Feature support by Replicat mode</h2>
+      <table class="matrix">
+        <tr><th>Feature</th><th>Integrated Replicat</th><th>Parallel Replicat (integrated mode)</th><th>Parallel Replicat (non-integrated)</th><th>Classic Replicat</th></tr>
+        <tr><td>Auto CDR</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+        <tr><td>DML Handler</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+        <tr><td>Multitenant (PDB) target</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="partial">Limited</td><td class="no">No</td></tr>
+        <tr><td>Trigger-free apply</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">Manual disable</td><td class="no">Manual disable</td></tr>
+        <tr><td>Raw throughput (typical)</td><td class="partial">Good</td><td class="yes">Best</td><td class="yes">Best</td><td class="partial">Lowest</td></tr>
+      </table>
+      <p style="margin-top:8px;">For this 3-site build: choose <strong>Parallel Replicat in integrated mode</strong> at each site for the best combination of Auto CDR support and throughput, falling back to plain Integrated Replicat only if a constraint elsewhere in the environment rules out parallel apply.</p>
+    </div>
+    <div class="card">
+      <h2><span class="num">iii</span>Minimum Replicat parameter shape</h2>
+      <pre class="code-block">REPLICAT REPB_A
+TARGET DB is SITE_A
+-- integrated / parallel-integrated apply selected at ADD REPLICAT time
+SETTAG '02'                 -- marks rows this Replicat applies, so
+                             -- Site A's own Extract can EXCLUDETAG '02'
+MAP APP.CUSTOMER_ACCT, TARGET APP.CUSTOMER_ACCT;
+-- Auto CDR itself needs NO Replicat-side COMPARECOLS/RESOLVECONFLICT --
+-- it is entirely enabled at the database with ADD_AUTO_CDR.</pre>
+    </div>
+  </section>
+
+  <!-- ============ 5. LIVE SIMULATOR ============ -->
+  <section class="view" id="view-sim">
+    <div class="card">
+      <h2><span class="num">&#9654;</span>Live simulator &mdash; table <code>APP.CUSTOMER_ACCT</code>, key 4471</h2>
+      <p>Drive INSERT / UPDATE / DELETE at any site individually (free play), or run a preset scenario that fires two sites near-simultaneously so you can watch how ACDR actually decides a winner underneath.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">&#9881;</span>Inside the CDR engine &mdash; the two-phase check</h2>
+      <p>Every inbound LCR goes through two distinct phases, and it's worth keeping them separate:</p>
+      <ul>
+        <li><strong>1. Detection</strong> &mdash; the engine compares the operation the LCR is asking for (INSERT / UPDATE / DELETE) against the <em>current state of the local row</em> (exists or not). A mismatch between what the source expected and what's actually there is what produces a named conflict type.</li>
+        <li><strong>2. Resolution</strong> &mdash; only once a conflict type has been flagged does the configured method run. With Auto CDR's default, that's Latest Timestamp: compare the incoming LCR's <code>CDRTS$ROW</code> against the local row's <code>CDRTS$ROW</code>, and let the later one win.</li>
+      </ul>
+      <table class="matrix">
+        <tr><th>Incoming op</th><th>Local row EXISTS</th><th>Local row MISSING</th></tr>
+        <tr><td>INSERT</td><td>INSERTROWEXISTS &rarr; timestamp arbitrates</td><td>No conflict &rarr; plain insert</td></tr>
+        <tr><td>UPDATE</td><td>UPDATEROWEXISTS &rarr; timestamp arbitrates</td><td>UPDATEROWMISSING &rarr; discarded by default</td></tr>
+        <tr><td>DELETE</td><td>DELETEROWEXISTS &rarr; timestamp arbitrates</td><td>DELETEROWMISSING &rarr; no-op, already converged</td></tr>
+      </table>
+      <p style="margin-top:8px;">Notice the asymmetry in the middle column: an <code>*ROWEXISTS</code> conflict is a fair fight decided by timestamp, but <code>UPDATEROWMISSING</code> is <strong>not</strong> timestamp-arbitrated &mdash; by default there is nothing to update, so the incoming change is simply discarded even if it's the "newer" one. This is a common gotcha in active-active designs: a DELETE can permanently defeat a slightly-later UPDATE from another site. <span style="color:var(--ink-soft);">(This simulator uses timestamp divergence as a teaching stand-in for the real detection check, which compares the LCR's captured before-image against the current column values.)</span></p>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">&#9654;</span>Free play &mdash; per-site actions</h2>
+      <div class="sim-sites">
+        <div class="sim-site a" id="site-a-box">
+          <h3>SITE A &middot; Chicago</h3>
+          <div class="row-card" id="row-a"></div>
+          <div class="btn-row">
+            <button id="ins-a" onclick="doInsert('a')">Insert</button>
+            <button id="upd-a" onclick="doUpdate('a')">Update</button>
+            <button id="del-a" onclick="doDelete('a')">Delete</button>
+          </div>
+        </div>
+        <div class="sim-site b" id="site-b-box">
+          <h3>SITE B &middot; London</h3>
+          <div class="row-card" id="row-b"></div>
+          <div class="btn-row">
+            <button id="ins-b" onclick="doInsert('b')">Insert</button>
+            <button id="upd-b" onclick="doUpdate('b')">Update</button>
+            <button id="del-b" onclick="doDelete('b')">Delete</button>
+          </div>
+        </div>
+        <div class="sim-site c" id="site-c-box">
+          <h3>SITE C &middot; Singapore</h3>
+          <div class="row-card" id="row-c"></div>
+          <div class="btn-row">
+            <button id="ins-c" onclick="doInsert('c')">Insert</button>
+            <button id="upd-c" onclick="doUpdate('c')">Update</button>
+            <button id="del-c" onclick="doDelete('c')">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">&#9881;</span>Conflict scenario presets</h2>
+      <div class="scenario-row">
+        <select id="scenarioSelect">
+          <optgroup label="2-site (A vs B)">
+            <option value="update-update">UPDATE vs UPDATE &mdash; A and B edit the same row (classic lost-update)</option>
+            <option value="insert-insert">INSERT vs INSERT &mdash; A and B independently (re)create the same key</option>
+            <option value="delete-update">DELETE vs UPDATE &mdash; A deletes while B updates</option>
+            <option value="update-delete">UPDATE vs DELETE &mdash; A updates while B deletes</option>
+            <option value="delete-delete">DELETE vs DELETE &mdash; A and B both delete (harmonious convergence)</option>
+          </optgroup>
+          <optgroup label="3-site (A, B &amp; C together)">
+            <option value="insert-all3">INSERT race &mdash; A, B, C all (re)create the same key within milliseconds</option>
+            <option value="update-all3">UPDATE race &mdash; A, B, C all edit the same row within milliseconds</option>
+            <option value="delete-all3">DELETE race &mdash; A, B, C all delete the row within milliseconds</option>
+            <option value="mixed-3way">Mixed 3-way &mdash; A deletes, B updates, C inserts, all at once</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="sim-controls">
+        <button class="main-action" onclick="runScenario()">Run scenario</button>
+        <button class="secondary" onclick="resetSim()">Reset baseline</button>
+      </div>
+      <div id="simLog"></div>
+      <div class="legend">
+        <span><i style="background:#2563eb;"></i>Site A</span>
+        <span><i style="background:#7c3aed;"></i>Site B</span>
+        <span><i style="background:#c74634;"></i>Site C</span>
+        <span><i style="background:#5adf9a;"></i>WIN / applied</span>
+        <span><i style="background:#ff8a80;"></i>LOST / discarded</span>
+        <span><i style="background:#8b93ab;"></i>No-op</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">?</span>What to notice</h2>
+      <ul>
+        <li>A single-site action propagates cleanly to both peers &mdash; no independent history to conflict with, so it's a routine apply.</li>
+        <li>In <strong>UPDATE vs UPDATE</strong>, both sites apply their own change locally first, then the later <code>CDRTS$ROW</code> wins everywhere once the peer's trail record arrives &mdash; the earlier one is logged as LOST, not silently dropped.</li>
+        <li>In <strong>INSERT vs INSERT</strong>, whichever insert a site sees first applies with no conflict (row was missing); the second insert to arrive at that same site <em>is</em> flagged INSERTROWEXISTS and arbitrated by timestamp.</li>
+        <li>In <strong>DELETE vs UPDATE</strong>, watch the asymmetry: the site that updated sees the incoming DELETE as a fair DELETEROWEXISTS fight (timestamp decides), but the site that deleted sees the incoming UPDATE as UPDATEROWMISSING and discards it outright &mdash; regardless of which timestamp is later.</li>
+        <li>In <strong>DELETE vs DELETE</strong>, there's no real contention at all &mdash; both sites already agree the row is gone, so incoming deletes just resolve as no-ops.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>Oracle GoldenGate Learning Simulator Suite &middot; Ravikumar Vasudevan</footer>
+
+<script>
+  // ---------- Tab navigation ----------
+  const tabButtons = document.querySelectorAll('#tabs button');
+  tabButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabButtons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('section.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    });
+  });
+
+  // ---------- Simulator state ----------
+  let simClock = 0; // simulated ms clock
+  const state = {
+    a: {exists:true, balance:1000.00, ts:0, origin:'baseline'},
+    b: {exists:true, balance:1000.00, ts:0, origin:'baseline'},
+    c: {exists:true, balance:1000.00, ts:0, origin:'baseline'},
+  };
+  const siteNames = {a:'Site A (Chicago)', b:'Site B (London)', c:'Site C (Singapore)'};
+  const otherSites = {a:['b','c'], b:['a','c'], c:['a','b']};
+
+  function fmtTs(ms){
+    const d = new Date(2000,0,1, 9, 0, 0, 0);
+    d.setMilliseconds(d.getMilliseconds()+ms);
+    const h = String(d.getHours()).padStart(2,'0');
+    const m = String(d.getMinutes()).padStart(2,'0');
+    const s = String(d.getSeconds()).padStart(2,'0');
+    const ms3 = String(d.getMilliseconds()).padStart(3,'0');
+    return h+':'+m+':'+s+'.'+ms3;
+  }
+  function fmtMoney(v){ return v.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+  function log(html){
+    const el = document.getElementById('simLog');
+    const line = document.createElement('div');
+    line.innerHTML = html;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function flashSite(site){
+    const box = document.getElementById('site-'+site+'-box');
+    box.classList.remove('flash');
+    void box.offsetWidth;
+    box.classList.add('flash');
+  }
+
+  function renderSite(site){
+    const s = state[site];
+    const card = document.getElementById('row-'+site);
+    if(s.exists){
+      card.classList.remove('tomb');
+      card.innerHTML = `ACCT_ID: 4471<br>BALANCE: ${fmtMoney(s.balance)}<br><span class="ts">CDRTS$ROW: ${fmtTs(s.ts)}</span>`;
+    } else {
+      card.classList.add('tomb');
+      card.innerHTML = `ACCT_ID: 4471<br>&mdash; ROW DELETED (tombstone) &mdash;<br><span class="ts">CDRTS$ROW: ${s.ts===0?'--:--:--.000':fmtTs(s.ts)}</span>`;
+    }
+    document.getElementById('ins-'+site).disabled = s.exists;
+    document.getElementById('upd-'+site).disabled = !s.exists;
+    document.getElementById('del-'+site).disabled = !s.exists;
+  }
+
+  function renderAll(){ ['a','b','c'].forEach(renderSite); }
+
+  // ---------- Core CDR-matrix logic ----------
+  function conflictTypeFor(op, localExists){
+    if(op==='INSERT') return localExists ? 'INSERTROWEXISTS' : null;
+    if(op==='UPDATE') return localExists ? 'UPDATEROWEXISTS' : 'UPDATEROWMISSING';
+    return localExists ? 'DELETEROWEXISTS' : 'DELETEROWMISSING'; // DELETE
+  }
+
+  function receiveReplicated(site, op, incomingBalance, incomingTs, fromSite){
+    const local = state[site];
+    const conflictType = conflictTypeFor(op, local.exists);
+    const hadIndependentHistory = local.origin !== 'baseline' && local.origin !== fromSite;
+
+    let decision;
+    if(conflictType === null){ decision = 'APPLY'; }
+    else if(conflictType === 'DELETEROWMISSING'){ decision = 'NOOP'; }
+    else if(conflictType === 'UPDATEROWMISSING'){ decision = 'DISCARD'; }
+    else { decision = (incomingTs > local.ts) ? 'APPLY' : 'DISCARD'; }
+
+    if(decision === 'APPLY'){
+      local.exists = (op !== 'DELETE');
+      if(op !== 'DELETE') local.balance = incomingBalance;
+      local.ts = incomingTs;
+      local.origin = fromSite;
+      renderSite(site);
+      flashSite(site);
+    }
+
+    const showFullTrace = conflictType !== null && (hadIndependentHistory || decision === 'DISCARD' || decision === 'NOOP');
+
+    if(!showFullTrace){
+      log(`<span class="info">[${fmtTs(incomingTs)}]</span> ${siteNames[site]} Replicat ${fromSite.toUpperCase()}&rarr;${site.toUpperCase()}: ${op} <span class="win">applied</span> &mdash; no independent history, clean propagation`);
+    } else {
+      const localTsStr = local.origin==='baseline' && local.ts===0 ? '--:--:--.000 (never touched)' : fmtTs(local.ts===incomingTs && decision==='APPLY' ? local.ts : local.ts);
+      let decisionLine;
+      if(decision==='APPLY') decisionLine = `<span class="win">APPLY</span> &mdash; incoming CDRTS$ROW is later`;
+      else if(decision==='DISCARD' && conflictType==='UPDATEROWMISSING') decisionLine = `<span class="lose">DISCARD</span> &mdash; target row missing, UPDATE has nothing to update (default behavior, not timestamp-arbitrated)`;
+      else if(decision==='DISCARD') decisionLine = `<span class="lose">DISCARD (LOST)</span> &mdash; local CDRTS$ROW is later, incoming change loses`;
+      else decisionLine = `<span class="noop">NO-OP</span> &mdash; row already gone at both ends, nothing to reconcile`;
+
+      log(`
+        <div class="trace">
+          <div class="hdr">LCR arrives at ${siteNames[site]} from ${fromSite.toUpperCase()}</div>
+          <span class="info">&nbsp;&nbsp;OP=${op}  KEY=4471  CDRTS$ROW(incoming)=${fmtTs(incomingTs)}</span><br>
+          <span class="info">&nbsp;&nbsp;Local row: EXISTS=${local.exists && decision!=='APPLY' ? 'TRUE' : (decision==='APPLY' ? (op!=='DELETE') : local.exists)}  CDRTS$ROW(local, pre-check)=${local.ts===0 && local.origin==='baseline' ? '--:--:--.000' : fmtTs(decision==='APPLY'? incomingTs : local.ts)}</span><br>
+          &nbsp;&nbsp;Detection &rarr; <span class="tag">${conflictType}</span><br>
+          &nbsp;&nbsp;Resolution &rarr; ${decisionLine}
+        </div>`);
+    }
+  }
+
+  function propagate(fromSite, op, balance, ts, delayBase){
+    otherSites[fromSite].forEach((peer, idx)=>{
+      setTimeout(()=>{ receiveReplicated(peer, op, balance, ts, fromSite); }, delayBase + 500 + idx*250);
+    });
+  }
+
+  // ---------- Free-play actions ----------
+  function doInsert(site){
+    simClock += 1000;
+    const ts = simClock;
+    const bal = Math.round((900 + Math.random()*300)*100)/100;
+    state[site] = {exists:true, balance:bal, ts:ts, origin:site};
+    renderSite(site); flashSite(site);
+    log(`<span class="info">[${fmtTs(ts)}]</span> <strong>${siteNames[site]}</strong>: local INSERT &rarr; balance=${fmtMoney(bal)}. Extract tags txn <span class="tag">SETTAG '${site.toUpperCase()}'</span>, pumps to peers.`);
+    propagate(site, 'INSERT', bal, ts, 0);
+  }
+
+  function doUpdate(site){
+    simClock += 1000;
+    const ts = simClock;
+    const bal = Math.round((state[site].balance + (Math.random()>0.5?50:-35))*100)/100;
+    state[site].balance = bal; state[site].ts = ts; state[site].origin = site;
+    renderSite(site); flashSite(site);
+    log(`<span class="info">[${fmtTs(ts)}]</span> <strong>${siteNames[site]}</strong>: local UPDATE &rarr; balance=${fmtMoney(bal)}. Extract tags txn <span class="tag">SETTAG '${site.toUpperCase()}'</span>, pumps to peers.`);
+    propagate(site, 'UPDATE', bal, ts, 0);
+  }
+
+  function doDelete(site){
+    simClock += 1000;
+    const ts = simClock;
+    state[site].exists = false; state[site].ts = ts; state[site].origin = site;
+    renderSite(site); flashSite(site);
+    log(`<span class="info">[${fmtTs(ts)}]</span> <strong>${siteNames[site]}</strong>: local DELETE. Extract tags txn <span class="tag">SETTAG '${site.toUpperCase()}'</span>, pumps to peers.`);
+    propagate(site, 'DELETE', null, ts, 0);
+  }
+
+  // ---------- Scenario presets ----------
+  function forceBaseline(existsEverywhere){
+    simClock = 0;
+    ['a','b','c'].forEach(s=>{
+      state[s] = existsEverywhere
+        ? {exists:true, balance:1000.00, ts:0, origin:'baseline'}
+        : {exists:false, balance:null, ts:0, origin:'baseline'};
+    });
+    renderAll();
+    document.getElementById('simLog').innerHTML = '';
+  }
+
+  function runScenario(){
+    const name = document.getElementById('scenarioSelect').value;
+
+    if(name==='update-update'){
+      forceBaseline(true);
+      log(`<span class="hdr">Scenario: UPDATE vs UPDATE</span>`);
+      simClock += 1000; const tsA = simClock;
+      const balA = 1075.00;
+      state.a = {exists:true, balance:balA, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local UPDATE &rarr; balance=${fmtMoney(balA)}`);
+
+      simClock += 40; const tsB = simClock;
+      const balB = 940.00;
+      state.b = {exists:true, balance:balB, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local UPDATE &rarr; balance=${fmtMoney(balB)} <span class="tag">(${tsB-tsA}ms after A)</span>`);
+
+      setTimeout(()=>receiveReplicated('b','UPDATE',balA,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','UPDATE',balA,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','UPDATE',balB,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','UPDATE',balB,tsB,'b'), 1300);
+      setTimeout(()=>log(`<span class="hdr">Converged: all 3 sites settle on balance=${fmtMoney(balB)} (Site B's later CDRTS$ROW won).</span>`), 1500);
+    }
+
+    else if(name==='insert-insert'){
+      forceBaseline(false);
+      log(`<span class="hdr">Scenario: INSERT vs INSERT (row currently deleted everywhere)</span>`);
+      simClock += 1000; const tsA = simClock;
+      const balA = 1200.00;
+      state.a = {exists:true, balance:balA, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local INSERT &rarr; balance=${fmtMoney(balA)} (recreates the key)`);
+
+      simClock += 40; const tsB = simClock;
+      const balB = 850.00;
+      state.b = {exists:true, balance:balB, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local INSERT &rarr; balance=${fmtMoney(balB)} (recreates the same key independently) <span class="tag">(${tsB-tsA}ms after A)</span>`);
+
+      setTimeout(()=>receiveReplicated('b','INSERT',balA,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','INSERT',balA,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','INSERT',balB,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','INSERT',balB,tsB,'b'), 1300);
+      setTimeout(()=>log(`<span class="hdr">Converged: all 3 sites settle on balance=${fmtMoney(balB)}. Note Site C's first arriving INSERT applied with no conflict; its second was flagged INSERTROWEXISTS.</span>`), 1500);
+    }
+
+    else if(name==='delete-update'){
+      forceBaseline(true);
+      log(`<span class="hdr">Scenario: DELETE (A) vs UPDATE (B)</span>`);
+      simClock += 1000; const tsA = simClock;
+      state.a = {exists:false, balance:null, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local DELETE`);
+
+      simClock += 40; const tsB = simClock;
+      const balB = 1120.00;
+      state.b = {exists:true, balance:balB, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local UPDATE &rarr; balance=${fmtMoney(balB)} <span class="tag">(${tsB-tsA}ms after A's delete, objectively later)</span>`);
+
+      setTimeout(()=>receiveReplicated('b','DELETE',null,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','DELETE',null,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','UPDATE',balB,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','UPDATE',balB,tsB,'b'), 1300);
+      setTimeout(()=>log(`<span class="hdr">Result: even though B's update has a later timestamp, Site A discards it as UPDATEROWMISSING &mdash; the row stays deleted at A. B and C, however, still had the row and resolve the incoming DELETE as a fair DELETEROWEXISTS fight, which the earlier delete loses to B's later update. Sites diverge (A: deleted, B/C: ${fmtMoney(balB)}) until a human or app-level reconciliation step corrects it &mdash; a real risk worth designing around.</span>`), 1500);
+    }
+
+    else if(name==='update-delete'){
+      forceBaseline(true);
+      log(`<span class="hdr">Scenario: UPDATE (A) vs DELETE (B)</span>`);
+      simClock += 1000; const tsA = simClock;
+      const balA = 1120.00;
+      state.a = {exists:true, balance:balA, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local UPDATE &rarr; balance=${fmtMoney(balA)}`);
+
+      simClock += 40; const tsB = simClock;
+      state.b = {exists:false, balance:null, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local DELETE <span class="tag">(${tsB-tsA}ms after A's update, objectively later)</span>`);
+
+      setTimeout(()=>receiveReplicated('b','UPDATE',balA,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','UPDATE',balA,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','DELETE',null,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','DELETE',null,tsB,'b'), 1300);
+      setTimeout(()=>log(`<span class="hdr">Result: Site B discards A's update as UPDATEROWMISSING (row is already gone at B). Site A, which still had the row, treats the incoming DELETE as DELETEROWEXISTS and &mdash; since B's delete is later &mdash; applies it, deleting the row. Site C receives both and ends up deleted too. Net effect: the DELETE wins everywhere despite being a plain timestamp fight only at A and C; at B it never had to fight at all.</span>`), 1500);
+    }
+
+    else if(name==='delete-delete'){
+      forceBaseline(true);
+      log(`<span class="hdr">Scenario: DELETE vs DELETE</span>`);
+      simClock += 1000; const tsA = simClock;
+      state.a = {exists:false, balance:null, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local DELETE`);
+
+      simClock += 40; const tsB = simClock;
+      state.b = {exists:false, balance:null, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local DELETE (independently, ${tsB-tsA}ms later)`);
+
+      setTimeout(()=>receiveReplicated('b','DELETE',null,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','DELETE',null,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','DELETE',null,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','DELETE',null,tsB,'b'), 1300);
+      setTimeout(()=>log(`<span class="hdr">Result: no real conflict. Every incoming DELETE finds the row already missing (DELETEROWMISSING) and resolves as a harmless no-op. All 3 sites agree the row is gone without ACDR needing to arbitrate anything.</span>`), 1500);
+    }
+
+    else if(name==='insert-all3'){
+      forceBaseline(false);
+      log(`<span class="hdr">Scenario: 3-way INSERT race (row currently deleted everywhere)</span>`);
+      simClock += 1000; const tsA = simClock; const balA = 1150.00;
+      state.a = {exists:true, balance:balA, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local INSERT &rarr; balance=${fmtMoney(balA)}`);
+
+      simClock += 40; const tsB = simClock; const balB = 800.00;
+      state.b = {exists:true, balance:balB, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local INSERT &rarr; balance=${fmtMoney(balB)} <span class="tag">(${tsB-tsA}ms after A)</span>`);
+
+      simClock += 40; const tsC = simClock; const balC = 1400.00;
+      state.c = {exists:true, balance:balC, ts:tsC, origin:'c'}; renderSite('c'); flashSite('c');
+      log(`<span class="info">[${fmtTs(tsC)}]</span> Site C: local INSERT &rarr; balance=${fmtMoney(balC)} <span class="tag">(${tsC-tsB}ms after B)</span>`);
+
+      setTimeout(()=>receiveReplicated('b','INSERT',balA,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','INSERT',balA,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','INSERT',balB,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','INSERT',balB,tsB,'b'), 1300);
+      setTimeout(()=>receiveReplicated('a','INSERT',balC,tsC,'c'), 1450);
+      setTimeout(()=>receiveReplicated('b','INSERT',balC,tsC,'c'), 1600);
+      setTimeout(()=>log(`<span class="hdr">Converged: all 3 sites settle on balance=${fmtMoney(balC)} &mdash; C's INSERT has the latest CDRTS$ROW, so it wins every INSERTROWEXISTS fight it enters, at every site, regardless of arrival order.</span>`), 1750);
+    }
+
+    else if(name==='update-all3'){
+      forceBaseline(true);
+      log(`<span class="hdr">Scenario: 3-way UPDATE race</span>`);
+      simClock += 1000; const tsA = simClock; const balA = 1080.00;
+      state.a = {exists:true, balance:balA, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local UPDATE &rarr; balance=${fmtMoney(balA)}`);
+
+      simClock += 40; const tsB = simClock; const balB = 955.00;
+      state.b = {exists:true, balance:balB, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local UPDATE &rarr; balance=${fmtMoney(balB)} <span class="tag">(${tsB-tsA}ms after A)</span>`);
+
+      simClock += 40; const tsC = simClock; const balC = 1225.00;
+      state.c = {exists:true, balance:balC, ts:tsC, origin:'c'}; renderSite('c'); flashSite('c');
+      log(`<span class="info">[${fmtTs(tsC)}]</span> Site C: local UPDATE &rarr; balance=${fmtMoney(balC)} <span class="tag">(${tsC-tsB}ms after B)</span>`);
+
+      setTimeout(()=>receiveReplicated('b','UPDATE',balA,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','UPDATE',balA,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','UPDATE',balB,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','UPDATE',balB,tsB,'b'), 1300);
+      setTimeout(()=>receiveReplicated('a','UPDATE',balC,tsC,'c'), 1450);
+      setTimeout(()=>receiveReplicated('b','UPDATE',balC,tsC,'c'), 1600);
+      setTimeout(()=>log(`<span class="hdr">Converged: all 3 sites settle on balance=${fmtMoney(balC)} &mdash; C's later CDRTS$ROW beats both A's and B's updates, at every site, regardless of message arrival order. Three-way active-active means every row can have up to 3 competing writers in the same instant &mdash; Auto CDR just runs the same pairwise timestamp check for each incoming LCR.</span>`), 1750);
+    }
+
+    else if(name==='delete-all3'){
+      forceBaseline(true);
+      log(`<span class="hdr">Scenario: 3-way DELETE race</span>`);
+      simClock += 1000; const tsA = simClock;
+      state.a = {exists:false, balance:null, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local DELETE`);
+
+      simClock += 40; const tsB = simClock;
+      state.b = {exists:false, balance:null, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local DELETE (independently, ${tsB-tsA}ms later)`);
+
+      simClock += 40; const tsC = simClock;
+      state.c = {exists:false, balance:null, ts:tsC, origin:'c'}; renderSite('c'); flashSite('c');
+      log(`<span class="info">[${fmtTs(tsC)}]</span> Site C: local DELETE (independently, ${tsC-tsB}ms later)`);
+
+      setTimeout(()=>receiveReplicated('b','DELETE',null,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','DELETE',null,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','DELETE',null,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','DELETE',null,tsB,'b'), 1300);
+      setTimeout(()=>receiveReplicated('a','DELETE',null,tsC,'c'), 1450);
+      setTimeout(()=>receiveReplicated('b','DELETE',null,tsC,'c'), 1600);
+      setTimeout(()=>log(`<span class="hdr">Result: still no real conflict, even with 3 independent deletes. Every incoming DELETE finds its target already missing (DELETEROWMISSING) and resolves as a harmless no-op &mdash; agreement doesn't need arbitration.</span>`), 1750);
+    }
+
+    else if(name==='mixed-3way'){
+      simClock = 0;
+      state.a = {exists:true, balance:1000.00, ts:0, origin:'baseline'};
+      state.b = {exists:true, balance:1000.00, ts:0, origin:'baseline'};
+      state.c = {exists:false, balance:null, ts:0, origin:'baseline'};
+      renderAll();
+      document.getElementById('simLog').innerHTML = '';
+      log(`<span class="hdr">Scenario: Mixed 3-way &mdash; A deletes, B updates, C inserts (C's local copy had been deleted earlier)</span>`);
+
+      simClock += 1000; const tsA = simClock;
+      state.a = {exists:false, balance:null, ts:tsA, origin:'a'}; renderSite('a'); flashSite('a');
+      log(`<span class="info">[${fmtTs(tsA)}]</span> Site A: local DELETE`);
+
+      simClock += 40; const tsB = simClock; const balB = 1120.00;
+      state.b = {exists:true, balance:balB, ts:tsB, origin:'b'}; renderSite('b'); flashSite('b');
+      log(`<span class="info">[${fmtTs(tsB)}]</span> Site B: local UPDATE &rarr; balance=${fmtMoney(balB)} <span class="tag">(${tsB-tsA}ms after A's delete)</span>`);
+
+      simClock += 40; const tsC = simClock; const balC = 1300.00;
+      state.c = {exists:true, balance:balC, ts:tsC, origin:'c'}; renderSite('c'); flashSite('c');
+      log(`<span class="info">[${fmtTs(tsC)}]</span> Site C: local INSERT &rarr; balance=${fmtMoney(balC)} (recreates the key) <span class="tag">(${tsC-tsB}ms after B's update, latest of the three)</span>`);
+
+      setTimeout(()=>receiveReplicated('b','DELETE',null,tsA,'a'), 900);
+      setTimeout(()=>receiveReplicated('c','DELETE',null,tsA,'a'), 1000);
+      setTimeout(()=>receiveReplicated('a','UPDATE',balB,tsB,'b'), 1150);
+      setTimeout(()=>receiveReplicated('c','UPDATE',balB,tsB,'b'), 1300);
+      setTimeout(()=>receiveReplicated('a','INSERT',balC,tsC,'c'), 1450);
+      setTimeout(()=>receiveReplicated('b','INSERT',balC,tsC,'c'), 1600);
+      setTimeout(()=>log(`<span class="hdr">Converged: all 3 sites settle on balance=${fmtMoney(balC)}. The mechanics differ per site &mdash; A discards B's UPDATE outright (UPDATEROWMISSING, timestamp irrelevant) but then accepts C's INSERT cleanly since A's row was missing; B loses a straight INSERTROWEXISTS timestamp fight to C; C never has to yield at all. Lesson: a DELETE can permanently defeat a later UPDATE, but a later INSERT can still "resurrect" a deleted row anywhere it finds one missing.</span>`), 1750);
+    }
+  }
+
+  function resetSim(){ forceBaseline(true); log(`<span class="info">Simulator reset. All 3 sites converged: balance=1,000.00.</span>`); }
+
+  resetSim();
+</script>
+
+</body>
+</html>
