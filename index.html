@@ -39,6 +39,12 @@
     --green:#197A3B;
     --green-bg:#EBF7EE;
     --green-border:#A3D9B0;
+    --purple:#7C3AED;
+    --purple-bg:#F1EBFD;
+    --purple-border:#D6C4F7;
+    --orange:#C2410C;
+    --orange-bg:#FDECE1;
+    --orange-border:#F5C5A0;
     --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
     --disp:-apple-system,'Segoe UI Semibold','Avenir Next',ui-sans-serif,system-ui,sans-serif;
     --body:-apple-system,'Segoe UI',ui-sans-serif,system-ui,sans-serif;
@@ -107,6 +113,10 @@
   .icon.mining{background:var(--amber-bg);color:var(--amber);}
   .icon.multicloud{background:var(--blue-bg);color:var(--blue);}
   .icon.lakehouse{background:var(--teal-bg);color:var(--teal);}
+  .icon.bidir{background:var(--green-bg);color:var(--green);}
+  .icon.macros{background:var(--purple-bg);color:var(--purple);}
+  .icon.agent{background:var(--blue-bg);color:var(--blue);}
+  .icon.restapi{background:var(--orange-bg);color:var(--orange);}
 
   .card .module-no{
     font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
@@ -138,11 +148,18 @@
     transition:background .15s,border-color .15s;
   }
   .btn-download:hover{background:var(--panel-alt);border-color:var(--dimmer);}
+  .btn-download.disabled{
+    color:var(--dimmer);cursor:not-allowed;pointer-events:none;background:var(--panel-alt);
+  }
 
   .card.fundamentals .card-head{border-top:3px solid var(--red);}
   .card.mining .card-head{border-top:3px solid var(--amber);}
   .card.multicloud .card-head{border-top:3px solid var(--blue);}
   .card.lakehouse .card-head{border-top:3px solid var(--teal);}
+  .card.bidir .card-head{border-top:3px solid var(--green);}
+  .card.macros .card-head{border-top:3px solid var(--purple);}
+  .card.agent .card-head{border-top:3px solid var(--blue);}
+  .card.restapi .card-head{border-top:3px solid var(--orange);}
 
   /* ---------- FOOTER ---------- */
   footer{
@@ -177,7 +194,7 @@
 </section>
 
 <div class="stats">
-  <div class="stat">📦 <b>4</b> Modules</div>
+  <div class="stat">📦 <b>8</b> Modules</div>
   <div class="stat">🧪 <b>Interactive</b> Simulators</div>
   <div class="stat">🎨 <b>Self-Contained</b> HTML</div>
 </div>
@@ -282,6 +299,106 @@
       <div class="card-foot">
         <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/Oracle_GoldenGate_for_Medallion_Architecture_Dashboard.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
         <a class="btn-download" href="Oracle_GoldenGate_for_Medallion_Architecture_Dashboard.html" download target="_blank" rel="noopener">⬇ Open Offline</a>
+      </div>
+    </div>
+
+    <!-- Module 5: Bi-Directional Replication -->
+    <div class="card bidir">
+      <div class="card-head">
+        <div class="icon bidir">🔁</div>
+        <div>
+          <p class="module-no">Module 05 · Topology</p>
+          <h3>GoldenGate Bi-Directional Replication</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Explore active-active bi-directional replication between two databases — conflict detection
+        and resolution (CDR), loopback prevention, and trail file routing to keep both sides
+        consistent in real time.</p>
+        <div class="tag-row">
+          <span class="tag">Active-Active</span>
+          <span class="tag">Conflict Detection</span>
+          <span class="tag">Loopback Prevention</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://claude.ai/public/artifacts/777fa73c-4300-4a4f-aa55-6e27a25e3239" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+      </div>
+    </div>
+
+    <!-- Module 6: Macros -->
+    <div class="card macros">
+      <div class="card-head">
+        <div class="icon macros">🧩</div>
+        <div>
+          <p class="module-no">Module 06 · Configuration</p>
+          <h3>GoldenGate Macros</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Learn how GoldenGate macros simplify and standardize Extract/Replicat parameter files —
+        reusable templates, macro libraries, and parameter substitution for consistent multi-environment
+        configuration.</p>
+        <div class="tag-row">
+          <span class="tag">Macro Library</span>
+          <span class="tag">Parameter Files</span>
+          <span class="tag">Reusability</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://claude.ai/public/artifacts/9dec95ea-9b0f-4b8b-a4ea-82d01b8c93c8" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+      </div>
+    </div>
+
+    <!-- Module 7: LLM vs Agent -->
+    <div class="card agent">
+      <div class="card-head">
+        <div class="icon agent">🤖</div>
+        <div>
+          <p class="module-no">Module 07 · AI Operations</p>
+          <h3>GoldenGate LLM vs. AI Agent</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Compare a plain LLM assistant against a true AI agent for GoldenGate 26ai operations —
+        reasoning vs. acting, tool-calling against live REST APIs, and why destructive actions must be
+        gated behind human approval.</p>
+        <div class="tag-row">
+          <span class="tag">LLM vs Agent</span>
+          <span class="tag">Tool Calling</span>
+          <span class="tag">Human Approval</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://claude.ai/public/artifacts/95bc4538-bcf6-415d-930b-2e40f6d818a4" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+      </div>
+    </div>
+
+    <!-- Module 8: REST API -->
+    <div class="card restapi">
+      <div class="card-head">
+        <div class="icon restapi">🔌</div>
+        <div>
+          <p class="module-no">Module 08 · Integration</p>
+          <h3>GoldenGate REST API</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Interact with the GoldenGate Microservices REST API — Extract/Replicat lifecycle endpoints,
+        deployment and service manager calls, and a live Monitor tab for tracking process status and
+        lag.</p>
+        <div class="tag-row">
+          <span class="tag">REST Endpoints</span>
+          <span class="tag">Service Manager</span>
+          <span class="tag">Monitor Tab</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://claude.ai/public/artifacts/b818b49b-2ec2-4f05-8b48-bde122831f46" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
       </div>
     </div>
 
