@@ -22,6 +22,23 @@
   #ggs-error{display:none;position:fixed;inset:0;background:#FBEAE7;color:#7A2E22;
     font-family:-apple-system,'Segoe UI',Inter,sans-serif;font-size:13px;padding:24px;white-space:pre-wrap;}
 </style>
+<script>
+/* Basic deterrents against casual view-source / copying.
+   NOTE: This does not provide real security — any determined visitor can
+   still access the page source via browser dev tools, curl, or other means. */
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('keydown', function(e){
+  var k = e.key ? e.key.toUpperCase() : '';
+  if (
+    k === 'F12' ||
+    (e.ctrlKey && k === 'U') ||
+    (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
+    (e.metaKey && e.altKey && (k === 'I' || k === 'J' || k === 'C'))
+  ) {
+    e.preventDefault();
+  }
+});
+</script>
 </head>
 <body>
 <div id="root"><div id="ggs-loading">Loading Oracle GoldenGate Dashboard…</div></div>
