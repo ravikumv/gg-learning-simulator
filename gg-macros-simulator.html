@@ -287,6 +287,23 @@ tr:last-child td{border-bottom:none;} tr:hover td{background:#F5F8FF;}
 ::-webkit-scrollbar-thumb{background:#C8D4E8;border-radius:3px;}
 @media(max-width:900px){.g2,.g3,.pgb,.scg,.lsbody{grid-template-columns:1fr;} .srow{grid-template-columns:repeat(2,1fr);} .synp{grid-template-columns:1fr;} .tbar{flex-wrap:wrap;} .tab{flex:none;min-width:45%;} .hc{display:none;}}
 </style>
+<script>
+/* Basic deterrents against casual view-source / copying.
+   NOTE: This does not provide real security — any determined visitor can
+   still access the page source via browser dev tools, curl, or other means. */
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('keydown', function(e){
+  var k = e.key ? e.key.toUpperCase() : '';
+  if (
+    k === 'F12' ||
+    (e.ctrlKey && k === 'U') ||
+    (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
+    (e.metaKey && e.altKey && (k === 'I' || k === 'J' || k === 'C'))
+  ) {
+    e.preventDefault();
+  }
+});
+</script>
 </head>
 <body>
 <header>
