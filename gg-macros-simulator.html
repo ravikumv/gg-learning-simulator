@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle GoldenGate Macros Simulator v2.0 | Made by VRK</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Orbitron:wght@700;900&display=swap');
+:root{
+  --r9:#6B1A10;--r6:#C74634;--r4:#E8573E;
+  --n9:#1A1A2E;--n8:#16213E;--n7:#0F2040;
+  --g5:#C9960C;--g4:#E0AA1A;--g3:#F2C33A;
+  --bg:#FFFFFF;--bgs:#F5F7FA;--bgr:#EDF0F5;--bgo:#E8EDF4;--bgc:#FFFFFF;--bgi:#F0F3F8;
+  --bd1:#D8E0EC;--bd2:#C8D4E8;--bd3:#B0C0D8;--bda:#C9960C40;
+  --t0:#111827;--t1:#374151;--t2:#6B7280;--t3:#9CA3AF;--ta:#C9960C;
+  --green:#0CC889;--teal:#00C4CC;--blue:#3D8EF0;--purple:#9D6EF5;
+  --ext:#E8890B;--rep:#3D8EF0;--mac:#9D6EF5;--src:#C74634;--tgt:#0CC889;--lake:#00C4CC;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--t0);font-family:'Public Sans',sans-serif;min-height:100vh;overflow-x:hidden;line-height:1.5;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(#D8E0EC 1px,transparent 1px),linear-gradient(90deg,#D8E0EC 1px,transparent 1px);
+  background-size:40px 40px;mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 100%);opacity:.5;}
+body>*{position:relative;z-index:1;}
+
+/* HEADER */
+header{background:linear-gradient(90deg,var(--n9),var(--r9) 50%,var(--n9));border-bottom:1px solid var(--bda);padding:0 28px;position:sticky;top:0;z-index:200;backdrop-filter:blur(12px);}
+.hi{max-width:1460px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:58px;}
+.hl2{display:flex;align-items:center;gap:14px;}
+.lm{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--r6),var(--g4));display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:#fff;box-shadow:0 0 18px var(--r6)50;}
+.lt{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--g4);letter-spacing:.06em;}
+.ls2{font-size:9px;color:var(--t3);letter-spacing:.14em;text-transform:uppercase;margin-top:2px;}
+.hc{display:flex;align-items:center;gap:8px;}
+.ec{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 11px;border-radius:20px;border:1px solid;white-space:nowrap;}
+.esrc{color:var(--src);border-color:var(--src)45;background:var(--src)10;}
+.earr{color:var(--t3);font-size:16px;}
+.etgt{color:var(--tgt);border-color:var(--tgt)45;background:var(--tgt)10;}
+.hr2{display:flex;align-items:center;gap:8px;}
+.vb{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--g4);border:1px solid var(--bda);border-radius:4px;padding:2px 8px;letter-spacing:.06em;background:var(--g4)08;}
+.vrk{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t2);border:1px solid var(--bd2);border-radius:4px;padding:2px 8px;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#FDF2EF 0%,#F0F4FF 55%,#EDF7F2);border:1px solid var(--bda);border-radius:14px;padding:28px 34px;margin:20px auto;max-width:1460px;position:relative;overflow:hidden;}
+.hero::before{content:'MACROS';position:absolute;right:28px;top:50%;transform:translateY(-50%);font-family:'Orbitron',monospace;font-size:80px;font-weight:900;color:var(--g4);opacity:.04;pointer-events:none;letter-spacing:6px;}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+.h1t{font-family:'Orbitron',monospace;font-size:19px;font-weight:700;color:var(--g4);margin-bottom:7px;}
+.h1s{font-size:13px;color:var(--t1);line-height:1.7;max-width:720px;}
+.hmeta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.hmr{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t3);display:flex;align-items:center;gap:5px;}
+.hmd{width:5px;height:5px;border-radius:50%;}
+.htags{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px;}
+.ht{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 9px;border-radius:4px;border:1px solid;}
+.ts{color:var(--src);border-color:var(--src)38;background:var(--src)0C;}
+.tt{color:var(--tgt);border-color:var(--tgt)38;background:var(--tgt)0C;}
+.te{color:var(--ext);border-color:var(--ext)38;background:var(--ext)0C;}
+.tm{color:var(--mac);border-color:var(--mac)38;background:var(--mac)0C;}
+.tr2{color:var(--rep);border-color:var(--rep)38;background:var(--rep)0C;}
+.tl{color:var(--lake);border-color:var(--lake)38;background:var(--lake)0C;}
+
+/* MAIN */
+.main{max-width:1460px;margin:0 auto;padding:18px 24px 40px;}
+
+/* TABS */
+.tbar{display:flex;gap:3px;background:var(--bgs);border:1px solid var(--bd2);border-radius:10px;padding:4px;margin-bottom:20px;}
+.tab{flex:1;padding:9px 4px;border:none;border-radius:7px;background:transparent;color:var(--t3);font-family:'Public Sans',sans-serif;font-size:11.5px;font-weight:600;cursor:pointer;transition:all .22s;text-align:center;white-space:nowrap;}
+.tab:hover{color:var(--t0);background:var(--bgr);}
+.tab.active{background:linear-gradient(135deg,var(--r6)18,var(--g4)12);color:var(--g4);border:1px solid var(--bda);}
+.sec{display:none;} .sec.active{display:block;}
+
+/* GRID / CARDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.card{background:var(--bgc);border:1px solid var(--bd2);border-radius:10px;padding:18px;}
+.ch{display:flex;align-items:center;gap:8px;margin-bottom:13px;}
+.cd{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ct{font-size:13px;font-weight:700;color:var(--t0);}
+.cs{font-size:10px;color:var(--t3);margin-left:auto;font-family:'IBM Plex Mono',monospace;}
+
+/* CODE */
+.cb{background:#F8FAFD;border:1px solid var(--bd1);border-radius:8px;overflow:hidden;margin-bottom:10px;}
+.cbh{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:#EEF2F8;border-bottom:1px solid var(--bd1);}
+.cfn{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t3);}
+.cfn span{color:var(--t2);}
+.cp2{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--g4);background:transparent;border:1px solid var(--bda);padding:2px 7px;border-radius:3px;cursor:pointer;transition:all .2s;}
+.cp2:hover{background:var(--g4)12;} .cp2.ok{color:var(--green);border-color:var(--green)35;}
+pre{padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.8;overflow-x:auto;color:#1F2937;}
+.kw{color:#7C3AED;font-weight:700;} .kw2{color:#1D4ED8;} .kw3{color:#B45309;font-weight:600;}
+.val{color:#065F46;} .cm{color:#9CA3AF;font-style:italic;} .mc{color:#B45309;font-weight:700;}
+.st{color:#92400E;} .nm{color:#0E7490;}
+
+/* INFO */
+.ib{border-radius:7px;padding:10px 13px;font-size:12px;line-height:1.65;margin-bottom:9px;}
+.ib strong{font-weight:700;display:block;margin-bottom:2px;}
+.tip{background:#FFFBEB;border:1px solid #D97706 40;color:#92400E;}
+.note{background:#EFF6FF;border:1px solid #3B82F6 50;color:#1E40AF;}
+.warn{background:#FEF2F2;border:1px solid #EF4444 50;color:#B91C1C;}
+.good{background:#ECFDF5;border:1px solid #10B981 50;color:#065F46;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:11.5px;}
+th{background:#F1F5FB;padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:#6B7280;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--bd2);}
+td{padding:9px 12px;border-bottom:1px solid var(--bd1)55;color:var(--t2);vertical-align:top;}
+tr:last-child td{border-bottom:none;} tr:hover td{background:#F5F8FF;}
+.tdk{color:var(--t0);font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:10.5px;}
+.bge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.by{background:var(--green)15;color:var(--green);border:1px solid var(--green)25;}
+.bn{background:var(--src)15;color:#FF8070;border:1px solid var(--src)25;}
+.bp{background:var(--g4)15;color:var(--g4);border:1px solid var(--g4)25;}
+.be{background:var(--ext)15;color:var(--ext);border:1px solid var(--ext)25;}
+.br{background:var(--rep)15;color:var(--rep);border:1px solid var(--rep)25;}
+.bm{background:var(--mac)15;color:var(--mac);border:1px solid var(--mac)25;}
+</style>
+<!-- PIPELINE -->
+<style>
+.pw{background:var(--bgs);border:1px solid var(--bd2);border-radius:12px;padding:26px 20px;margin-bottom:18px;box-shadow:0 1px 4px #0001;}
+.pl{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:20px;}
+.pf{display:flex;align-items:center;justify-content:center;overflow-x:auto;padding-bottom:8px;}
+.pn{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:108px;}
+.pb2{width:96px;padding:12px 6px;border-radius:10px;border:1.5px solid;text-align:center;cursor:pointer;transition:all .25s;}
+.pb2:hover{transform:translateY(-4px);}
+.pi{font-size:20px;margin-bottom:5px;}
+.pll{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;line-height:1.3;}
+.ps{font-size:8.5px;color:var(--t3);margin-top:3px;}
+.pnote{font-size:8px;color:var(--t3);text-align:center;max-width:96px;}
+.nsrc{background:#FEF2EF;border-color:var(--src)45;} .nsrc:hover{border-color:var(--src);box-shadow:0 0 22px var(--src)30;}
+.next{background:#FFF7EE;border-color:var(--ext)45;} .next:hover{border-color:var(--ext);box-shadow:0 0 22px var(--ext)30;}
+.nmac{background:#F5F0FF;border-color:var(--mac)45;} .nmac:hover{border-color:var(--mac);box-shadow:0 0 22px var(--mac)30;}
+.ntra{background:#FFFBEA;border-color:var(--g5)45;} .ntra:hover{border-color:var(--g4);box-shadow:0 0 22px var(--g4)30;}
+.nrep{background:#EFF6FF;border-color:var(--rep)45;} .nrep:hover{border-color:var(--rep);box-shadow:0 0 22px var(--rep)30;}
+.ntgt{background:#ECFDF5;border-color:var(--tgt)45;} .ntgt:hover{border-color:var(--tgt);box-shadow:0 0 22px var(--tgt)30;}
+.nlk{background:#ECFEFF;border-color:var(--lake)45;} .nlk:hover{border-color:var(--lake);box-shadow:0 0 22px var(--lake)30;}
+.arr{flex-shrink:0;width:36px;height:2px;background:linear-gradient(90deg,var(--bd2),var(--g5)80,var(--bd2));position:relative;margin-top:-13px;}
+.arr::after{content:'';position:absolute;right:-6px;top:-4.5px;width:0;height:0;border-top:5.5px solid transparent;border-bottom:5.5px solid transparent;border-left:9px solid var(--g5)80;}
+.hlp{background:var(--bgr);border:1px solid var(--bd2);border-radius:10px;padding:15px 18px;margin-bottom:16px;display:none;}
+.hlt{font-size:13px;font-weight:700;margin-bottom:5px;}
+.hlb{font-size:12px;color:var(--t2);line-height:1.75;}
+
+/* FLOW STEPS */
+.fs{background:#FFFFFF;border:1px solid var(--bd2);border-radius:10px;padding:13px 15px;margin-bottom:9px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.fs::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.fse::before{background:var(--ext);} .fsm::before{background:var(--mac);} .fst::before{background:var(--g5);}
+.fsr::before{background:var(--rep);} .fsg::before{background:var(--tgt);}
+.fs:hover{border-color:var(--bda);transform:translateX(3px);} .fs.on{border-color:#C9960C;box-shadow:0 2px 8px #C9960C15;}
+.fsh{display:flex;align-items:center;gap:9px;}
+.fsn{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;flex-shrink:0;}
+.ne2{background:var(--ext)18;color:var(--ext);} .nm2{background:var(--mac)18;color:var(--mac);}
+.nt2{background:var(--g5)18;color:var(--g4);} .nr2{background:var(--rep)18;color:var(--rep);}
+.ng2{background:var(--tgt)18;color:var(--tgt);}
+.fsti{font-size:12.5px;font-weight:700;flex:1;color:var(--t0);}
+.fstog{font-size:13px;color:var(--t3);transition:transform .2s;} .fs.on .fstog{transform:rotate(180deg);}
+.fsb{display:none;margin-top:11px;padding-top:11px;border-top:1px solid var(--bd1);}
+.fs.on .fsb{display:block;} .fsb p{font-size:12px;color:var(--t2);line-height:1.75;margin-bottom:9px;}
+
+/* WHAT ARE MACROS */
+.mhero{background:linear-gradient(135deg,#F5F0FF,#EFF6FF 60%,#EFFAF5);border:1px solid var(--mac)28;border-radius:14px;padding:26px 30px;margin-bottom:18px;position:relative;overflow:hidden;}
+.mhero::after{content:'DEFINE';position:absolute;right:24px;top:50%;transform:translateY(-50%);font-family:'Orbitron',monospace;font-size:64px;font-weight:900;color:var(--mac);opacity:.035;pointer-events:none;}
+.mhero h2{font-family:'Orbitron',monospace;font-size:16px;color:var(--mac);margin-bottom:9px;}
+.mhero p{font-size:13px;color:var(--t1);line-height:1.75;margin-bottom:7px;}
+.anl{background:#FDFBF0;border:1px solid var(--bd2);border-left:3px solid var(--g5);border-radius:8px;padding:13px 15px;margin:12px 0;}
+.at{font-size:10px;font-weight:700;color:var(--g4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;}
+.anl p{font-size:12px;color:var(--t2);line-height:1.7;}
+.hsteps{display:flex;flex-direction:column;gap:13px;margin-bottom:16px;}
+.hs{display:flex;gap:14px;align-items:flex-start;}
+.hsn{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--mac)25,var(--g5)18);border:1px solid var(--mac)38;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:var(--g4);flex-shrink:0;}
+.hst{font-size:13px;font-weight:700;color:var(--t0);margin-bottom:3px;}
+.hsd{font-size:12px;color:var(--t2);line-height:1.65;}
+.hsd code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--g3);background:var(--g4)10;padding:0 4px;border-radius:3px;}
+.synp{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;}
+.sp{border-radius:8px;padding:12px;border:1px solid;}
+.spt{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;}
+.spd{font-size:11.5px;color:var(--t2);line-height:1.6;}
+
+/* LIVE SIM */
+.lsim{background:var(--bgs);box-shadow:0 2px 8px #0001;border:1px solid var(--bd2);border-radius:14px;overflow:hidden;margin-bottom:18px;}
+.lsh{background:linear-gradient(90deg,#6B1A10,#1A1A2E 50%,#6B1A10);border-bottom:1px solid var(--bd2);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.lst{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--g4);}
+.lsbs{display:flex;gap:6px;flex-wrap:wrap;}
+.lsb{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 8px;border-radius:3px;border:1px solid;}
+.sbar{background:var(--bgc);border-bottom:1px solid var(--bd1);padding:8px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.pp{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 10px;border-radius:5px;border:1px solid;cursor:pointer;transition:all .2s;}
+.pp.running{border-color:var(--green)40;background:var(--green)08;}
+.pp.stopped{border-color:var(--src)40;background:var(--src)08;}
+.pp.abended{border-color:var(--ext)40;background:var(--ext)08;}
+.pst{width:7px;height:7px;border-radius:50%;}
+.prun{background:var(--green);animation:bl 1.5s infinite;}
+.psto{background:var(--src);} .pabn{background:var(--ext);}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.pnm{font-weight:700;} .plag{color:var(--t3);}
+
+/* Sim body */
+.lsbody{display:grid;grid-template-columns:270px 1fr;min-height:500px;}
+.lssb{background:#F5F7FA;border-right:1px solid var(--bd1);padding:14px;}
+.lscv{padding:18px;display:flex;flex-direction:column;gap:14px;}
+.ssl{font-size:9.5px;font-weight:700;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;margin-top:12px;}
+.ssl:first-child{margin-top:0;}
+.sssel{width:100%;background:#FFFFFF;border:1px solid var(--bd2);border-radius:6px;padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#111827;outline:none;cursor:pointer;}
+.sssel option{background:#FFFFFF;}
+.sst{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.sst label{font-size:11.5px;color:var(--t1);cursor:pointer;}
+.sschk{width:14px;height:14px;accent-color:var(--g4);cursor:pointer;}
+.ssslw{margin-bottom:8px;}
+.sssl{width:100%;accent-color:var(--g4);cursor:pointer;}
+.ssv{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--g4);}
+.sbtn{width:100%;padding:9px;border-radius:7px;border:none;cursor:pointer;font-family:'Public Sans',sans-serif;font-size:12px;font-weight:700;transition:all .2s;margin-bottom:6px;}
+.brun{background:linear-gradient(135deg,var(--tgt),#00A878);color:#000;}
+.brun:hover{box-shadow:0 4px 16px var(--tgt)30;transform:translateY(-1px);}
+.bstp{background:var(--src)18;color:var(--src);border:1px solid var(--src)35;}
+.bflt{background:var(--ext)18;color:var(--ext);border:1px solid var(--ext)35;font-size:11px;}
+.bclr{background:transparent;color:var(--t3);border:1px solid var(--bd2);font-size:11px;}
+
+/* Canvas pipeline */
+.spipe{display:flex;align-items:center;gap:0;background:var(--bgc);border:1px solid var(--bd1);border-radius:10px;padding:16px;overflow-x:auto;}
+.sn2{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:100px;}
+.sbox{width:86px;padding:10px 5px;border-radius:9px;border:1.5px solid;text-align:center;transition:all .3s;}
+.si{font-size:18px;margin-bottom:4px;}
+.slbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;line-height:1.3;}
+.sst2{font-size:8px;color:var(--t3);margin-top:2px;}
+@keyframes npulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06);}}
+.sarr{width:32px;height:2px;background:var(--bd2);position:relative;flex-shrink:0;margin-top:-11px;transition:background .5s;}
+.sarr::after{content:'';position:absolute;right:-5px;top:-4px;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid var(--bd2);transition:border-left-color .5s;}
+.fl{background:linear-gradient(90deg,var(--ext)80,var(--g4));animation:fa .8s linear infinite;}
+.fl::after{border-left-color:var(--g4)!important;}
+.flr{background:linear-gradient(90deg,var(--g4),var(--rep)80);animation:fa .8s linear infinite;}
+.flr::after{border-left-color:var(--rep)!important;}
+.flt{background:linear-gradient(90deg,var(--rep)80,var(--tgt));animation:fa .8s linear infinite;}
+.flt::after{border-left-color:var(--tgt)!important;}
+@keyframes fa{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
+
+/* Stats */
+.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.sc2{background:#FFFFFF;border:1px solid var(--bd2);border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 3px #0001;}
+.sv{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;margin-bottom:2px;transition:all .3s;}
+.slb{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;}
+
+/* Macro expansion viewer */
+.ev{background:#FAFCFF;border:1px solid var(--bd1);border-radius:8px;overflow:hidden;}
+.evh{background:#EEF2F8;padding:8px 12px;border-bottom:1px solid var(--bd1);display:flex;align-items:center;justify-content:space-between;}
+.evt{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--t2);}
+.evb{padding:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.75;color:var(--t2);min-height:80px;white-space:pre-wrap;}
+
+/* Log */
+.llog{background:#F8FAFD;border:1px solid var(--bd1);border-radius:8px;overflow:hidden;}
+.llh{background:#EEF2F8;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd1);}
+.llt{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t3);}
+.llc{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t3);background:transparent;border:1px solid var(--bd1);padding:1px 6px;border-radius:3px;cursor:pointer;}
+.llb{height:160px;overflow-y:auto;padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.7;}
+.le{display:flex;gap:8px;margin-bottom:1px;}
+.ltm{color:#9CA3AF;flex-shrink:0;} .lext{color:#D97706;flex-shrink:0;font-weight:700;}
+.lrep{color:#1D4ED8;flex-shrink:0;font-weight:700;} .lmac{color:#7C3AED;flex-shrink:0;font-weight:700;}
+.ltgt{color:#059669;flex-shrink:0;font-weight:700;} .lerr{color:#DC2626;flex-shrink:0;font-weight:700;}
+.lsys{color:#9CA3AF;flex-shrink:0;} .lmsg{color:#374151;} .lv{color:#B45309;font-weight:700;}
+
+/* Playground */
+.pg{background:#FFFFFF;border:1px solid var(--bd2);border-radius:12px;overflow:hidden;margin-bottom:18px;}
+.pgh{background:#F1F5FB;border-bottom:1px solid var(--bd2);padding:10px 16px;display:flex;align-items:center;gap:9px;}
+.pgd{display:flex;gap:5px;}
+.pgdt{width:9px;height:9px;border-radius:50%;}
+.pgt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t3);}
+.pgb{display:grid;grid-template-columns:1fr 1fr;min-height:270px;}
+.pgp{padding:14px;} .pgp:first-child{border-right:1px solid var(--bd1);}
+.pgl{font-size:9.5px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;font-weight:700;}
+.pge{width:100%;min-height:230px;background:transparent;border:none;outline:none;resize:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.8;color:#111827;}
+.pgo{font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.8;color:var(--t2);white-space:pre-wrap;min-height:230px;}
+.pgf{background:#F1F5FB;border-top:1px solid var(--bd1);padding:9px 16px;display:flex;gap:7px;align-items:center;}
+.rbtn{background:var(--tgt)15;color:var(--tgt);border:1px solid var(--tgt)35;border-radius:6px;padding:5px 13px;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;}
+.rbtn:hover{background:var(--tgt)25;}
+.cbtn{background:transparent;color:var(--t3);border:1px solid var(--bd2);border-radius:6px;padding:5px 13px;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;}
+.sdot{width:7px;height:7px;border-radius:50%;margin-left:auto;}
+.sdot.idle{background:var(--t3);} .sdot.ok{background:var(--green);animation:bl 2s infinite;} .sdot.err{background:var(--src);}
+
+/* Scenarios */
+.scg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.scc{background:var(--bgc);border:1px solid var(--bd2);border-radius:10px;padding:15px;cursor:pointer;transition:all .22s;}
+.scc:hover{border-color:var(--bda);transform:translateY(-2px);} .scc.sel{border-color:var(--g5)55;background:var(--g4)05;}
+.sci{font-size:22px;margin-bottom:8px;} .sct{font-size:12.5px;font-weight:700;margin-bottom:3px;color:var(--t0);}
+.scd{font-size:11px;color:var(--t3);line-height:1.5;} .sctags{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px;}
+
+/* Footer */
+.foot{border-top:1px solid var(--bd1);background:#F5F7FA;padding:16px 28px;max-width:1460px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.fl2{font-size:11px;color:var(--t3);} .fl2 span{color:var(--t2);}
+.fr{display:flex;align-items:center;gap:10px;}
+.fv{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t3);}
+.fvrk{font-family:'Orbitron',monospace;font-size:11px;color:var(--g4);opacity:.5;}
+
+::-webkit-scrollbar{width:5px;height:5px;} ::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#C8D4E8;border-radius:3px;}
+@media(max-width:900px){.g2,.g3,.pgb,.scg,.lsbody{grid-template-columns:1fr;} .srow{grid-template-columns:repeat(2,1fr);} .synp{grid-template-columns:1fr;} .tbar{flex-wrap:wrap;} .tab{flex:none;min-width:45%;} .hc{display:none;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hi">
+    <div class="hl2">
+      <div class="lm">GG</div>
+      <div><div class="lt">GoldenGate Macros</div><div class="ls2">GoldenGate Learning Hub</div></div>
+    </div>
+    <div class="hc">
+      <span class="ec esrc">Oracle 19c — Source</span>
+      <span class="earr">→</span>
+      <span class="ec etgt">Oracle 26ai — Target</span>
+    </div>
+    <div class="hr2">
+      <span class="vb">v2.0.0</span>
+      <span class="vrk">Made by VRK</span>
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-top">
+    <div>
+      <div class="h1t">Oracle GoldenGate Macros Simulator</div>
+      <div class="h1s">Understand what macros are, how to define and call them, and how they drive the full replication pipeline — from <strong style="color:var(--ext)">Integrated Extract</strong> on Oracle 19c through <strong style="color:var(--rep)">Non-Integrated Parallel Replicat</strong> to <strong style="color:var(--tgt)">Oracle 26ai</strong> and the Data Lakehouse.</div>
+    </div>
+    <div class="hmeta">
+      <div class="hmr"><div class="hmd" style="background:var(--green)"></div>v2.0.0 — Live Simulator</div>
+      <div class="hmr"><div class="hmd" style="background:var(--tgt)"></div>Oracle 19c → Oracle 26ai</div>
+      <div class="hmr"><div class="hmd" style="background:var(--mac)"></div>Macro Expansion Engine</div>
+      <div class="hmr"><div class="hmd" style="background:var(--lake)"></div>Data Lakehouse Target</div>
+    </div>
+  </div>
+  <div class="htags">
+    <span class="ht ts">Source: Oracle 19c</span>
+    <span class="ht tt">Target: Oracle 26ai</span>
+    <span class="ht te">Integrated Extract</span>
+    <span class="ht tm">DEFINE MACRO / CALL</span>
+    <span class="ht tr2">NI Parallel Replicat</span>
+    <span class="ht tl">Data Lakehouse</span>
+    <span class="ht tm">Live Process Simulator</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tbar">
+    <button class="tab active" onclick="showTab('what',this)">💡 What are Macros?</button>
+    <button class="tab" onclick="showTab('arch',this)">🏗 Architecture</button>
+    <button class="tab" onclick="showTab('live',this)">⚡ Live Simulator</button>
+    <button class="tab" onclick="showTab('extract',this)">🔴 Extract Config</button>
+    <button class="tab" onclick="showTab('replicat',this)">🔵 Replicat Config</button>
+    <button class="tab" onclick="showTab('scenarios',this)">🎯 Scenarios</button>
+    <button class="tab" onclick="showTab('playground',this)">🧪 Playground</button>
+  </div>
+
+  <!-- WHAT ARE MACROS -->
+  <div id="tab-what" class="sec active">
+    <div class="mhero">
+      <h2>What is a GoldenGate Macro?</h2>
+      <p>A <strong style="color:var(--mac)">GoldenGate macro</strong> is a named, reusable block of GoldenGate parameter-file syntax. Define it once with <code style="font-family:'IBM Plex Mono',monospace;color:var(--g3)">DEFINE MACRO #name</code>, give it optional parameters, and <strong>CALL</strong> it inside TABLE or MAP statements. GoldenGate expands every CALL in-place at process startup — pure text substitution before execution begins.</p>
+      <p>Think of macros as <strong style="color:var(--g4)">managed copy-paste with parameters</strong>. One definition, called for every table. One change propagates everywhere instantly.</p>
+      <div class="anl"><div class="at">💡 Analogy</div><p>Without macros: adding 4 audit columns to 80 tables = <strong style="color:var(--src)">320 lines</strong> of COLMAP, repeated 80 times. With one <code style="font-family:'IBM Plex Mono',monospace;color:var(--g3)">#audit_cols</code> macro: <strong style="color:var(--tgt)">80 CALL statements</strong>. If a column name changes, update <em>one macro body</em>.</p></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--mac)"></div><div class="ct">Why Use Macros?</div></div>
+        <table>
+          <tr><th>Without Macros</th><th>With Macros</th></tr>
+          <tr><td style="color:#FF8070">Repeat COLMAP for every table</td><td style="color:var(--green)">Define once, CALL everywhere</td></tr>
+          <tr><td style="color:#FF8070">Column name change = edit 80 files</td><td style="color:var(--green)">Change macro body → all updated</td></tr>
+          <tr><td style="color:#FF8070">PRM files grow to 2000+ lines</td><td style="color:var(--green)">PRM stays concise and readable</td></tr>
+          <tr><td style="color:#FF8070">Error-prone copy-paste across schemas</td><td style="color:var(--green)">Single source of truth (.mac file)</td></tr>
+          <tr><td style="color:#FF8070">No standard filter enforcement</td><td style="color:var(--green)">Shared filter macros everywhere</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--g5)"></div><div class="ct">Where Can Macros Be Used?</div></div>
+        <table>
+          <tr><th>Location</th><th>Supported?</th><th>Common Use</th></tr>
+          <tr><td class="tdk">Extract .prm</td><td><span class="bge by">✓ YES</span></td><td style="color:var(--t3)">TABLE + filter macros</td></tr>
+          <tr><td class="tdk">Replicat .prm</td><td><span class="bge by">✓ YES</span></td><td style="color:var(--t3)">MAP + COLMAP macros</td></tr>
+          <tr><td class="tdk">.mac library file</td><td><span class="bge by">✓ YES</span></td><td style="color:var(--t3)">DEFINE MACRO blocks</td></tr>
+          <tr><td class="tdk">.oby OBEY file</td><td><span class="bge by">✓ YES</span></td><td style="color:var(--t3)">Include chains</td></tr>
+          <tr><td class="tdk">GGSCI command line</td><td><span class="bge bn">✗ NO</span></td><td style="color:var(--t3)">Not applicable</td></tr>
+          <tr><td class="tdk">Manager .prm</td><td><span class="bge bn">✗ NO</span></td><td style="color:var(--t3)">Not supported</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="ch"><div class="cd" style="background:var(--g5)"></div><div class="ct">Macro Anatomy — Every Part Explained</div></div>
+      <div class="cb">
+        <div class="cbh"><span class="cfn">dirprm/<span>gg_macros.mac — annotated</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div>
+        <pre><span class="kw">DEFINE MACRO</span>  <span class="mc">#audit_cols</span>           <span class="cm">-- ① keyword + name (must start with #)</span>
+<span class="kw3">PARAMS</span> (                               <span class="cm">-- ② optional parameter list</span>
+  <span class="mc">&amp;src_schema</span>,                         <span class="cm">--    & prefix marks a parameter</span>
+  <span class="mc">&amp;src_table</span>,
+  <span class="mc">&amp;tgt_schema</span>,
+  <span class="mc">&amp;tgt_table</span>
+)
+<span class="kw">BEGIN</span>                                  <span class="cm">-- ③ body start</span>
+  <span class="kw2">COLMAP</span> (
+    USEDEFAULTS,
+    <span class="val">GG_OP_TYPE</span>    = @GETENV (<span class="st">'LASTERR'</span>,       <span class="st">'DMLTYPE'</span>),
+    <span class="val">GG_COMMIT_TS</span> = @GETENV (<span class="st">'GGHEADER'</span>,      <span class="st">'COMMITTIMESTAMP'</span>),
+    <span class="val">GG_EXTRACT_NM</span>= @GETENV (<span class="st">'GGENVIRONMENT'</span>, <span class="st">'GROUPNAME'</span>),
+    <span class="val">GG_TRAIL_SEQ</span> = @GETENV (<span class="st">'GGHEADER'</span>,      <span class="st">'LOGRBA'</span>)
+  )
+<span class="kw">END</span>;                                   <span class="cm">-- ④ body end — semicolon required</span>
+
+<span class="cm">-- ⑤ CALL in Replicat MAP statement:</span>
+<span class="kw2">MAP</span> <span class="val">HR.EMPLOYEES</span>, TARGET <span class="val">HR.EMPLOYEES</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span> (<span class="val">HR</span>, <span class="val">EMPLOYEES</span>, <span class="val">HR</span>, <span class="val">EMPLOYEES</span>);
+<span class="cm">--                   ↑src_schema ↑src_table ↑tgt_schema ↑tgt_table</span>
+<span class="cm">-- ⑥ Result: macro body expands in-place at startup</span></pre>
+      </div>
+      <div class="synp">
+        <div class="sp" style="background:#F5F0FF;border-color:#7C3AED40"><div class="spt" style="color:var(--mac)">① DEFINE MACRO #name</div><div class="spd">Registers macro in GG's in-memory dictionary. The <code style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--g3)">#</code> prefix is mandatory. Name must be unique within scope.</div></div>
+        <div class="sp" style="background:#FFF7EE;border-color:#D9770640"><div class="spt" style="color:var(--ext)">② PARAMS (&amp;name, ...)</div><div class="spd">Optional parameter list. Reference inside body with <code style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--g3)">&amp;param_name</code>. CALL replaces each &amp;param positionally.</div></div>
+        <div class="sp" style="background:#ECFDF5;border-color:#10B98140"><div class="spt" style="color:var(--tgt)">③④ BEGIN ... END;</div><div class="spd">Body can contain COLMAP, FILTER, TABLE, MAP, TOKENS, SQLEXEC. <code style="font-family:'IBM Plex Mono',monospace;font-size:10.5px">END;</code> semicolon is required.</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="ch"><div class="cd" style="background:var(--g5)"></div><div class="ct">How to Use Macros — Step by Step</div></div>
+      <div class="hsteps">
+        <div class="hs"><div class="hsn">1</div><div><div class="hst">Create a macro library file (.mac)</div><div class="hsd">Create <code>dirprm/gg_macros.mac</code>. Write all DEFINE MACRO blocks here. Shared between Extract and Replicat — single source of truth.</div></div></div>
+        <div class="hs"><div class="hsn">2</div><div><div class="hst">INCLUDE the library at the top of your .prm file</div><div class="hsd">Add <code>INCLUDE ./dirprm/gg_macros.mac</code> before any CALL statements. GG reads this and registers all macros before processing TABLE or MAP statements.</div></div></div>
+        <div class="hs"><div class="hsn">3</div><div><div class="hst">CALL the macro inside TABLE or MAP</div><div class="hsd">Use <code>CALL #macroname (arg1, arg2, ...)</code> inside TABLE or MAP. Arguments are positional — must match PARAMS list in order and exact count.</div></div></div>
+        <div class="hs"><div class="hsn">4</div><div><div class="hst">Verify expansion with VIEW PARAMS</div><div class="hsd">Run <code>VIEW PARAMS &lt;groupname&gt;</code> in GGSCI. Shows the fully expanded parameter file — every CALL replaced with its expanded body. Best macro debug tool.</div></div></div>
+        <div class="hs"><div class="hsn">5</div><div><div class="hst">Nest macros (call one macro from another)</div><div class="hsd">A macro body can CALL another macro. Define inner macros first (top-to-bottom matters). No recursion — a macro cannot call itself.</div></div></div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--tgt)"></div><div class="ct">Macro Rules — Do's</div></div>
+        <div class="ib good"><strong>✓ DEFINE before CALL</strong>Macro must be defined or INCLUDEd before its first CALL — GG parses top-to-bottom.</div>
+        <div class="ib good"><strong>✓ &amp; prefix for params</strong>Always use &amp;param_name inside body. Without &amp;, text is literal — not substituted.</div>
+        <div class="ib good"><strong>✓ END; with semicolon</strong>Omitting the semicolon after END causes a parse error on startup.</div>
+        <div class="ib good"><strong>✓ VIEW PARAMS to debug</strong>Shows the fully expanded file in GGSCI after all macro substitution.</div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--src)"></div><div class="ct">Macro Rules — Don'ts</div></div>
+        <div class="ib warn"><strong>✗ No recursion</strong>A macro cannot CALL itself. GoldenGate does not support recursive expansion.</div>
+        <div class="ib warn"><strong>✗ No runtime logic</strong>Macros expand at startup only. Use FILTER/SQLEXEC for conditional runtime logic.</div>
+        <div class="ib warn"><strong>✗ Argument count must match</strong>CALL arg count must exactly match PARAMS count — mismatch = startup error.</div>
+        <div class="ib warn"><strong>✗ No $ or : prefix</strong>Parameters use &amp; not $ or :. Wrong prefix = no substitution occurs.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="cd" style="background:var(--mac)"></div><div class="ct">Built-in Macro Patterns — Oracle 19c → 26ai Reference</div></div>
+      <table>
+        <tr><th>Macro</th><th>Type</th><th>Used In</th><th>What It Does</th><th>Oracle 26ai Relevance</th></tr>
+        <tr><td class="tdk">#audit_cols</td><td><span class="bge bm">COLMAP</span></td><td><span class="bge br">Replicat</span></td><td style="color:var(--t3)">Injects GG_OP_TYPE, GG_COMMIT_TS, GG_EXTRACT_NM, GG_TRAIL_SEQ</td><td style="color:var(--t3)">CDC lineage in 26ai JSON Duality Views</td></tr>
+        <tr><td class="tdk">#active_filter</td><td><span class="bge bm">FILTER</span></td><td><span class="bge be">Extract</span> <span class="bge br">Rep</span></td><td style="color:var(--t3)">Replicate only rows where STATUS='ACTIVE'</td><td style="color:var(--t3)">Keep 26ai target lean — skip deleted rows</td></tr>
+        <tr><td class="tdk">#table_map_pair</td><td><span class="bge bm">TABLE+MAP</span></td><td><span class="bge be">Extract</span> <span class="bge br">Rep</span></td><td style="color:var(--t3)">Generates TABLE src.t + MAP src.t, TARGET tgt.t in one CALL</td><td style="color:var(--t3)">Replicate 50+ tables with 1 line each</td></tr>
+        <tr><td class="tdk">#scd2_stamp</td><td><span class="bge bm">COLMAP</span></td><td><span class="bge br">Replicat</span></td><td style="color:var(--t3)">EFF_START_DATE=commit TS, EFF_END_DATE='9999-12-31', IS_CURRENT='Y'</td><td style="color:var(--t3)">26ai temporal history tables</td></tr>
+        <tr><td class="tdk">#lakehouse_partition</td><td><span class="bge bm">COLMAP</span></td><td><span class="bge br">Replicat</span></td><td style="color:var(--t3)">Injects PART_YEAR, PART_MONTH, PART_DAY from commit TS</td><td style="color:var(--t3)">Iceberg partition pruning for analytics</td></tr>
+        <tr><td class="tdk">#vector_tag</td><td><span class="bge bm">COLMAP</span></td><td><span class="bge br">Replicat</span></td><td style="color:var(--t3)">VECTOR_PENDING='Y', LAST_CDC_TS for AI pipeline trigger</td><td style="color:var(--t3)">Triggers DBMS_VECTOR.EMBED() on changed rows</td></tr>
+      </table>
+    </div>
+  </div>
+  <!-- ARCHITECTURE -->
+  <div id="tab-arch" class="sec">
+    <div class="pw">
+      <div class="pl">Full Pipeline — Oracle 19c Source → Oracle 26ai + Data Lakehouse</div>
+      <div class="pf">
+        <div class="pn"><div class="pb2 nsrc" onclick="hlN('src')"><div class="pi">🗄️</div><div class="pll" style="color:var(--src)">SOURCE<br>ORACLE</div><div class="ps">19c · ORCL19C</div></div><div class="pnote" style="color:var(--src)60">LogMiner/LCR</div></div>
+        <div class="arr"></div>
+        <div class="pn"><div class="pb2 next" onclick="hlN('ext')"><div class="pi">⚙️</div><div class="pll" style="color:var(--ext)">INTEGRATED<br>EXTRACT</div><div class="ps">EXTE1.prm</div></div><div class="pnote" style="color:var(--ext)60">Reads redo log</div></div>
+        <div class="arr"></div>
+        <div class="pn"><div class="pb2 nmac" onclick="hlN('mac')"><div class="pi">🔧</div><div class="pll" style="color:var(--mac)">MACRO<br>LIBRARY</div><div class="ps">gg_macros.mac</div></div><div class="pnote" style="color:var(--mac)60">DEFINE / CALL</div></div>
+        <div class="arr"></div>
+        <div class="pn"><div class="pb2 ntra" onclick="hlN('tra')"><div class="pi">📁</div><div class="pll" style="color:var(--g4)">TRAIL<br>FILES</div><div class="ps">./dirdat/ea</div></div><div class="pnote" style="color:var(--g5)60">Canonical fmt</div></div>
+        <div class="arr"></div>
+        <div class="pn"><div class="pb2 nrep" onclick="hlN('rep')"><div class="pi">🔄</div><div class="pll" style="color:var(--rep)">NI PARALLEL<br>REPLICAT</div><div class="ps">REPO1/REPLK1</div></div><div class="pnote" style="color:var(--rep)60">Multi-threaded</div></div>
+        <div class="arr"></div>
+        <div class="pn"><div class="pb2 ntgt" onclick="hlN('tgt')"><div class="pi">🏦</div><div class="pll" style="color:var(--tgt)">ORACLE<br>TARGET</div><div class="ps">26ai · ORA26AI</div></div></div>
+        <div class="arr"></div>
+        <div class="pn"><div class="pb2 nlk" onclick="hlN('lk')"><div class="pi">🏞️</div><div class="pll" style="color:var(--lake)">DATA<br>LAKEHOUSE</div><div class="ps">Iceberg/Parquet</div></div></div>
+      </div>
+    </div>
+    <div id="hlp" class="hlp"></div>
+    <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">Step-by-Step Flow — Click to Expand</div>
+    <div class="fs fse" onclick="tog(this)"><div class="fsh"><div class="fsn ne2">1</div><div class="fsti">Source Oracle 19c — Supplemental Logging & LogMiner Registration</div><div class="fstog">▼</div></div>
+      <div class="fsb"><p>GoldenGate Integrated Extract registers with Oracle 19c's internal LogMiner server (REGISTER EXTRACT ... DATABASE). Captures INSERT, UPDATE, DELETE, DDL from redo logs as LCRs. Supplemental logging must be enabled at DB and table level. The mining user requires LOGMINING and SELECT ANY TABLE privileges.</p>
+      <div class="cb"><div class="cbh"><span class="cfn">SQL + GGSCI — <span>Oracle 19c setup</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div><pre><span class="cm">-- Enable supplemental logging</span>
+<span class="kw">ALTER</span> DATABASE <span class="kw">ADD</span> SUPPLEMENTAL LOG DATA;
+<span class="kw">ALTER</span> <span class="kw">TABLE</span> <span class="val">HR.EMPLOYEES</span> <span class="kw">ADD</span> SUPPLEMENTAL LOG DATA <span class="kw">ALL</span> COLUMNS;
+<span class="cm">-- GGSCI</span>
+<span class="kw2">DBLOGIN</span> USERID <span class="val">ggadmin@ORCL19C</span>, PASSWORD <span class="val">Welcome1</span>
+<span class="kw2">ADD EXTRACT</span>      <span class="val">EXTE1</span>, INTEGRATED TRANLOG, BEGIN NOW
+<span class="kw2">REGISTER EXTRACT</span> <span class="val">EXTE1</span>, DATABASE
+<span class="kw2">ADD EXTTRAIL</span>     <span class="st">./dirdat/ea</span>, EXTRACT <span class="val">EXTE1</span>, MEGABYTES <span class="nm">500</span></pre></div></div>
+    </div>
+    <div class="fs fsm" onclick="tog(this)"><div class="fsh"><div class="fsn nm2">2</div><div class="fsti">Macro Library — DEFINE MACRO in gg_macros.mac</div><div class="fstog">▼</div></div>
+      <div class="fsb"><p>Shared macro library (<code>dirprm/gg_macros.mac</code>) holds all DEFINE MACRO blocks. Both Extract and Replicat load it with INCLUDE. Macros expand at startup via text substitution — parameters use &amp; prefix. VIEW PARAMS shows the expanded result.</p>
+      <div class="ib tip"><strong>Key point:</strong> Macros are startup-time text substitution — NOT runtime. This makes them fast and predictable but means no conditional logic inside a macro body.</div></div>
+    </div>
+    <div class="fs fst" onclick="tog(this)"><div class="fsh"><div class="fsn nt2">3</div><div class="fsti">Trail Files — Canonical Format, Multi-Reader</div><div class="fstog">▼</div></div>
+      <div class="fsb"><p>Trail files store before/after images, operation type, commit TS, and transaction context in GoldenGate binary canonical format. Both REPO1 (Oracle 26ai) and REPLK1 (Lakehouse) read the same trail concurrently. Always use FORMAT RELEASE 12.3 for full column metadata required for Parallel Replicat and Oracle 26ai targets.</p></div>
+    </div>
+    <div class="fs fsr" onclick="tog(this)"><div class="fsh"><div class="fsn nr2">4</div><div class="fsti">Non-Integrated Parallel Replicat — Direct SQL Apply to 26ai</div><div class="fstog">▼</div></div>
+      <div class="fsb"><p>ADD REPLICAT ... NONINTEGRATED PARALLEL creates N applier threads (PARALLELISM N) sharing a coordinator. Applies DML directly via OCI — no Oracle apply server needed. Macros in the .prm inject #vector_tag (AI pipeline), #scd2_stamp (history), #audit_cols (lineage) per MAP statement.</p>
+      <div class="ib note"><strong>PARALLELISM N:</strong> Start with 4–8 for Oracle 26ai targets. Use BATCHSQL BATCHTRANSOPS 1000 to reduce round-trips. Tune dynamically via SEND REPLICAT &lt;name&gt; PARALLELISM N.</div></div>
+    </div>
+    <div class="fs fsg" onclick="tog(this)"><div class="fsh"><div class="fsn ng2">5</div><div class="fsti">Oracle 26ai Target — AI-Ready Schema with Macro-Injected Columns</div><div class="fstog">▼</div></div>
+      <div class="fsb"><p>Oracle 26ai adds native VECTOR columns, JSON Relational Duality Views, and AI Optimizer integration. The <strong>#vector_tag</strong> macro marks CDC rows with VECTOR_PENDING='Y' — a Scheduler job calls DBMS_VECTOR.EMBED() on changed rows, keeping 26ai vector indexes synchronized with Oracle 19c OLTP changes in real time.</p>
+      <div class="ib tip"><strong>Oracle 26ai + GoldenGate:</strong> VECTOR_PENDING='Y' + DBMS_VECTOR.EMBED() + LAST_CDC_TS watermark = real-time RAG search powered by GoldenGate CDC. All triggered by a two-line macro called once per table.</div></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="ch"><div class="cd" style="background:var(--g5)"></div><div class="ct">Extract vs Replicat — Macro Usage Comparison</div></div>
+      <table>
+        <tr><th>Feature</th><th>Integrated Extract (19c)</th><th>NI Parallel Replicat (26ai)</th></tr>
+        <tr><td class="tdk">Primary role</td><td>Capture changes from Oracle 19c redo log</td><td>Apply changes to Oracle 26ai via SQL</td></tr>
+        <tr><td class="tdk">DEFINE MACRO</td><td><span class="bge by">YES</span></td><td><span class="bge by">YES</span></td></tr>
+        <tr><td class="tdk">CALL Macro</td><td><span class="bge by">YES</span></td><td><span class="bge by">YES</span></td></tr>
+        <tr><td class="tdk">Macro with FILTER</td><td><span class="bge by">YES — reduces trail size</span></td><td><span class="bge by">YES — filters before apply</span></td></tr>
+        <tr><td class="tdk">Macro with COLMAP</td><td><span class="bge bp">Limited (trail columns)</span></td><td><span class="bge by">Full — maps to 26ai columns</span></td></tr>
+        <tr><td class="tdk">Parallelism</td><td>Single capture thread</td><td><span class="bge by">Multi-thread (PARALLELISM N)</span></td></tr>
+        <tr><td class="tdk">Oracle apply server</td><td>YES (LogMiner)</td><td><span class="bge bn">NO — direct SQL apply</span></td></tr>
+        <tr><td class="tdk">26ai VECTOR columns</td><td>Captured via trail</td><td><span class="bge by">MAP + #vector_tag macro</span></td></tr>
+      </table>
+    </div>
+  </div>
+  <!-- LIVE SIMULATOR -->
+  <div id="tab-live" class="sec">
+    <div class="lsim">
+      <div class="lsh">
+        <div class="lst">⚡ GoldenGate Live Process Simulator</div>
+        <div class="lsbs">
+          <span class="lsb" style="color:var(--src);border-color:var(--src)35;background:var(--src)0A">Oracle 19c Source</span>
+          <span class="lsb" style="color:var(--tgt);border-color:var(--tgt)35;background:var(--tgt)0A">Oracle 26ai Target</span>
+          <span class="lsb" style="color:var(--mac);border-color:var(--mac)35;background:var(--mac)0A">Macro Engine</span>
+          <span class="vb">v2.0.0</span>
+        </div>
+      </div>
+      <div class="sbar">
+        <div class="pp stopped" id="pmgr"><div class="pst psto" id="dmgr"></div><span class="pnm" style="color:var(--t2)">MGR</span><span class="plag" id="lmgr">STOPPED</span></div>
+        <div class="pp stopped" id="pext"><div class="pst psto" id="dext"></div><span class="pnm" style="color:var(--ext)">EXTE1</span><span class="plag" id="lext">STOPPED</span></div>
+        <div class="pp stopped" id="prep"><div class="pst psto" id="drep"></div><span class="pnm" style="color:var(--rep)">REPO1</span><span class="plag" id="lrep">STOPPED</span></div>
+        <div class="pp stopped" id="plk"><div class="pst psto" id="dlk"></div><span class="pnm" style="color:var(--lake)">REPLK1</span><span class="plag" id="llk">STOPPED</span></div>
+        <div style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t3)">Trail: <span id="tsize" style="color:var(--g4)">0 MB</span></div>
+      </div>
+      <div class="lsbody">
+        <div class="lssb">
+          <div class="ssl">Scenario</div>
+          <select class="sssel" id="simsc" onchange="applyScen()">
+            <option value="std">Standard Replication</option>
+            <option value="bulk">Bulk 50-Table Migration</option>
+            <option value="ai">Oracle 26ai AI Vector Pipeline</option>
+            <option value="lake">Lakehouse + 26ai Dual Target</option>
+          </select>
+          <div class="ssl" style="margin-top:10px">TPS (Transactions/sec)</div>
+          <div class="ssslw"><input type="range" style="width:100%;accent-color:var(--g4)" id="tpssl" min="10" max="2000" value="250" oninput="document.getElementById('tpsv').textContent=this.value"><br><span class="ssv" id="tpsv">250</span> TPS</div>
+          <div class="ssl">Replicat Parallelism</div>
+          <div class="ssslw"><input type="range" style="width:100%;accent-color:var(--g4)" id="parsl" min="1" max="16" value="4" oninput="document.getElementById('parv').textContent=this.value"><br><span class="ssv" id="parv">4</span> threads</div>
+          <div class="ssl">Active Macros</div>
+          <div class="sst"><label>Enable #audit_cols</label><input type="checkbox" class="sschk" id="caud" checked></div>
+          <div class="sst"><label>Enable #active_filter</label><input type="checkbox" class="sschk" id="cflt"></div>
+          <div class="sst"><label>Enable #scd2_stamp</label><input type="checkbox" class="sschk" id="cscd"></div>
+          <div class="sst"><label>Enable #vector_tag</label><input type="checkbox" class="sschk" id="cvec" checked></div>
+          <div class="sst"><label>Enable #lakehouse_partition</label><input type="checkbox" class="sschk" id="clk"></div>
+          <div class="ssl" style="margin-top:14px">Controls</div>
+          <button class="sbtn brun" onclick="startSim()">▶ START ALL</button>
+          <button class="sbtn bstp" onclick="stopSim()">⏹ STOP ALL</button>
+          <button class="sbtn bflt" onclick="injectFault()">⚠ Inject Fault</button>
+          <button class="sbtn bclr" onclick="clearLog()">✕ Clear Log</button>
+        </div>
+        <div class="lscv">
+          <div class="spipe">
+            <div class="sn2"><div class="sbox nsrc" id="bsrc"><div class="si">🗄️</div><div class="slbl" style="color:var(--src)">ORACLE 19c</div><div class="sst2" id="ssrc">ORCL19C</div></div></div>
+            <div class="sarr" id="ae"></div>
+            <div class="sn2"><div class="sbox next" id="bext"><div class="si">⚙️</div><div class="slbl" style="color:var(--ext)">EXTE1</div><div class="sst2" id="sext">STOPPED</div></div></div>
+            <div class="sarr" id="am"></div>
+            <div class="sn2"><div class="sbox nmac" id="bmac"><div class="si">🔧</div><div class="slbl" style="color:var(--mac)">MACROS</div><div class="sst2" id="smac">IDLE</div></div></div>
+            <div class="sarr" id="at2"></div>
+            <div class="sn2"><div class="sbox ntra" id="btra"><div class="si">📁</div><div class="slbl" style="color:var(--g4)">TRAIL</div><div class="sst2">./dirdat/ea</div></div></div>
+            <div class="sarr" id="ar"></div>
+            <div class="sn2"><div class="sbox nrep" id="brep"><div class="si">🔄</div><div class="slbl" style="color:var(--rep)">REPO1</div><div class="sst2" id="srep">STOPPED</div></div></div>
+            <div class="sarr" id="atg"></div>
+            <div class="sn2"><div class="sbox ntgt" id="btgt"><div class="si">🏦</div><div class="slbl" style="color:var(--tgt)">ORACLE 26ai</div><div class="sst2" id="stgt">ORA26AI</div></div></div>
+            <div class="sarr" id="alk"></div>
+            <div class="sn2"><div class="sbox nlk" id="blk"><div class="si">🏞️</div><div class="slbl" style="color:var(--lake)">LAKEHOUSE</div><div class="sst2" id="slk">STOPPED</div></div></div>
+          </div>
+          <div class="srow">
+            <div class="sc2"><div class="sv" id="svops" style="color:var(--ext)">0</div><div class="slb">Ops Captured/sec</div></div>
+            <div class="sc2"><div class="sv" id="svmac" style="color:var(--mac)">0</div><div class="slb">Macros Expanded</div></div>
+            <div class="sc2"><div class="sv" id="svapp" style="color:var(--rep)">0</div><div class="slb">Ops Applied/sec</div></div>
+            <div class="sc2"><div class="sv" id="svlag" style="color:var(--tgt)">0s</div><div class="slb">Replication Lag</div></div>
+          </div>
+          <div class="ev">
+            <div class="evh"><span class="evt">🔧 Live Macro Expansion — Active Macros</span><span id="evc" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mac)">0 macros loaded</span></div>
+            <div class="evb" id="evb">Start the simulator to see macro expansion output...</div>
+          </div>
+          <div class="llog">
+            <div class="llh"><span class="llt">📋 GoldenGate Process Log — Oracle 19c → 26ai</span><button class="llc" onclick="clearLog()">CLEAR</button></div>
+            <div class="llb" id="simlog"><div class="le"><span class="ltm">00:00:00</span><span class="lsys">SYS</span><span class="lmsg">GoldenGate Simulator ready. Configure and click START ALL.</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXTRACT CONFIG -->
+  <div id="tab-extract" class="sec">
+    <div class="ib note" style="margin-bottom:14px"><strong>Integrated Extract on Oracle 19c</strong> Registered via ADD EXTRACT ... INTEGRATED TRANLOG. Reads LCRs from redo/archive logs without data block access. Requires supplemental logging and LOGMINING privilege. The .prm INCLUDEs the macro library then calls macros per TABLE.</div>
+    <div class="g2">
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--ext)"></div><div class="ct">EXTE1.prm — Full Extract with Macros</div><div class="cs">Oracle 19c Source</div></div>
+        <div class="cb"><div class="cbh"><span class="cfn">dirprm/<span>EXTE1.prm</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div>
+        <pre><span class="cm">-- Integrated Extract — Oracle 19c Source</span>
+<span class="cm">-- Made by VRK | GoldenGate Learning Hub v2.0</span>
+<span class="kw3">EXTRACT</span>  <span class="val">EXTE1</span>
+<span class="kw2">USERID</span>   <span class="val">ggadmin@ORCL19C</span>, PASSWORD <span class="val">Welcome1</span>
+<span class="kw2">EXTTRAIL</span> <span class="st">./dirdat/ea</span>, FORMAT RELEASE <span class="nm">12.3</span>
+<span class="kw2">TRANLOGOPTIONS</span> INTEGRATEDPARAMS
+  (MAX_SGA_SIZE <span class="nm">256</span>, EXCLUDETAG <span class="st">'GG'</span>)
+<span class="kw2">FETCHOPTIONS</span>   FETCHPKUPDATECOLS, MISSINGCOLS IGNORE
+<span class="kw2">DDL</span>            INCLUDE ALL
+<span class="cm">-- Load macro library (shared with Replicat)</span>
+<span class="kw">INCLUDE</span> <span class="st">./dirprm/gg_macros.mac</span>
+<span class="cm">-- HR schema — 1 CALL = TABLE + MAP</span>
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span> (<span class="val">HR</span>, <span class="val">HR</span>, <span class="val">EMPLOYEES</span>)
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span> (<span class="val">HR</span>, <span class="val">HR</span>, <span class="val">DEPARTMENTS</span>)
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span> (<span class="val">HR</span>, <span class="val">HR</span>, <span class="val">JOBS</span>)
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span> (<span class="val">HR</span>, <span class="val">HR</span>, <span class="val">JOB_HISTORY</span>)
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span> (<span class="val">HR</span>, <span class="val">HR</span>, <span class="val">LOCATIONS</span>)
+<span class="cm">-- OE schema with row filter macro</span>
+<span class="kw2">TABLE</span> <span class="val">OE.ORDERS</span>,
+  <span class="kw">CALL</span> <span class="mc">#active_filter</span>(<span class="val">ORDER_STATUS</span>);
+<span class="kw2">TABLE</span> <span class="val">OE.ORDER_ITEMS</span>;
+<span class="kw2">TABLE</span> <span class="val">OE.CUSTOMERS</span>;</pre></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--ext)"></div><div class="ct">Macro Expansion — VIEW PARAMS EXTE1</div></div>
+        <div class="ib tip" style="margin-bottom:9px"><strong>How it works:</strong> At startup, every CALL is text-replaced in-place. This is what GoldenGate actually executes:</div>
+        <div class="cb"><div class="cbh"><span class="cfn">Expanded — <span>VIEW PARAMS EXTE1 output</span></span></div>
+        <pre><span class="cm">-- CALL #table_map_pair (HR, HR, EMPLOYEES)</span>
+<span class="cm">-- ↓ expands to:</span>
+<span class="kw2">TABLE</span>  <span class="val">HR.EMPLOYEES</span>;
+<span class="kw2">MAP</span>    <span class="val">HR.EMPLOYEES</span>, TARGET <span class="val">HR.EMPLOYEES</span>;
+
+<span class="cm">-- CALL #active_filter(ORDER_STATUS)</span>
+<span class="cm">-- ↓ expands to:</span>
+<span class="kw2">FILTER</span> (<span class="val">ORDER_STATUS</span> = <span class="st">'ACTIVE'</span>)
+
+<span class="cm">-- CALL #audit_cols(HR,EMPLOYEES,HR,EMPLOYEES)</span>
+<span class="cm">-- ↓ expands to:</span>
+<span class="kw2">COLMAP</span> (
+  USEDEFAULTS,
+  <span class="val">GG_OP_TYPE</span>    = @GETENV(<span class="st">'LASTERR'</span>,<span class="st">'DMLTYPE'</span>),
+  <span class="val">GG_COMMIT_TS</span> = @GETENV(<span class="st">'GGHEADER'</span>,<span class="st">'COMMITTIMESTAMP'</span>),
+  <span class="val">GG_EXTRACT_NM</span>= @GETENV(<span class="st">'GGENVIRONMENT'</span>,<span class="st">'GROUPNAME'</span>),
+  <span class="val">GG_TRAIL_SEQ</span> = @GETENV(<span class="st">'GGHEADER'</span>,<span class="st">'LOGRBA'</span>)
+)</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPLICAT CONFIG -->
+  <div id="tab-replicat" class="sec">
+    <div class="ib note" style="margin-bottom:14px"><strong>Non-Integrated Parallel Replicat → Oracle 26ai</strong> NONINTEGRATED PARALLEL applies SQL directly without Oracle's apply server. PARALLELISM N threads. Macros inject #audit_cols, #scd2_stamp, #vector_tag per MAP. Second Replicat REPLK1 reads same trail for Lakehouse.</div>
+    <div class="g2">
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--tgt)"></div><div class="ct">REPO1.prm — Oracle 26ai Target</div><div class="cs">NI Parallel Replicat</div></div>
+        <div class="cb"><div class="cbh"><span class="cfn">dirprm/<span>REPO1.prm</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div>
+        <pre><span class="cm">-- NI Parallel Replicat → Oracle 26ai</span>
+<span class="cm">-- Made by VRK | GoldenGate Learning Hub v2.0</span>
+<span class="kw3">REPLICAT</span>     <span class="val">REPO1</span>
+<span class="kw2">USERID</span>       <span class="val">ggadmin@ORA26AI</span>, PASSWORD <span class="val">Welcome1</span>
+<span class="kw2">PARALLELISM</span>  <span class="nm">4</span>
+<span class="kw2">BATCHSQL</span>     BATCHTRANSOPS <span class="nm">1000</span>
+<span class="kw2">MAXTRANSOPS</span>  <span class="nm">10000</span>
+<span class="kw2">REPERROR</span>     (<span class="nm">1403</span>, DISCARD)
+<span class="kw2">DISCARDFILE</span>  <span class="st">./dirrpt/REPO1.dsc</span>, PURGE
+<span class="kw">INCLUDE</span> <span class="st">./dirprm/gg_macros.mac</span>
+<span class="cm">-- audit + 26ai AI vector marker</span>
+<span class="kw2">MAP</span> <span class="val">HR.EMPLOYEES</span>, TARGET <span class="val">HR.EMPLOYEES</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">HR</span>,<span class="val">EMPLOYEES</span>,<span class="val">HR</span>,<span class="val">EMPLOYEES</span>),
+  <span class="kw">CALL</span> <span class="mc">#vector_tag</span>;
+<span class="cm">-- SCD Type 2 history for 26ai temporal queries</span>
+<span class="kw2">MAP</span> <span class="val">HR.EMPLOYEES</span>, TARGET <span class="val">DW.EMP_HISTORY</span>,
+  <span class="kw">CALL</span> <span class="mc">#scd2_stamp</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">HR</span>,<span class="val">EMPLOYEES</span>,<span class="val">DW</span>,<span class="val">EMP_HISTORY</span>);
+<span class="kw2">MAP</span> <span class="val">HR.DEPARTMENTS</span>, TARGET <span class="val">HR.DEPARTMENTS</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">HR</span>,<span class="val">DEPARTMENTS</span>,<span class="val">HR</span>,<span class="val">DEPARTMENTS</span>);
+<span class="kw2">MAP</span> <span class="val">OE.ORDERS</span>, TARGET <span class="val">OE.ORDERS</span>,
+  <span class="kw">CALL</span> <span class="mc">#active_filter</span>(<span class="val">ORDER_STATUS</span>),
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">OE</span>,<span class="val">ORDERS</span>,<span class="val">OE</span>,<span class="val">ORDERS</span>),
+  <span class="kw">CALL</span> <span class="mc">#vector_tag</span>;</pre></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--lake)"></div><div class="ct">REPLK1.prm — Data Lakehouse Target</div><div class="cs">Iceberg / Parquet</div></div>
+        <div class="cb"><div class="cbh"><span class="cfn">dirprm/<span>REPLK1.prm</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div>
+        <pre><span class="cm">-- NI Parallel Replicat → Data Lakehouse</span>
+<span class="cm">-- Reads same trail as REPO1 concurrently</span>
+<span class="kw3">REPLICAT</span>        <span class="val">REPLK1</span>
+<span class="kw2">GROUPTRANSOPS</span>   <span class="nm">10000</span>
+<span class="kw2">PARALLELISM</span>     <span class="nm">8</span>
+<span class="kw2">INSERTMISSINGUPDATES</span>
+<span class="kw">INCLUDE</span> <span class="st">./dirprm/gg_macros.mac</span>
+<span class="kw2">MAP</span> <span class="val">HR.EMPLOYEES</span>, TARGET <span class="val">LAKE.EMPLOYEES</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">HR</span>,<span class="val">EMPLOYEES</span>,<span class="val">LAKE</span>,<span class="val">EMPLOYEES</span>),
+  <span class="kw">CALL</span> <span class="mc">#lakehouse_partition</span>;
+<span class="kw2">MAP</span> <span class="val">OE.ORDERS</span>, TARGET <span class="val">LAKE.ORDERS</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">OE</span>,<span class="val">ORDERS</span>,<span class="val">LAKE</span>,<span class="val">ORDERS</span>),
+  <span class="kw">CALL</span> <span class="mc">#lakehouse_partition</span>;
+<span class="kw2">MAP</span> <span class="val">OE.ORDER_ITEMS</span>, TARGET <span class="val">LAKE.ORDER_ITEMS</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">OE</span>,<span class="val">ORDER_ITEMS</span>,<span class="val">LAKE</span>,<span class="val">ORDER_ITEMS</span>),
+  <span class="kw">CALL</span> <span class="mc">#lakehouse_partition</span>;</pre></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="cd" style="background:var(--rep)"></div><div class="ct">GGSCI — Replicat Setup for Oracle 26ai</div></div>
+      <div class="cb"><div class="cbh"><span class="cfn">GGSCI — <span>Oracle 26ai target</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div>
+      <pre><span class="kw2">DBLOGIN</span> USERID <span class="val">ggadmin@ORA26AI</span>, PASSWORD <span class="val">Welcome1</span>
+<span class="kw2">ADD REPLICAT</span> <span class="val">REPO1</span>, NONINTEGRATED PARALLEL, EXTTRAIL <span class="st">./dirdat/ea</span>
+<span class="kw2">ADD REPLICAT</span> <span class="val">REPLK1</span>, NONINTEGRATED PARALLEL, EXTTRAIL <span class="st">./dirdat/ea</span>
+<span class="kw2">START REPLICAT</span> <span class="val">REPO1</span>
+<span class="kw2">START REPLICAT</span> <span class="val">REPLK1</span>
+<span class="kw2">INFO ALL</span>
+<span class="kw2">STATS REPLICAT</span> <span class="val">REPO1</span>, LATEST
+<span class="kw2">INFO REPLICAT</span>  <span class="val">REPO1</span>, TASKS       <span class="cm">-- shows parallel threads</span>
+<span class="kw2">VIEW PARAMS</span>    <span class="val">REPO1</span>              <span class="cm">-- see expanded macros</span>
+<span class="kw2">SEND REPLICAT</span>  <span class="val">REPO1</span>, PARALLELISM <span class="nm">8</span></pre></div>
+    </div>
+  </div>
+
+  <!-- SCENARIOS -->
+  <div id="tab-scenarios" class="sec">
+    <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px">Macro Scenarios — Oracle 19c → Oracle 26ai</div>
+    <div class="scg">
+      <div class="scc" onclick="selSc(this,0)"><div class="sci">🤖</div><div class="sct">Oracle 26ai AI Vector Pipeline</div><div class="scd">Mark CDC rows for DBMS_VECTOR embedding via #vector_tag. Real-time RAG powered by GoldenGate.</div><div class="sctags"><span class="ht tm">#vector_tag</span><span class="ht tm">#audit_cols</span><span class="ht tt">Oracle 26ai</span></div></div>
+      <div class="scc" onclick="selSc(this,1)"><div class="sci">📅</div><div class="sct">SCD Type 2 History Tables</div><div class="scd">Full change history in 26ai with effective dating from #scd2_stamp using GoldenGate commit timestamps.</div><div class="sctags"><span class="ht tm">#scd2_stamp</span><span class="ht tm">#audit_cols</span><span class="ht tr2">NI Parallel</span></div></div>
+      <div class="scc" onclick="selSc(this,2)"><div class="sci">🏞️</div><div class="sct">Real-Time Lakehouse Feed</div><div class="scd">Stream OE transactions to Iceberg. Partition columns from #lakehouse_partition enable time-range pruning.</div><div class="sctags"><span class="ht tm">#lakehouse_partition</span><span class="ht tl">Iceberg</span></div></div>
+      <div class="scc" onclick="selSc(this,3)"><div class="sci">⚡</div><div class="sct">Bulk 50+ Tables — 1 Line Each</div><div class="scd">#table_map_pair turns 3-line TABLE+MAP+COLMAP into one CALL. 50 tables = 50 lines.</div><div class="sctags"><span class="ht tm">#table_map_pair</span><span class="ht ts">Oracle 19c</span></div></div>
+    </div>
+    <div id="scd2" style="display:none" class="card"><div id="sccon"></div></div>
+  </div>
+
+  <!-- PLAYGROUND -->
+  <div id="tab-playground" class="sec">
+    <div class="ib tip" style="margin-bottom:12px"><strong>Macro Expansion Playground</strong> Write CALL statements and click "Expand Macros" to see text substitution. Built-in: <code style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--g3)">#audit_cols #active_filter #scd2_stamp #lakehouse_partition #table_map_pair #vector_tag</code></div>
+    <div class="pg">
+      <div class="pgh"><div class="pgd"><div class="pgdt" style="background:#FF5F57"></div><div class="pgdt" style="background:#FFBD2E"></div><div class="pgdt" style="background:#28CA41"></div></div><div class="pgt">GoldenGate Macro Playground — Oracle 19c → Oracle 26ai | Made by VRK v2.0</div></div>
+      <div class="pgb">
+        <div class="pgp"><div class="pgl">📝 Input — PRM with CALL statements</div><textarea class="pge" id="pgin" spellcheck="false">REPLICAT REPO1
+USERID ggadmin@ORA26AI, PASSWORD Welcome1
+PARALLELISM 4
+
+INCLUDE ./dirprm/gg_macros.mac
+
+MAP HR.EMPLOYEES, TARGET HR.EMPLOYEES,
+  CALL #audit_cols(HR, EMPLOYEES, HR, EMPLOYEES),
+  CALL #vector_tag;
+
+MAP HR.EMPLOYEES, TARGET DW.EMP_HISTORY,
+  CALL #scd2_stamp,
+  CALL #audit_cols(HR, EMPLOYEES, DW, EMP_HISTORY);
+
+MAP OE.ORDERS, TARGET LAKE.ORDERS,
+  CALL #audit_cols(OE, ORDERS, LAKE, ORDERS),
+  CALL #lakehouse_partition;</textarea></div>
+        <div class="pgp"><div class="pgl">✅ Expanded — what GoldenGate processes</div><div class="pgo" id="pgout">Click "Expand Macros" to simulate...</div></div>
+      </div>
+      <div class="pgf">
+        <button class="rbtn" onclick="expandMacros()">▶ Expand Macros</button>
+        <button class="cbtn" onclick="clearPg()">✕ Clear</button>
+        <button class="cbtn" onclick="loadEx()">↺ Example</button>
+        <div class="sdot idle" id="sdot"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--mac)"></div><div class="ct">Built-in Macro Library</div></div>
+        <table>
+          <tr><th>Macro</th><th>Params</th><th>Expands to</th></tr>
+          <tr><td class="tdk">#audit_cols</td><td style="color:var(--t3);font-size:10px">src_s,src_t,tgt_s,tgt_t</td><td style="color:var(--t3);font-size:10px">COLMAP: GG_OP_TYPE, GG_COMMIT_TS, GG_EXTRACT_NM, GG_TRAIL_SEQ</td></tr>
+          <tr><td class="tdk">#active_filter</td><td style="color:var(--t3);font-size:10px">status_col</td><td style="color:var(--t3);font-size:10px">FILTER (status_col = 'ACTIVE')</td></tr>
+          <tr><td class="tdk">#scd2_stamp</td><td style="color:var(--t3);font-size:10px">(none)</td><td style="color:var(--t3);font-size:10px">COLMAP: EFF_START_DATE, EFF_END_DATE='9999-12-31', IS_CURRENT='Y'</td></tr>
+          <tr><td class="tdk">#lakehouse_partition</td><td style="color:var(--t3);font-size:10px">(none)</td><td style="color:var(--t3);font-size:10px">COLMAP: PART_YEAR, PART_MONTH, PART_DAY from commit TS</td></tr>
+          <tr><td class="tdk">#table_map_pair</td><td style="color:var(--t3);font-size:10px">src_s,tgt_s,tname</td><td style="color:var(--t3);font-size:10px">TABLE src_s.tname; MAP src_s.tname, TARGET tgt_s.tname;</td></tr>
+          <tr><td class="tdk">#vector_tag</td><td style="color:var(--t3);font-size:10px">(none)</td><td style="color:var(--t3);font-size:10px">COLMAP: VECTOR_PENDING='Y', LAST_CDC_TS from commit TS</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="cd" style="background:var(--src)"></div><div class="ct">Common Errors & Fixes</div></div>
+        <div class="ib warn"><strong>Macro not found: #name</strong>INCLUDE or DEFINE must appear before CALL — GG parses top-to-bottom.</div>
+        <div class="ib warn"><strong>Parameter count mismatch</strong>CALL arg count must exactly match PARAMS count.</div>
+        <div class="ib warn"><strong>No substitution occurring</strong>Check &amp; prefix — without it, text is literal not a parameter.</div>
+        <div class="ib good"><strong>Debug: VIEW PARAMS groupname</strong>Shows fully expanded parameter file in GGSCI.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  <div class="fl2">Oracle GoldenGate Macros Simulator • <span>GoldenGate Learning Hub</span> • Oracle 19c → Oracle 26ai</div>
+  <div class="fr"><span class="fv">v2.0.0 — Live Simulator Edition</span><span class="fvrk">Made by VRK</span></div>
+</div>
+<script>
+function showTab(n,btn){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');btn.classList.add('active');}
+function tog(el){el.classList.toggle('on');}
+function cpC(btn){const pre=btn.closest('.cb').querySelector('pre');navigator.clipboard.writeText(pre.innerText).then(()=>{btn.textContent='COPIED!';btn.classList.add('ok');setTimeout(()=>{btn.textContent='COPY';btn.classList.remove('ok');},2000);});}
+
+/* PIPELINE HIGHLIGHT */
+const HLD={
+  src:{c:'var(--src)',t:'🗄️ Source Oracle 19c (ORCL19C)',b:'Oracle 19c is the capture source. Integrated Extract registers as a LogMiner mining client via REGISTER EXTRACT ... DATABASE. Supplemental logging must be enabled at DB and table level. The mining user needs LOGMINING and SELECT ANY TABLE privileges. Oracle 19c LogMiner provides efficient redo-based capture with sub-second latency.'},
+  ext:{c:'var(--ext)',t:'⚙️ Integrated Extract (EXTE1)',b:'Reads LCRs from Oracle 19c redo logs without touching data blocks. The .prm uses INCLUDE to load gg_macros.mac, then CALL #macroname per TABLE clause. TRANLOGOPTIONS INTEGRATEDPARAMS (MAX_SGA_SIZE 256) tunes LogMiner SGA. All macros expand at startup — VIEW PARAMS shows the expanded output.'},
+  mac:{c:'var(--mac)',t:'🔧 Macro Library (gg_macros.mac)',b:'Shared DEFINE MACRO library holding: #audit_cols, #active_filter, #table_map_pair, #scd2_stamp, #lakehouse_partition, #vector_tag. Both Extract and Replicat INCLUDE this file. Macros are text-substituted at startup — parameters use & prefix. VIEW PARAMS in GGSCI shows the fully expanded result.'},
+  tra:{c:'var(--g4)',t:'📁 Trail Files (./dirdat/ea)',b:'GoldenGate binary canonical format. Each record contains: operation type, commit TS, transaction ID, before/after column images. FORMAT RELEASE 12.3 enables full column metadata required for Parallel Replicat and Oracle 26ai targets. Both REPO1 (26ai) and REPLK1 (Lakehouse) read the same trail file concurrently.'},
+  rep:{c:'var(--rep)',t:'🔄 Non-Integrated Parallel Replicat (REPO1 + REPLK1)',b:'ADD REPLICAT ... NONINTEGRATED PARALLEL. PARALLELISM N creates N applier threads sharing a coordinator. Applies DML directly via OCI without Oracle\'s apply server — ideal for 26ai and heterogeneous lakehouse targets. Macros inject #vector_tag (AI pipeline), #scd2_stamp (history), #audit_cols (lineage) per MAP.'},
+  tgt:{c:'var(--tgt)',t:'🏦 Oracle 26ai Target (ORA26AI)',b:'Oracle 26ai adds native VECTOR columns, JSON Relational Duality Views, and AI Optimizer integration. The #vector_tag macro marks CDC rows with VECTOR_PENDING=\'Y\' — a Scheduler job calls DBMS_VECTOR.EMBED() on changed rows, enabling real-time RAG pipelines sourced from Oracle 19c OLTP via GoldenGate.'},
+  lk:{c:'var(--lake)',t:'🏞️ Data Lakehouse (Iceberg / Parquet / ADLS Gen2)',b:'A second Replicat (REPLK1) reads the same trail concurrently and delivers to Apache Iceberg tables. The #lakehouse_partition macro injects PART_YEAR, PART_MONTH, PART_DAY — these become Iceberg partition fields enabling efficient time-range query pruning on analytical workloads.'}
+};
+function hlN(k){const h=HLD[k];if(!h)return;const p=document.getElementById('hlp');p.style.display='block';p.innerHTML=`<div class="hlt" style="color:${h.c}">${h.t}</div><div class="hlb">${h.b}</div>`;p.scrollIntoView({behavior:'smooth',block:'nearest'});}
+
+/* LIVE SIMULATOR */
+let running=false,simTmr=null,tick=0,totOps=0,totMac=0,totApp=0,fault=false;
+const SCEN={
+  std:{macros:['#audit_cols','#active_filter'],tps:250,par:4},
+  bulk:{macros:['#audit_cols','#table_map_pair'],tps:800,par:8},
+  ai:{macros:['#audit_cols','#vector_tag'],tps:150,par:4},
+  lake:{macros:['#audit_cols','#lakehouse_partition','#scd2_stamp'],tps:500,par:8}
+};
+function applyScen(){const s=SCEN[document.getElementById('simsc').value];document.getElementById('tpssl').value=s.tps;document.getElementById('tpsv').textContent=s.tps;document.getElementById('parsl').value=s.par;document.getElementById('parv').textContent=s.par;document.getElementById('caud').checked=s.macros.includes('#audit_cols');document.getElementById('cvec').checked=s.macros.includes('#vector_tag');document.getElementById('clk').checked=s.macros.includes('#lakehouse_partition');document.getElementById('cscd').checked=s.macros.includes('#scd2_stamp');document.getElementById('cflt').checked=s.macros.includes('#active_filter');if(running){stopSim();setTimeout(startSim,300);}}
+function getMacros(){const m=[];if(document.getElementById('caud').checked)m.push('#audit_cols');if(document.getElementById('cflt').checked)m.push('#active_filter');if(document.getElementById('cscd').checked)m.push('#scd2_stamp');if(document.getElementById('cvec').checked)m.push('#vector_tag');if(document.getElementById('clk').checked)m.push('#lakehouse_partition');return m;}
+function startSim(){if(running)return;running=true;fault=false;tick=0;
+  setP('mgr','running','RUNNING');
+  setTimeout(()=>{setP('ext','running','RUNNING');addLog('ext','EXTE1','Integrated Extract started — source: <lv>ORACLE 19C</lv>');
+    addLog('ext','EXTE1','LogMiner registered on ORCL19C — trail: <lv>./dirdat/ea</lv>');
+    loadMacros();
+    setTimeout(()=>{setP('rep','running','RUNNING');setP('lk','running','RUNNING');
+      addLog('rep','REPO1','NI Parallel Replicat started — target: <lv>ORACLE 26AI</lv>');
+      const par=document.getElementById('parsl').value;
+      addLog('rep','REPO1','Parallelism: <lv>'+par+'</lv> applier threads active');
+      addLog('rep','REPLK1','Lakehouse Replicat started — target: <lv>ICEBERG/PARQUET</lv>');
+      simTmr=setInterval(doTick,1000);},600);},400);}
+
+const MEXP={
+  '#audit_cols':`DEFINE MACRO #audit_cols PARAMS(&src_s,&src_t,&tgt_s,&tgt_t)\nBEGIN\n  COLMAP(\n    USEDEFAULTS,\n    GG_OP_TYPE    = @GETENV('LASTERR','DMLTYPE'),\n    GG_COMMIT_TS = @GETENV('GGHEADER','COMMITTIMESTAMP'),\n    GG_EXTRACT_NM= @GETENV('GGENVIRONMENT','GROUPNAME')\n  )\nEND;`,
+  '#active_filter':`DEFINE MACRO #active_filter PARAMS(&status_col)\nBEGIN\n  FILTER (&status_col = 'ACTIVE')\nEND;`,
+  '#scd2_stamp':`DEFINE MACRO #scd2_stamp\nBEGIN\n  COLMAP(\n    USEDEFAULTS,\n    EFF_START_DATE=@GETENV('GGHEADER','COMMITTIMESTAMP'),\n    EFF_END_DATE='9999-12-31', IS_CURRENT='Y'\n  )\nEND;`,
+  '#vector_tag':`DEFINE MACRO #vector_tag\nBEGIN\n  COLMAP(\n    USEDEFAULTS,\n    VECTOR_PENDING='Y',\n    LAST_CDC_TS=@GETENV('GGHEADER','COMMITTIMESTAMP')\n  )\nEND;`,
+  '#lakehouse_partition':`DEFINE MACRO #lakehouse_partition\nBEGIN\n  COLMAP(\n    USEDEFAULTS,\n    PART_YEAR=@YEAR(@GETENV('GGHEADER','COMMITTIMESTAMP')),\n    PART_MONTH=@MONTH(@GETENV('GGHEADER','COMMITTIMESTAMP')),\n    PART_DAY=@DAY(@GETENV('GGHEADER','COMMITTIMESTAMP'))\n  )\nEND;`
+};
+function loadMacros(){const ms=getMacros();document.getElementById('evc').textContent=ms.length+' macros loaded';document.getElementById('evb').textContent=ms.map(m=>MEXP[m]||m).join('\n\n')||'No macros selected.';ms.forEach(m=>addLog('mac','MACRO','Expanded: <lv>'+m+'</lv> → ready'));}
+
+function doTick(){tick++;
+  const tps=parseInt(document.getElementById('tpssl').value);
+  const par=parseInt(document.getElementById('parsl').value);
+  const ms=getMacros();
+  const ops=Math.floor(tps*(0.8+Math.random()*0.4));
+  const app=fault?0:Math.floor(ops*(0.85+Math.random()*0.1));
+  const lag=fault?Math.floor(30+Math.random()*60):Math.max(0,Math.floor((ops-app)/50));
+  totOps+=ops;totMac+=ms.length*Math.floor(ops/8);totApp+=app;
+  document.getElementById('svops').textContent=ops.toLocaleString();
+  document.getElementById('svmac').textContent=totMac.toLocaleString();
+  document.getElementById('svapp').textContent=fault?'0':app.toLocaleString();
+  document.getElementById('svlag').textContent=lag+'s';
+  document.getElementById('svlag').style.color=lag>10?'var(--src)':lag>3?'var(--ext)':'var(--tgt)';
+  document.getElementById('tsize').textContent=(totOps*0.0004).toFixed(1)+' MB';
+  if(!fault){['ae','am','at2'].forEach(id=>{const a=document.getElementById(id);if(a)a.className='sarr fl';});const ar=document.getElementById('ar');if(ar)ar.className='sarr flr';['atg','alk'].forEach(id=>{const a=document.getElementById(id);if(a)a.className='sarr flt';});}
+  document.getElementById('sext').textContent=ops+'/s · '+tps+' TPS';
+  document.getElementById('smac').textContent=ms.length+' macros active';
+  document.getElementById('srep').textContent=par+' threads · '+app+'/s';
+  if(!fault){document.getElementById('stgt').textContent='lag: '+lag+'s';document.getElementById('slk').textContent='Iceberg lag: '+lag+'s';}
+  const tbls=['HR.EMPLOYEES','HR.DEPARTMENTS','OE.ORDERS','OE.ORDER_ITEMS'];
+  const ops2=['INSERT','UPDATE','DELETE'];
+  if(tick%3===0&&!fault)addLog('rep','REPO1',ops2[Math.floor(Math.random()*3)]+' → <lv>'+tbls[Math.floor(Math.random()*tbls.length)]+'</lv> [26ai · '+par+' threads]');
+  if(tick%5===0&&ms.includes('#vector_tag')&&!fault)addLog('tgt','ORA26AI','VECTOR_PENDING=Y set → <lv>DBMS_VECTOR.EMBED()</lv> queued');
+  if(tick%7===0&&ms.includes('#lakehouse_partition')&&!fault){const d=new Date();addLog('tgt','LAKE','Iceberg partition <lv>'+d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'</lv> updated');}
+  if(tick%8===0)addLog('ext','EXTE1','Trail: <lv>./dirdat/ea</lv> → '+document.getElementById('tsize').textContent);}
+
+function injectFault(){if(!running){addLog('sys','SYS','Start simulator first.');return;}
+  fault=true;setP('rep','abended','ABENDED');
+  ['ar','atg','alk'].forEach(id=>{const a=document.getElementById(id);if(a)a.className='sarr';});
+  document.getElementById('srep').textContent='ABENDED';document.getElementById('stgt').textContent='lag ↑↑';document.getElementById('slk').textContent='STOPPED';
+  addLog('err','REPO1','ERROR 1403 — ORA-01403: no data found in <lv>HR.EMPLOYEES</lv>');
+  addLog('err','REPO1','Replicat ABENDED — check <lv>dirrpt/REPO1.rpt</lv>');
+  setTimeout(()=>{fault=false;setP('rep','running','RUNNING');addLog('rep','REPO1','Replicat restarted — recovering from checkpoint...');addLog('mac','MACRO','Macro library reloaded: <lv>'+getMacros().length+'</lv> macros active');['ar','atg','alk'].forEach(id=>{const a=document.getElementById(id);if(a)a.className=id==='ar'?'sarr flr':'sarr flt';});},4000);}
+
+function stopSim(){if(!running)return;running=false;if(simTmr)clearInterval(simTmr);
+  ['mgr','ext','rep','lk'].forEach(p=>setP(p,'stopped','STOPPED'));
+  ['ae','am','at2','ar','atg','alk'].forEach(id=>{const a=document.getElementById(id);if(a)a.className='sarr';});
+  ['sext','smac','srep','stgt','slk'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='STOPPED';});
+  ['svops','svapp'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('svlag').textContent='0s';addLog('sys','SYS','All processes stopped.');
+  totOps=0;totMac=0;totApp=0;}
+
+function setP(n,st,lb){const pp=document.getElementById('p'+n),dd=document.getElementById('d'+n),ll=document.getElementById('l'+n);if(!pp)return;pp.className='pp '+st;dd.className='pst '+(st==='running'?'prun':st==='abended'?'pabn':'psto');ll.textContent=lb;}
+let logC=0;
+function addLog(type,src,msg){const b=document.getElementById('simlog');const now=new Date();const ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');const cm={ext:'lext',rep:'lrep',mac:'lmac',tgt:'ltgt',err:'lerr',sys:'lsys'};const d=document.createElement('div');d.className='le';d.innerHTML=`<span class="ltm">${ts}</span><span class="${cm[type]||'lsys'}">${src.padEnd(8)}</span><span class="lmsg">${msg.replace(/<lv>/g,'<span class="lv">').replace(/<\/lv>/g,'</span>')}</span>`;b.appendChild(d);b.scrollTop=b.scrollHeight;logC++;if(logC>200){b.removeChild(b.firstChild);logC--;}}
+function clearLog(){document.getElementById('simlog').innerHTML='';logC=0;addLog('sys','SYS','Log cleared.');}
+
+/* SCENARIOS */
+const SCS=[
+  {html:`<div class="ch"><div class="cd" style="background:var(--tgt)"></div><div class="ct">Oracle 26ai AI Vector Pipeline — #vector_tag</div></div><p style="font-size:12px;color:var(--t2);margin-bottom:12px">Each changed row replicated to Oracle 26ai is stamped VECTOR_PENDING='Y' by the #vector_tag macro. A Scheduler job calls DBMS_VECTOR.EMBED() on flagged rows — keeping 26ai vector indexes in sync with Oracle 19c OLTP changes in real time.</p><div class="cb"><div class="cbh"><span class="cfn">dirprm/<span>REPO1.prm — 26ai vector pipeline</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div><pre><span class="kw3">REPLICAT</span> <span class="val">REPO1</span>
+<span class="kw">INCLUDE</span> <span class="st">./dirprm/gg_macros.mac</span>
+<span class="kw2">MAP</span> <span class="val">HR.EMPLOYEES</span>, TARGET <span class="val">HR.EMPLOYEES</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">HR</span>,<span class="val">EMPLOYEES</span>,<span class="val">HR</span>,<span class="val">EMPLOYEES</span>),
+  <span class="kw">CALL</span> <span class="mc">#vector_tag</span>;
+<span class="kw2">MAP</span> <span class="val">OE.ORDERS</span>, TARGET <span class="val">OE.ORDERS</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">OE</span>,<span class="val">ORDERS</span>,<span class="val">OE</span>,<span class="val">ORDERS</span>),
+  <span class="kw">CALL</span> <span class="mc">#vector_tag</span>;</pre></div><div class="ib tip"><strong>Oracle 26ai:</strong> VECTOR_PENDING='Y' + DBMS_VECTOR.EMBED() + LAST_CDC_TS watermark = real-time RAG search powered by GoldenGate CDC from Oracle 19c.</div>`},
+  {html:`<div class="ch"><div class="cd" style="background:var(--mac)"></div><div class="ct">SCD Type 2 — Oracle 19c → 26ai History</div></div><p style="font-size:12px;color:var(--t2);margin-bottom:12px">Every change on HR.EMPLOYEES in 19c replicates to both the current table AND a history table. #scd2_stamp stamps EFF_START_DATE from the GoldenGate commit timestamp automatically.</p><div class="cb"><div class="cbh"><span class="cfn">dirprm/<span>REPO1.prm — SCD2</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div><pre><span class="kw3">REPLICAT</span> <span class="val">REPO1</span>
+<span class="kw">INCLUDE</span> <span class="st">./dirprm/gg_macros.mac</span>
+<span class="kw2">MAP</span> <span class="val">HR.EMPLOYEES</span>, TARGET <span class="val">HR.EMPLOYEES</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">HR</span>,<span class="val">EMPLOYEES</span>,<span class="val">HR</span>,<span class="val">EMPLOYEES</span>);
+<span class="kw2">MAP</span> <span class="val">HR.EMPLOYEES</span>, TARGET <span class="val">DW.EMP_HISTORY</span>,
+  <span class="kw">CALL</span> <span class="mc">#scd2_stamp</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">HR</span>,<span class="val">EMPLOYEES</span>,<span class="val">DW</span>,<span class="val">EMP_HISTORY</span>);</pre></div>`},
+  {html:`<div class="ch"><div class="cd" style="background:var(--lake)"></div><div class="ct">Real-Time Lakehouse — #lakehouse_partition</div></div><p style="font-size:12px;color:var(--t2);margin-bottom:12px">OE transactions stream from 19c to Apache Iceberg tables. #lakehouse_partition injects PART_YEAR, PART_MONTH, PART_DAY — Iceberg partition fields enabling time-range query pruning.</p><div class="cb"><div class="cbh"><span class="cfn">dirprm/<span>REPLK1.prm — Iceberg</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div><pre><span class="kw3">REPLICAT</span> <span class="val">REPLK1</span>
+<span class="kw">INCLUDE</span> <span class="st">./dirprm/gg_macros.mac</span>
+<span class="kw2">MAP</span> <span class="val">OE.ORDERS</span>, TARGET <span class="val">LAKE.ORDERS</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">OE</span>,<span class="val">ORDERS</span>,<span class="val">LAKE</span>,<span class="val">ORDERS</span>),
+  <span class="kw">CALL</span> <span class="mc">#lakehouse_partition</span>;
+<span class="kw2">MAP</span> <span class="val">OE.ORDER_ITEMS</span>, TARGET <span class="val">LAKE.ORDER_ITEMS</span>,
+  <span class="kw">CALL</span> <span class="mc">#audit_cols</span>(<span class="val">OE</span>,<span class="val">ORDER_ITEMS</span>,<span class="val">LAKE</span>,<span class="val">ORDER_ITEMS</span>),
+  <span class="kw">CALL</span> <span class="mc">#lakehouse_partition</span>;</pre></div>`},
+  {html:`<div class="ch"><div class="cd" style="background:var(--g5)"></div><div class="ct">Bulk 50+ Tables — #table_map_pair Efficiency</div></div><p style="font-size:12px;color:var(--t2);margin-bottom:12px">Without macros: each table needs TABLE + MAP + COLMAP = 5-8 lines. With #table_map_pair: 1 line. 50 tables = 50 lines. Combine with #audit_cols in Replicat for consistent metadata across all tables.</p><div class="cb"><div class="cbh"><span class="cfn">dirprm/<span>EXTE1.prm — bulk</span></span><button class="cp2" onclick="cpC(this)">COPY</button></div><pre><span class="kw3">EXTRACT</span> <span class="val">EXTE1</span>
+<span class="kw">INCLUDE</span> <span class="st">./dirprm/gg_macros.mac</span>
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span>(<span class="val">HR</span>,<span class="val">HR</span>,<span class="val">EMPLOYEES</span>)
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span>(<span class="val">HR</span>,<span class="val">HR</span>,<span class="val">DEPARTMENTS</span>)
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span>(<span class="val">OE</span>,<span class="val">OE</span>,<span class="val">ORDERS</span>)
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span>(<span class="val">OE</span>,<span class="val">OE</span>,<span class="val">ORDER_ITEMS</span>)
+<span class="kw">CALL</span> <span class="mc">#table_map_pair</span>(<span class="val">INV</span>,<span class="val">INV</span>,<span class="val">PRODUCTS</span>)
+<span class="cm">-- ... 45 more lines for 50 tables total</span></pre></div>`}
+];
+function selSc(el,i){document.querySelectorAll('.scc').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');document.getElementById('sccon').innerHTML=SCS[i].html;const d=document.getElementById('scd2');d.style.display='block';d.scrollIntoView({behavior:'smooth',block:'nearest'});}
+
+/* PLAYGROUND */
+const MDEFS={
+  audit_cols:{p:['src_s','src_t','tgt_s','tgt_t'],b:`  COLMAP (\n    USEDEFAULTS,\n    GG_OP_TYPE     = @GETENV ('LASTERR',       'DMLTYPE'),\n    GG_COMMIT_TS  = @GETENV ('GGHEADER',      'COMMITTIMESTAMP'),\n    GG_EXTRACT_NM = @GETENV ('GGENVIRONMENT', 'GROUPNAME'),\n    GG_TRAIL_SEQ  = @GETENV ('GGHEADER',      'LOGRBA')\n  )`},
+  active_filter:{p:['status_col'],b:`  FILTER (&status_col = 'ACTIVE')`},
+  scd2_stamp:{p:[],b:`  COLMAP (\n    USEDEFAULTS,\n    EFF_START_DATE = @GETENV('GGHEADER', 'COMMITTIMESTAMP'),\n    EFF_END_DATE   = '9999-12-31',\n    IS_CURRENT     = 'Y'\n  )`},
+  lakehouse_partition:{p:[],b:`  COLMAP (\n    USEDEFAULTS,\n    PART_YEAR  = @YEAR(@GETENV('GGHEADER','COMMITTIMESTAMP')),\n    PART_MONTH = @MONTH(@GETENV('GGHEADER','COMMITTIMESTAMP')),\n    PART_DAY   = @DAY(@GETENV('GGHEADER','COMMITTIMESTAMP'))\n  )`},
+  table_map_pair:{p:['src_s','tgt_s','tname'],b:`  TABLE  &src_s.&tname;\n  MAP    &src_s.&tname, TARGET &tgt_s.&tname;`},
+  vector_tag:{p:[],b:`  COLMAP (\n    USEDEFAULTS,\n    VECTOR_PENDING = 'Y',\n    LAST_CDC_TS    = @GETENV('GGHEADER','COMMITTIMESTAMP')\n  )`}
+};
+function expandMacros(){const inp=document.getElementById('pgin').value;let res='',errs=[];
+  for(let line of inp.split('\n')){const tr=line.trim();
+    if(/^INCLUDE\s+/i.test(tr)){res+=line+'  -- [macros loaded: #audit_cols #active_filter #scd2_stamp #lakehouse_partition #table_map_pair #vector_tag]\n';continue;}
+    const m=tr.match(/^CALL\s+#(\w+)\s*(?:\(([^)]*)\))?[;,]?\s*(?:--.*)?$/i);
+    if(m){const nm=m[1],astr=m[2]?m[2].trim():'';const args=astr?astr.split(',').map(a=>a.trim()):[];const mac=MDEFS[nm];const ind=line.match(/^\s*/)[0];
+      if(!mac){res+=line+'  -- [ERROR: #'+nm+' not found]\n';errs.push(nm);continue;}
+      if(mac.p.length&&args.length!==mac.p.length){res+=line+'  -- [ERROR: expected '+mac.p.length+' args, got '+args.length+']\n';errs.push(nm);continue;}
+      let body=mac.b;for(let i=0;i<mac.p.length;i++)body=body.split('&'+mac.p[i]).join(args[i]||'');
+      res+=ind+'-- ↓ EXPANDED: CALL #'+nm+(astr?'('+astr+')':'')+'\n';res+=body.split('\n').map(l=>ind+l).join('\n')+'\n';continue;}
+    res+=line+'\n';}
+  document.getElementById('pgout').textContent=res;document.getElementById('sdot').className='sdot '+(errs.length?'err':'ok');}
+function clearPg(){document.getElementById('pgin').value='';document.getElementById('pgout').textContent='Cleared.';document.getElementById('sdot').className='sdot idle';}
+function loadEx(){document.getElementById('pgin').value=`EXTRACT EXTE1\nUSERID ggadmin@ORCL19C, PASSWORD Welcome1\nEXTTRAIL ./dirdat/ea\n\nINCLUDE ./dirprm/gg_macros.mac\n\nCALL #table_map_pair (HR, HR, EMPLOYEES)\nCALL #table_map_pair (OE, DW, ORDERS)\nCALL #table_map_pair (INV, INV, PRODUCTS)`;document.getElementById('pgout').textContent='Example loaded — click Expand Macros.';document.getElementById('sdot').className='sdot idle';}
+</script>
+</body>
+</html>
