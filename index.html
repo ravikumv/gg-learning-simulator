@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
-  Oracle GoldenGate Interactive Learning Simulator — Landing Dashboard
-  Owner: Ravikumar Vasudevan | Version: 1.0.1
+  Oracle GoldenGate Interactive Technical Simulator — Landing Dashboard
+  Author: Ravikumar Vasudevan | Version: 2.0
   Neutral slate/indigo light theme — white background, no Oracle Redwood styling.
   Self-contained, no external CDN dependencies. Links to four learning modules.
 -->
@@ -10,8 +10,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="author" content="Ravikumar Vasudevan"/>
-<meta name="version" content="1.0.1"/>
-<title>Oracle GoldenGate Interactive Learning Simulator</title>
+<meta name="version" content="2.0"/>
+<title>Oracle GoldenGate Interactive Technical Simulator</title>
 <style>
   :root{
     --bg:#FFFFFF;
@@ -23,10 +23,10 @@
     --text:#1A1D22;
     --dim:#5B6472;
     --dimmer:#8A90A0;
-    --red:#4F46E5;
-    --red-dark:#3E37B8;
-    --red-light:#EEECFD;
-    --red-glow:rgba(79,70,229,.14);
+    --red:#C74634;
+    --red-dark:#A83A2A;
+    --red-light:#FDECEA;
+    --red-glow:rgba(199,70,52,.14);
     --amber:#B45309;
     --amber-bg:#FEF3C7;
     --amber-border:#FCD34D;
@@ -45,6 +45,15 @@
     --orange:#C2410C;
     --orange-bg:#FDECE1;
     --orange-border:#F5C5A0;
+    --cyan:#0891B2;
+    --cyan-bg:#E3F5F8;
+    --cyan-border:#A9E0E9;
+    --rose:#BE185D;
+    --rose-bg:#FCE7F0;
+    --rose-border:#F3B8D3;
+    --sky:#2563EB;
+    --sky-bg:#EAF1FE;
+    --sky-border:#B8D0FC;
     --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
     --disp:-apple-system,'Segoe UI Semibold','Avenir Next',ui-sans-serif,system-ui,sans-serif;
     --body:-apple-system,'Segoe UI',ui-sans-serif,system-ui,sans-serif;
@@ -90,9 +99,10 @@
   .stat b{font-family:var(--disp);font-size:16px;color:var(--text);font-weight:700;}
 
   /* ---------- MODULE GRID ---------- */
-  .grid-wrap{max-width:1180px;margin:0 auto;padding:32px 32px 60px;}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;}
-  @media (max-width:860px){.grid{grid-template-columns:1fr;}}
+  .grid-wrap{max-width:1360px;margin:0 auto;padding:32px 32px 60px;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  @media (max-width:1100px){.grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:700px){.grid{grid-template-columns:1fr;}}
 
   .card{
     background:var(--panel);border:1px solid var(--border);border-radius:14px;
@@ -117,6 +127,9 @@
   .icon.macros{background:var(--purple-bg);color:var(--purple);}
   .icon.agent{background:var(--blue-bg);color:var(--blue);}
   .icon.restapi{background:var(--orange-bg);color:var(--orange);}
+  .icon.hadr{background:var(--cyan-bg);color:var(--cyan);}
+  .icon.avdf{background:var(--rose-bg);color:var(--rose);}
+  .icon.ocigg{background:var(--sky-bg);color:var(--sky);}
 
   .card .module-no{
     font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
@@ -160,6 +173,9 @@
   .card.macros .card-head{border-top:3px solid var(--purple);}
   .card.agent .card-head{border-top:3px solid var(--blue);}
   .card.restapi .card-head{border-top:3px solid var(--orange);}
+  .card.hadr .card-head{border-top:3px solid var(--cyan);}
+  .card.avdf .card-head{border-top:3px solid var(--rose);}
+  .card.ocigg .card-head{border-top:3px solid var(--sky);}
 
   /* ---------- FOOTER ---------- */
   footer{
@@ -177,24 +193,24 @@
     <div class="brand">
       <div class="mark">GG</div>
       <div class="titles">
-        <h1>Oracle GoldenGate Interactive Learning Simulator</h1>
+        <h1>Oracle GoldenGate Interactive Technical Simulator</h1>
         <p>Hands-on module dashboard · Extract, Replicat &amp; Trail File Concepts</p>
       </div>
     </div>
-    <div class="topbar-meta">v1.0.1 · Owner: Ravikumar Vasudevan</div>
+    <div class="topbar-meta">v2.0 · Author: Ravikumar Vasudevan</div>
   </div>
 </header>
 
 <section class="hero">
   <p class="eyebrow">Module Dashboard</p>
-  <h2>Choose a learning module to begin</h2>
-  <p class="lead">Four self-contained interactive simulators covering core Oracle GoldenGate concepts — from
+  <h2>Choose a technical module to begin</h2>
+  <p class="lead">A self-contained interactive simulators covering core Oracle GoldenGate concepts — from
   supplemental logging fundamentals through mining database topologies, multi-cloud deployment, and
   medallion-architecture data lake house delivery. Each module opens independently in a new page.</p>
 </section>
 
 <div class="stats">
-  <div class="stat">📦 <b>8</b> Modules</div>
+  <div class="stat">📦 <b>11</b> Modules</div>
   <div class="stat">🧪 <b>Interactive</b> Simulators</div>
   <div class="stat">🎨 <b>Self-Contained</b> HTML</div>
 </div>
@@ -216,14 +232,14 @@
         captures before/after column images from redo via LogMiner, and why supplemental logging is the
         foundation of reliable Extract capture.</p>
         <div class="tag-row">
+          <span class="tag">Supplemental Logging</span>
           <span class="tag">ADD TRANDATA</span>
           <span class="tag">LogMiner</span>
           <span class="tag">Demo Mode</span>
         </div>
       </div>
       <div class="card-foot">
-        <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/gg_supplemental_logging_simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
-        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/gg_supplemental_logging_simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -247,8 +263,7 @@
         </div>
       </div>
       <div class="card-foot">
-        <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/GoldenGate_OptionA_OptionB_Simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
-        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/GoldenGate_OptionA_OptionB_Simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -272,8 +287,7 @@
         </div>
       </div>
       <div class="card-foot">
-        <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/gg-databaseAzure-replication-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
-        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/gg-databaseAzure-replication-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -283,7 +297,7 @@
         <div class="icon lakehouse">🏞️</div>
         <div>
           <p class="module-no">Module 04 · Architecture</p>
-          <h3>GoldenGate Data Lake House</h3>
+          <h3>GoldenGate Data Lake House (Medallion Architecture)</h3>
         </div>
       </div>
       <div class="card-body">
@@ -297,8 +311,7 @@
         </div>
       </div>
       <div class="card-foot">
-        <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/Oracle_GoldenGate_for_Medallion_Architecture_Dashboard.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
-        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/Oracle_GoldenGate_for_Medallion_Architecture_Dashboard.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -322,8 +335,7 @@
         </div>
       </div>
       <div class="card-foot">
-        <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/gg-bidirectional-acdr-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
-        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/gg-bidirectional-acdr-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -347,8 +359,7 @@
         </div>
       </div>
       <div class="card-foot">
-        <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/gg-macros-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
-        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/gg-macros-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -372,8 +383,7 @@
         </div>
       </div>
       <div class="card-foot">
-        <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/gg-agent-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
-        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/gg-agent-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -397,8 +407,79 @@
         </div>
       </div>
       <div class="card-foot">
-        <a class="btn-open" href="https://ravikumv.github.io/gg-learning-simulator/goldengate-restapi-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
-        <span class="btn-download disabled">⬇ Open Offline (Coming Soon)</span>
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/goldengate-restapi-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- Module 9: HA & DR -->
+    <div class="card hadr">
+      <div class="card-head">
+        <div class="icon hadr">🛡️</div>
+        <div>
+          <p class="module-no">Module 09 · Resilience</p>
+          <h3>GoldenGate HA &amp; DR</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Understand how GoldenGate supports High Availability and Disaster Recovery — Extract/Replicat
+        checkpoint recovery, trail file resilience, and coordinated failover with standby databases to
+        keep replication continuous through outages.</p>
+        <div class="tag-row">
+          <span class="tag">Checkpoint Recovery</span>
+          <span class="tag">Failover</span>
+          <span class="tag">Trail Resilience</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/gg-ha-dr-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- Module 10: AVDF -->
+    <div class="card avdf">
+      <div class="card-head">
+        <div class="icon avdf">🔒</div>
+        <div>
+          <p class="module-no">Module 10 · Security</p>
+          <h3>GoldenGate AVDF</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Explore integration between GoldenGate and Oracle Audit Vault &amp; Database Firewall —
+        capturing audit trail data, monitoring database activity, and enforcing security policies across
+        replicated environments.</p>
+        <div class="tag-row">
+          <span class="tag">Audit Vault</span>
+          <span class="tag">Database Firewall</span>
+          <span class="tag">Compliance</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/gg-avdf-transaction-log-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- Module 11: OCI GoldenGate Service -->
+    <div class="card ocigg">
+      <div class="card-head">
+        <div class="icon ocigg">🌐</div>
+        <div>
+          <p class="module-no">Module 11 · Cloud Service</p>
+          <h3>OCI GoldenGate Service</h3>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Walk through the fully managed OCI GoldenGate service — deployment provisioning, connection
+        management, and how the managed control plane handles Extract/Replicat lifecycle without manual
+        infrastructure upkeep.</p>
+        <div class="tag-row">
+          <span class="tag">Managed Deployment</span>
+          <span class="tag">Connections</span>
+          <span class="tag">Control Plane</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a class="btn-open" href="https://ravikumv.github.io/gg-technical-simulator/oci-goldengate-service-simulator.html" target="_blank" rel="noopener">Open Online <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -406,8 +487,8 @@
 </div>
 
 <footer>
-  <span>Oracle GoldenGate Interactive Learning Simulator · v1.0.1</span>
-  <span>Owner: Ravikumar Vasudevan</span>
+  <span>Oracle GoldenGate Interactive Technical Simulator · v2.0</span>
+  <span>Author: Ravikumar Vasudevan</span>
 </footer>
 
 </body>
