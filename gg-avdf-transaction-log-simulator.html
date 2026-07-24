@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Ravikumar Vasudevan">
+<meta name="contact" content="ravikumar.v.v@oracle.com">
+<title>Oracle GoldenGate for AVDF Simulator | Concept, Architecture, Internals &amp; Reporting</title>
+<style>
+  :root{
+    --redwood:#C74634;
+    --redwood-dark:#9C3327;
+    --ink:#1B1B1B;
+    --muted:#5F6368;
+    --line:#E3E1DD;
+    --bg:#FAF9F7;
+    --panel:#FFFFFF;
+    --ok:#2E7D32;
+    --warn:#B45309;
+    --primary-blue:#1B6FC9;
+    --standby-grey:#8A8D91;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);}
+  header{background:var(--ink);color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  header .title{display:flex;align-items:center;gap:12px;}
+  header .badge{background:var(--redwood);color:#fff;font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:4px;text-transform:uppercase;}
+  header h1{font-size:18px;margin:0;font-weight:600;}
+  header .sub{font-size:12px;color:#C9C9C9;margin-top:2px;}
+  nav{display:flex;gap:2px;background:#fff;border-bottom:2px solid var(--line);padding:0 20px;overflow-x:auto;position:sticky;top:0;z-index:20;}
+  nav button{border:none;background:transparent;padding:14px 16px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
+  nav button:hover{color:var(--ink);}
+  nav button.active{color:var(--redwood);border-bottom-color:var(--redwood);}
+  main{max-width:1180px;margin:0 auto;padding:22px 20px 60px;}
+  section.tab{display:none;}
+  section.tab.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  h2{font-size:20px;margin:4px 0 6px;}
+  p.lead{color:var(--muted);font-size:14px;margin:0 0 20px;max-width:820px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .card h3{margin:0 0 8px;font-size:14.5px;color:var(--redwood-dark);display:flex;align-items:center;gap:8px;}
+  .card p{margin:0;font-size:13px;color:var(--muted);line-height:1.55;}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:#F3E9E7;color:var(--redwood-dark);letter-spacing:.03em;margin-right:6px;margin-bottom:6px;}
+  .pill.blue{background:#E7F0FB;color:var(--primary-blue);}
+  .pill.grey{background:#EEEFEF;color:var(--muted);}
+  .pill.green{background:#E6F4EA;color:var(--ok);}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+  button.action{background:var(--redwood);color:#fff;border:none;padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
+  button.action:hover{background:var(--redwood-dark);}
+  button.action.secondary{background:#fff;color:var(--redwood);border:1.5px solid var(--redwood);}
+  button.action.secondary:hover{background:#FBEFED;}
+  button.action:disabled{opacity:.45;cursor:not-allowed;}
+  select.action-select{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;background:#fff;color:var(--ink);}
+  .canvas-wrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;}
+  .log{background:#111417;color:#D7F5DE;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;border-radius:8px;padding:12px 14px;height:150px;overflow-y:auto;margin-top:12px;line-height:1.6;}
+  .log .t{color:#7DA6FF;}
+  .log .w{color:#FFD479;}
+  .log .e{color:#FF8A80;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;background:#FAFAF9;}
+  td.mono, th.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;}
+  .note{background:#FFF7EA;border:1px solid #F1DDAF;color:#7A5A12;font-size:12.5px;padding:10px 14px;border-radius:8px;margin-top:14px;}
+  .region-box{border:2px solid var(--line);border-radius:12px;padding:14px;position:relative;}
+  .region-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;position:absolute;top:-11px;left:14px;background:var(--bg);padding:0 6px;}
+  .role-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;margin-top:6px;}
+  footer{text-align:center;font-size:11.5px;color:var(--muted);padding:20px;border-top:1px solid var(--line);}
+  a.back{color:var(--redwood);text-decoration:none;font-size:12.5px;font-weight:600;}
+  .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .status-chip{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;}
+  .status-chip.active{background:#E6F4EA;color:var(--ok);}
+  .status-chip.updating{background:#FFF3D6;color:var(--warn);}
+  .version-badge{background:rgba(255,255,255,.12);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid rgba(255,255,255,.25);white-space:nowrap;}
+  .version-badge:hover{background:rgba(255,255,255,.2);}
+  #changelogPanel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;max-width:1180px;margin:0 auto 24px;}
+  #changelogPanel.open{display:block;}
+  #changelogPanel h3{margin:0 0 10px;font-size:14px;color:var(--redwood-dark);}
+  .cl-entry{border-left:3px solid var(--redwood);padding:4px 0 4px 12px;margin-bottom:10px;}
+  .cl-entry .cl-ver{font-weight:700;font-size:13px;}
+  .cl-entry .cl-date{color:var(--muted);font-size:11.5px;margin-left:8px;}
+  .cl-entry ul{margin:4px 0 0;padding-left:18px;font-size:12.5px;color:var(--muted);}
+  .cl-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;}
+
+  /* AVDF-specific: stage boxes for the pipeline diagram (tab 1) */
+  .stagegrid{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:6px 2px 14px;}
+  .stagebox{min-width:170px;background:#F3E9E7;border:1px solid #EAD9D5;border-radius:10px;padding:12px;font-size:12px;display:flex;flex-direction:column;gap:4px;}
+  .stagebox .t{font-weight:700;color:var(--redwood-dark);font-size:12.5px;}
+  .stagebox .s{color:var(--muted);font-size:11px;line-height:1.35;}
+  .stagearrow{display:flex;align-items:center;justify-content:center;min-width:32px;color:var(--redwood);font-size:20px;font-weight:700;}
+
+  /* live pipeline nodes (tab 4) */
+  .liveflow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:6px;}
+  @media(max-width:1000px){.liveflow{grid-template-columns:repeat(2,1fr);}}
+  .node{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;min-height:118px;position:relative;}
+  .node .h{font-weight:700;font-size:12px;color:var(--redwood-dark);margin-bottom:4px;}
+  .node .m{font-size:11px;color:var(--muted);}
+  .node .metric{font-size:20px;font-weight:700;margin-top:6px;color:var(--ink);}
+  .pulse{position:absolute;top:8px;right:8px;width:9px;height:9px;border-radius:50%;background:#C9CCE0;}
+  .pulse.on{background:var(--ok);box-shadow:0 0 0 0 rgba(46,125,50,.6);animation:pulse 1s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,125,50,.55);}70%{box-shadow:0 0 0 8px rgba(46,125,50,0);}100%{box-shadow:0 0 0 0 rgba(46,125,50,0);}}
+  .bar{height:8px;border-radius:5px;background:#EEF0FA;overflow:hidden;margin-top:8px;}
+  .bar > div{height:100%;background:var(--warn);width:0%;transition:width .25s linear;}
+  .atc{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;background:#FBFBFA;border:1px dashed var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);}
+
+  /* xml + param code blocks */
+  pre.code{background:#111417;color:#D7F5DE;padding:14px 16px;border-radius:8px;font-size:12px;overflow-x:auto;line-height:1.55;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  pre.xml{background:#111417;color:#D8DCFB;padding:14px 16px;border-radius:8px;font-size:11.5px;max-height:340px;overflow:auto;line-height:1.6;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  .xtag{color:#7FB3FF;}
+  .xattr{color:#F2B65A;}
+  .xval{color:#9AE6B4;}
+  .xval.diff{color:#FF8A80;font-weight:700;}
+  .badge-op{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;}
+  .badge-op.INSERT{background:#E6F4EA;color:var(--ok);}
+  .badge-op.UPDATE{background:#FFF3D6;color:var(--warn);}
+  .badge-op.DELETE{background:#F3E9E7;color:var(--redwood-dark);}
+  .badge-op.DDL{background:#E7F0FB;color:var(--primary-blue);}
+  .keycol{background:#FFF3D6;border-radius:4px;padding:1px 4px;}
+  .stepline{display:flex;align-items:center;gap:8px;margin:14px 0;flex-wrap:wrap;}
+  .step{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);padding:6px 10px;border-radius:20px;border:1px solid var(--line);}
+  .step.done{color:var(--ok);border-color:var(--ok);background:#F0FBF6;}
+  .step.active{color:var(--redwood-dark);border-color:var(--redwood);background:#F3E9E7;font-weight:700;}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;}
+  .kv{display:grid;grid-template-columns:130px 1fr;font-size:12.5px;gap:4px 10px;}
+  .kv div.k{color:var(--muted);}
+  .kv div.v{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+</style>
+<script>
+/* Basic deterrents against casual view-source / copying.
+   NOTE: This does not provide real security — any determined visitor can
+   still access the page source via browser dev tools, curl, or other means. */
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('keydown', function(e){
+  var k = e.key ? e.key.toUpperCase() : '';
+  if (
+    k === 'F12' ||
+    (e.ctrlKey && k === 'U') ||
+    (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
+    (e.metaKey && e.altKey && (k === 'I' || k === 'J' || k === 'C'))
+  ) {
+    e.preventDefault();
+  }
+});
+</script>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <span class="badge">AVDF</span>
+    <div>
+      <h1>Oracle GoldenGate for AVDF Simulator</h1>
+      <div class="sub">Concept &middot; Architecture &middot; REDO&rarr;XML Internals &middot; Reporting &middot; Live Pipeline</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <button class="version-badge" id="verBadge">v1.0.0 &middot; Changelog</button>
+    <a class="back" href="index.html">&larr; Back to Learning Simulator Dashboard</a>
+  </div>
+</header>
+
+<div id="changelogPanel">
+  <button class="cl-close" id="clClose">&#10005; Close</button>
+  <h3>Version History</h3>
+  <div class="cl-entry">
+    <span class="cl-ver">v1.0.0</span><span class="cl-date">2026-07-23</span>
+    <ul>
+      <li>Initial release: Architecture &amp; Concept, Extract&rarr;XML Mini Simulator, AVDF Report Viewer, and Live Pipeline Simulator tabs.</li>
+      <li>REDO before/after image walkthrough with representative OUTPUTFORMAT XML _AUDIT_VAULT trail record generation.</li>
+      <li>Live animated simulator: Source DB &rarr; Integrated Extract &rarr; XML Trail (with rotation) &rarr; AVDF Agent Collector &rarr; Audit Vault Server &rarr; report tail, with ATC checkpoint file.</li>
+    </ul>
+  </div>
+</div>
+
+<nav id="tabNav">
+  <button data-tab="arch" class="active">1. Architecture &amp; Concept</button>
+  <button data-tab="extract">2. Extract &rarr; XML</button>
+  <button data-tab="report">3. AVDF Report Viewer</button>
+  <button data-tab="live">4. Live Pipeline</button>
+</nav>
+
+<main>
+
+<!-- ===================== TAB 1: ARCHITECTURE & CONCEPT ===================== -->
+<section class="tab active" id="tab-arch">
+  <h2>Why GoldenGate Sits Inside AVDF</h2>
+  <p class="lead">REDO (transaction) logs record the before and after image of every DML/DDL change made to an Oracle Database, so the instance can recover after a crash. Oracle Audit Vault and Database Firewall reuses this same stream &mdash; via GoldenGate's <b>Integrated Extract</b> &mdash; as its <b>TRANSACTION LOG</b> audit trail, instead of relying only on native database auditing. This gives AVDF visibility into the actual column-level before/after values changed by a transaction.</p>
+
+  <h3 style="font-size:14px;color:var(--redwood-dark);margin:18px 0 8px;">End-to-end flow</h3>
+  <div class="canvas-wrap">
+    <div class="stagegrid">
+      <div class="stagebox"><div class="t">&#128193; Source Oracle DB</div><div class="s">REDO / archive logs. Supplemental logging + force logging enabled. 12.2.0.1+ required for direct Integrated Extract.</div></div>
+      <div class="stagearrow">&rarr;</div>
+      <div class="stagebox"><div class="t">&#9881; Integrated Extract</div><div class="s">Runs on source DB (12.2.0.1+) or a Downstream Mining DB (pre-12.2.0.1). Captures DML + DDL for configured TABLE / DDL INCLUDE objects.</div></div>
+      <div class="stagearrow">&rarr;</div>
+      <div class="stagebox"><div class="t">&#128220; XML Trail Files</div><div class="s">OUTPUTFORMAT XML _AUDIT_VAULT. Trail rotates at configured Trail Size (MB). Written to a directory, read directly &mdash; not consumed as a normal GG trail.</div></div>
+      <div class="stagearrow">&rarr;</div>
+      <div class="stagebox"><div class="t">&#128225; AVDF Transaction Log Collector</div><div class="s">Audit Vault Agent reads the XML trail directory. Checkpoints progress into an .atc (Audit Trail Cleanup) file, in UTC.</div></div>
+      <div class="stagearrow">&rarr;</div>
+      <div class="stagebox"><div class="t">&#128272; Audit Vault Server</div><div class="s">Records land in event_log. DDL &rarr; All Activity report. DML &rarr; Data Modification Before-After Values report (with key columns since 20.10).</div></div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:16px;">
+    <div class="card"><h3>&#9881; Integrated Extract</h3><p>The only supported capture mode for 12.2.0.1+ &mdash; runs inside the database's logmining server, directly against the source. One Integrated Extract per database is the recommended baseline.</p></div>
+    <div class="card"><h3>&#128257; Downstream Mining</h3><p>Required for source databases older than 12.2.0.1: the source ships REDO to a 12.2.0.1+ mining database, and Integrated Extract runs there instead of on the source.</p></div>
+    <div class="card"><h3>&#128273; Key Columns</h3><p>Default to the table's primary key. GoldenGate's <code>KEYCOLS</code> option lets you override this when no PK exists, or a different column set is preferred for the report.</p></div>
+    <div class="card"><h3>&#128269; GETBEFORECOLS</h3><p>Needed when key columns aren't already present in the before-image, so update/delete key values still render correctly in the AVDF report (available from AVDF 20.10).</p></div>
+  </div>
+  <div class="note">Terminology convention used throughout this simulator: <b>Integrated Extract</b> (not Classic Extract), <b>Downstream Mining database</b>, and <b>OUTPUTFORMAT XML _AUDIT_VAULT</b> &mdash; matching the AVDF 20 Administrator's Guide exactly.</div>
+
+  <div class="grid" style="margin-top:16px;grid-template-columns:1fr 1fr;">
+    <div class="card">
+      <h3>Licensing &amp; Deployment</h3>
+      <p style="margin-bottom:10px;">A restricted-use GoldenGate license is bundled with AVDF 20 &mdash; for capture only, consumed only by AVDF &mdash; and must be deployed on a separate server from the AVDF appliance.</p>
+      <table>
+        <tr><th>AVDF Version</th><th>Minimum GoldenGate Version</th></tr>
+        <tr><td>20.1 &ndash; 20.9</td><td class="mono">19.1.0.0.4</td></tr>
+        <tr><td>20.10 &ndash; 20.16</td><td class="mono">21.9.0.0.0</td></tr>
+        <tr><td>20.17 and later</td><td class="mono">23.26.1.0.0</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Sizing Baseline</h3>
+      <p style="margin-bottom:10px;">Per Integrated Extract, as a starting point &mdash; scale up per transaction volume/pattern:</p>
+      <div class="kv">
+        <div class="k">Memory</div><div class="v">32 GB minimum</div>
+        <div class="k">CPU</div><div class="v">2 vCPU minimum</div>
+        <div class="k">Disk</div><div class="v">2 TB starting point (trail + cache)</div>
+        <div class="k">Extracts</div><div class="v">1 per database</div>
+      </div>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:10px;">Use <code>v$log</code> / <code>v$log_history</code> to estimate log volume, and <code>send &lt;extract&gt; cachemgr, cachestats</code> to baseline transaction cache needs.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TAB 2: EXTRACT -> XML ===================== -->
+<section class="tab" id="tab-extract">
+  <h2>Mini Simulator &mdash; REDO Record to GoldenGate XML</h2>
+  <p class="lead">Pick a DML or DDL statement against <code>scott.emp</code>. The simulator shows the REDO record the database generates, then runs Integrated Extract to render it into a representative <code>OUTPUTFORMAT XML _AUDIT_VAULT</code> trail record.</p>
+
+  <div class="toolbar">
+    <select class="action-select" id="opSelect">
+      <option value="INSERT">INSERT &mdash; new hire</option>
+      <option value="UPDATE" selected>UPDATE &mdash; salary change</option>
+      <option value="DELETE">DELETE &mdash; employee removed</option>
+      <option value="DDL">DDL &mdash; ALTER TABLE (structure change)</option>
+    </select>
+    <button class="action" id="runExtractBtn">&#9654; Run Integrated Extract</button>
+    <button class="action secondary" id="resetExtractBtn">&#8635; Reset</button>
+  </div>
+
+  <div class="stepline" id="stepline">
+    <div class="step" data-step="0"><span class="dot"></span> DML/DDL executed</div>
+    <div class="step" data-step="1"><span class="dot"></span> REDO record written</div>
+    <div class="step" data-step="2"><span class="dot"></span> Integrated Extract mines LogMiner buffer</div>
+    <div class="step" data-step="3"><span class="dot"></span> OUTPUTFORMAT XML _AUDIT_VAULT applied</div>
+    <div class="step" data-step="4"><span class="dot"></span> Record appended to XML trail file</div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;">
+    <div>
+      <h3 style="font-size:13px;color:var(--redwood-dark);text-transform:uppercase;letter-spacing:.4px;">REDO log record (before / after image)</h3>
+      <div class="canvas-wrap" id="redoBox"></div>
+    </div>
+    <div>
+      <h3 style="font-size:13px;color:var(--redwood-dark);text-transform:uppercase;letter-spacing:.4px;">Generated XML trail record</h3>
+      <pre class="xml" id="xmlBox">Click "Run Integrated Extract" to generate.</pre>
+    </div>
+  </div>
+
+  <h3 style="font-size:13px;color:var(--redwood-dark);text-transform:uppercase;letter-spacing:.4px;margin-top:18px;">Relevant Integrated Extract parameter file</h3>
+  <pre class="code" id="paramBox"></pre>
+</section>
+
+<!-- ===================== TAB 3: AVDF REPORT VIEWER ===================== -->
+<section class="tab" id="tab-report">
+  <h2>AVDF Reports Built From the XML Trail</h2>
+  <p class="lead">The Transaction Log Collector reads the XML trail files continuously. DDL records surface in <b>All Activity</b>; DML records surface in <b>Data Modification Before-After Values</b>, with key columns highlighted (AVDF 20.10+).</p>
+  <div class="toolbar">
+    <button class="action" id="dmlPill">Data Modification Before-After Values</button>
+    <button class="action secondary" id="ddlPill">All Activity (DDL)</button>
+    <button class="action secondary" id="loadSampleBtn" style="margin-left:auto;">Load sample batch (5 records)</button>
+  </div>
+  <div class="canvas-wrap" id="reportArea"></div>
+</section>
+
+<!-- ===================== TAB 4: LIVE PIPELINE ===================== -->
+<section class="tab" id="tab-live">
+  <h2>Live Simulator &mdash; Source DB &rarr; AVDF Server</h2>
+  <p class="lead">Simulates continuous transaction activity flowing from the source database, through Integrated Extract and the XML trail, to the AVDF Transaction Log Collector and Audit Vault Server &mdash; with trail file rotation and ATC checkpointing.</p>
+
+  <div class="toolbar">
+    <button class="action" id="liveStartBtn">&#9654; Start</button>
+    <button class="action secondary" id="livePauseBtn" disabled>&#9208; Pause</button>
+    <button class="action secondary" id="liveResetBtn">&#8635; Reset</button>
+    <span style="font-size:12.5px;color:var(--muted);">Speed</span>
+    <input type="range" id="liveSpeed" min="1" max="4" value="2">
+    <label style="font-size:12.5px;color:var(--muted);"><input type="checkbox" id="mixDDL" checked> include occasional DDL</label>
+  </div>
+
+  <div class="liveflow">
+    <div class="node" id="node-source">
+      <span class="pulse" id="pulse-source"></span>
+      <div class="h">Source DB</div>
+      <div class="m">scott schema &mdash; REDO generation</div>
+      <div class="metric" id="metric-source">0</div>
+      <div class="m">transactions generated</div>
+    </div>
+    <div class="node" id="node-extract">
+      <span class="pulse" id="pulse-extract"></span>
+      <div class="h">Integrated Extract</div>
+      <div class="m">int_ex_1 &mdash; mining LogMiner buffer</div>
+      <div class="metric" id="metric-extract">0</div>
+      <div class="m">records captured</div>
+    </div>
+    <div class="node" id="node-trail">
+      <span class="pulse" id="pulse-trail"></span>
+      <div class="h">XML Trail File</div>
+      <div class="m" id="trail-name">subdirectory/aa000001</div>
+      <div class="bar"><div id="trail-bar"></div></div>
+      <div class="m" id="trail-size">0 / 100 MB</div>
+    </div>
+    <div class="node" id="node-collector">
+      <span class="pulse" id="pulse-collector"></span>
+      <div class="h">AVDF Agent Collector</div>
+      <div class="m">Transaction Log audit trail</div>
+      <div class="metric" id="metric-collector">0</div>
+      <div class="m">records read</div>
+    </div>
+    <div class="node" id="node-server">
+      <span class="pulse" id="pulse-server"></span>
+      <div class="h">Audit Vault Server</div>
+      <div class="m">event_log</div>
+      <div class="metric" id="metric-server">0</div>
+      <div class="m">rows delivered to reports</div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;">
+    <div>
+      <h3 style="font-size:13px;color:var(--redwood-dark);text-transform:uppercase;letter-spacing:.4px;">Extract activity log</h3>
+      <div class="log" id="liveLog">Idle. Click Start to begin simulation.</div>
+    </div>
+    <div>
+      <h3 style="font-size:13px;color:var(--redwood-dark);text-transform:uppercase;letter-spacing:.4px;">Audit Trail Cleanup (.atc) checkpoint file</h3>
+      <div class="atc" id="atcBox">securedTargetType=Oracle Database
+SecuredTargetName=secured_target_oracle_one
+TrailType=TRANSACTION LOG
+TrailName=/foo/bar/trail_files
+(no checkpoint yet)</div>
+      <p style="font-size:11px;color:var(--muted);margin-top:6px;">Written by the Audit Vault Agent under &lt;Agent_Home&gt;/av/atc. Timestamp is UTC; used to identify which trail records are safe to purge.</p>
+    </div>
+  </div>
+
+  <h3 style="font-size:13px;color:var(--redwood-dark);text-transform:uppercase;letter-spacing:.4px;margin-top:18px;">Live "Data Modification Before-After Values" report (tail)</h3>
+  <div class="canvas-wrap" id="liveReportArea"></div>
+</section>
+
+</main>
+
+<footer>Oracle GoldenGate for AVDF Simulator &middot; part of the GoldenGate Learning Simulator Suite &middot; Ravikumar Vasudevan (ravikumar.v.v@oracle.com)</footer>
+
+<script>
+// ---------- VERSION CONTROL ----------
+const SIMULATOR_VERSION = "1.0.0";
+document.title = document.title + " (v" + SIMULATOR_VERSION + ")";
+const verBadge = document.getElementById('verBadge');
+const changelogPanel = document.getElementById('changelogPanel');
+verBadge.addEventListener('click', ()=> changelogPanel.classList.toggle('open'));
+document.getElementById('clClose').addEventListener('click', ()=> changelogPanel.classList.remove('open'));
+
+// ---------- TAB NAVIGATION ----------
+document.querySelectorAll('#tabNav button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#tabNav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('section.tab').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+(function(){
+  // ---------- shared sample schema ----------
+  var EMP = {
+    7369: {ename:'SMITH', job:'CLERK', sal:800, deptno:20},
+    7499: {ename:'ALLEN', job:'SALESMAN', sal:1600, deptno:30},
+    7566: {ename:'JONES', job:'MANAGER', sal:2975, deptno:20},
+    7788: {ename:'SCOTT', job:'ANALYST', sal:3000, deptno:20},
+    7900: {ename:'JAMES', job:'CLERK', sal:950, deptno:30}
+  };
+
+  function nowStamp(offsetSec){
+    var d = new Date(Date.now() + (offsetSec||0)*1000);
+    return d.toISOString().replace('T',' ').substring(0,23);
+  }
+  function scn(){ return 1834000000 + Math.floor(Math.random()*99999); }
+
+  // =========================================================
+  // TAB 2: Extract -> XML mini simulator
+  // =========================================================
+  var opSelect = document.getElementById('opSelect');
+  var runBtn = document.getElementById('runExtractBtn');
+  var resetBtn = document.getElementById('resetExtractBtn');
+  var redoBox = document.getElementById('redoBox');
+  var xmlBox = document.getElementById('xmlBox');
+  var paramBox = document.getElementById('paramBox');
+  var stepEls = document.querySelectorAll('#stepline .step');
+
+  function paramFileFor(op){
+    if(op === 'DDL'){
+      return 'extract int_ex_1\n' +
+        'useridalias avggadmin_inst1 domain inst1\n' +
+        'OUTPUTFORMAT XML _AUDIT_VAULT\n' +
+        'exttrail subdirectory/aa\n' +
+        'SOURCECATALOG cdb1_pdb1\n' +
+        'DDL INCLUDE OBJNAME scott.*\n';
+    }
+    return 'extract int_ex_1\n' +
+      'useridalias avggadmin_inst1 domain inst1\n' +
+      'OUTPUTFORMAT XML _AUDIT_VAULT\n' +
+      'exttrail subdirectory/aa\n' +
+      'SOURCECATALOG cdb1_pdb1\n' +
+      'TABLE scott.emp, KEYCOLS (empno, ename),\n' +
+      '  GETBEFORECOLS (ON UPDATE ALL, ON DELETE ALL);\n';
+  }
+
+  function buildRedoAndXml(op){
+    var empno = 7788, before, after;
+    if(op === 'INSERT'){
+      after = {empno:7902, ename:'FORD', job:'ANALYST', sal:3000, deptno:20};
+      before = null; empno = after.empno;
+    } else if(op === 'UPDATE'){
+      before = Object.assign({empno:empno}, EMP[empno]);
+      after = Object.assign({}, before, {sal: before.sal + 450});
+    } else if(op === 'DELETE'){
+      empno = 7900;
+      before = Object.assign({empno:empno}, EMP[empno]);
+      after = null;
+    } else { // DDL
+      before = null; after = null;
+    }
+    return {op:op, empno:empno, before:before, after:after, csn:scn(), ts:nowStamp()};
+  }
+
+  function renderRedo(data){
+    if(data.op === 'DDL'){
+      redoBox.innerHTML =
+        '<div class="kv">' +
+        '<div class="k">SQL</div><div class="v">ALTER TABLE scott.emp ADD (bonus_pct NUMBER(5,2))</div>' +
+        '<div class="k">SCN</div><div class="v">'+data.csn+'</div>' +
+        '<div class="k">Timestamp</div><div class="v">'+data.ts+'</div>' +
+        '<div class="k">Redo type</div><div class="v">DDL / metadata change vector</div>' +
+        '</div>';
+      return;
+    }
+    var rows = '<table><tr><th>Column</th><th>Before</th><th>After</th></tr>';
+    var cols = ['empno','ename','job','sal','deptno'];
+    cols.forEach(function(c){
+      var b = data.before ? data.before[c] : '<span style="color:#9CA3AF">(none &mdash; INSERT)</span>';
+      var a = data.after ? data.after[c] : '<span style="color:#9CA3AF">(none &mdash; DELETE)</span>';
+      var changed = data.before && data.after && data.before[c] !== data.after[c];
+      rows += '<tr><td class="mono">'+c+(c==='empno'||c==='ename'?' <span class="keycol">key</span>':'')+'</td>' +
+        '<td class="mono">'+(changed?'<b style="color:var(--redwood-dark)">'+b+'</b>':b)+'</td>' +
+        '<td class="mono">'+(changed?'<b style="color:var(--redwood-dark)">'+a+'</b>':a)+'</td></tr>';
+    });
+    rows += '</table>';
+    redoBox.innerHTML =
+      '<div class="kv" style="margin-bottom:8px;">' +
+      '<div class="k">Operation</div><div class="v"><span class="badge-op '+data.op+'">'+data.op+'</span></div>' +
+      '<div class="k">SCN</div><div class="v">'+data.csn+'</div>' +
+      '<div class="k">Timestamp</div><div class="v">'+data.ts+'</div>' +
+      '</div>' + rows;
+  }
+
+  function xmlEscape(v){ return v===undefined||v===null ? '' : String(v); }
+
+  function renderXml(data){
+    var opTag = data.op;
+    var lines = [];
+    lines.push('<span class="xtag">&lt;operation</span> <span class="xattr">table</span>=<span class="xval">"SCOTT.EMP"</span> ' +
+      '<span class="xattr">type</span>=<span class="xval">"'+opTag+'"</span> ' +
+      '<span class="xattr">csn</span>=<span class="xval">"'+data.csn+'"</span> ' +
+      '<span class="xattr">timestamp</span>=<span class="xval">"'+data.ts+'"</span><span class="xtag">&gt;</span>');
+
+    if(data.op === 'DDL'){
+      lines.push('  <span class="xtag">&lt;ddl</span> <span class="xattr">object</span>=<span class="xval">"SCOTT.EMP"</span><span class="xtag">&gt;</span>');
+      lines.push('    <span class="xval">ALTER TABLE scott.emp ADD (bonus_pct NUMBER(5,2))</span>');
+      lines.push('  <span class="xtag">&lt;/ddl&gt;</span>');
+    } else {
+      lines.push('  <span class="xtag">&lt;keycolumns&gt;</span>');
+      lines.push('    <span class="xtag">&lt;column</span> <span class="xattr">name</span>=<span class="xval">"EMPNO"</span> <span class="xattr">value</span>=<span class="xval">"'+data.empno+'"</span><span class="xtag">/&gt;</span>');
+      lines.push('  <span class="xtag">&lt;/keycolumns&gt;</span>');
+
+      if(data.before){
+        lines.push('  <span class="xtag">&lt;before&gt;</span>');
+        Object.keys(data.before).forEach(function(c){
+          var changed = data.after && data.after[c] !== data.before[c];
+          lines.push('    <span class="xtag">&lt;column</span> <span class="xattr">name</span>=<span class="xval">"'+c.toUpperCase()+'"</span> ' +
+            '<span class="xattr">value</span>=<span class="xval'+(changed?' diff':'')+'">"'+xmlEscape(data.before[c])+'"</span><span class="xtag">/&gt;</span>');
+        });
+        lines.push('  <span class="xtag">&lt;/before&gt;</span>');
+      }
+      if(data.after){
+        lines.push('  <span class="xtag">&lt;after&gt;</span>');
+        Object.keys(data.after).forEach(function(c){
+          var changed = data.before && data.after[c] !== data.before[c];
+          lines.push('    <span class="xtag">&lt;column</span> <span class="xattr">name</span>=<span class="xval">"'+c.toUpperCase()+'"</span> ' +
+            '<span class="xattr">value</span>=<span class="xval'+(changed?' diff':'')+'">"'+xmlEscape(data.after[c])+'"</span><span class="xtag">/&gt;</span>');
+        });
+        lines.push('  <span class="xtag">&lt;/after&gt;</span>');
+      }
+    }
+    lines.push('<span class="xtag">&lt;/operation&gt;</span>');
+    xmlBox.innerHTML = lines.join('\n');
+  }
+
+  function stepThrough(cb){
+    var i = 0;
+    stepEls.forEach(function(s){ s.classList.remove('active','done'); });
+    runBtn.disabled = true;
+    function tick(){
+      if(i>0) stepEls[i-1].classList.remove('active');
+      if(i>0) stepEls[i-1].classList.add('done');
+      if(i < stepEls.length){
+        stepEls[i].classList.add('active');
+        i++;
+        setTimeout(tick, 420);
+      } else {
+        runBtn.disabled = false;
+        cb && cb();
+      }
+    }
+    tick();
+  }
+
+  function runExtract(){
+    var op = opSelect.value;
+    paramBox.textContent = paramFileFor(op);
+    var data = buildRedoAndXml(op);
+    renderRedo(data);
+    xmlBox.textContent = 'Extracting…';
+    stepThrough(function(){ renderXml(data); });
+  }
+  runBtn.addEventListener('click', runExtract);
+  resetBtn.addEventListener('click', function(){
+    redoBox.innerHTML = '';
+    xmlBox.textContent = 'Click "Run Integrated Extract" to generate.';
+    paramBox.textContent = paramFileFor(opSelect.value);
+    stepEls.forEach(function(s){ s.classList.remove('active','done'); });
+  });
+  paramBox.textContent = paramFileFor(opSelect.value);
+
+  // =========================================================
+  // TAB 3: AVDF report viewer
+  // =========================================================
+  var reportArea = document.getElementById('reportArea');
+  var loadSampleBtn = document.getElementById('loadSampleBtn');
+  var dmlPill = document.getElementById('dmlPill');
+  var ddlPill = document.getElementById('ddlPill');
+  var currentReport = 'dml';
+
+  var sampleDml = [
+    {ts:'2026-07-23 09:14:02', user:'AVGGADMIN', obj:'SCOTT.EMP', op:'UPDATE', key:'EMPNO=7788', col:'SAL', before:'3000', after:'3450'},
+    {ts:'2026-07-23 09:14:07', user:'AVGGADMIN', obj:'SCOTT.EMP', op:'DELETE', key:'EMPNO=7900', col:'(row)', before:'JAMES, CLERK, 950, 30', after:'—'},
+    {ts:'2026-07-23 09:14:11', user:'AVGGADMIN', obj:'SCOTT.EMP', op:'INSERT', key:'EMPNO=7902', col:'(row)', before:'—', after:'FORD, ANALYST, 3000, 20'},
+    {ts:'2026-07-23 09:14:19', user:'AVGGADMIN', obj:'SCOTT.DEPT', op:'UPDATE', key:'DEPTNO=20', col:'DNAME', before:'RESEARCH', after:'ENGINEERING'},
+    {ts:'2026-07-23 09:14:25', user:'AVGGADMIN', obj:'SCOTT.EMP', op:'UPDATE', key:'EMPNO=7566', col:'DEPTNO', before:'20', after:'40'}
+  ];
+  var sampleDdl = [
+    {ts:'2026-07-23 09:10:44', user:'AVGGADMIN', obj:'SCOTT.EMP', op:'DDL', sql:'ALTER TABLE scott.emp ADD (bonus_pct NUMBER(5,2))'},
+    {ts:'2026-07-23 09:12:03', user:'AVGGADMIN', obj:'SCOTT.SALGRADE', op:'DDL', sql:'CREATE INDEX salgrade_idx ON scott.salgrade(grade)'}
+  ];
+
+  function renderDmlTable(rows){
+    var html = '<table><tr><th>Timestamp</th><th>DB User</th><th>Object</th><th>Operation</th><th>Key Column(s)</th><th>Column</th><th>Before Value</th><th>After Value</th></tr>';
+    rows.forEach(function(r){
+      html += '<tr><td class="mono">'+r.ts+'</td><td class="mono">'+r.user+'</td><td class="mono">'+r.obj+'</td>' +
+        '<td><span class="badge-op '+r.op+'">'+r.op+'</span></td>' +
+        '<td class="mono"><span class="keycol">'+r.key+'</span></td>' +
+        '<td class="mono">'+r.col+'</td>' +
+        '<td class="mono">'+r.before+'</td><td class="mono">'+r.after+'</td></tr>';
+    });
+    html += '</table>';
+    return html;
+  }
+  function renderDdlTable(rows){
+    var html = '<table><tr><th>Timestamp</th><th>DB User</th><th>Object</th><th>Operation</th><th>Statement</th></tr>';
+    rows.forEach(function(r){
+      html += '<tr><td class="mono">'+r.ts+'</td><td class="mono">'+r.user+'</td><td class="mono">'+r.obj+'</td>' +
+        '<td><span class="badge-op DDL">DDL</span></td><td class="mono">'+r.sql+'</td></tr>';
+    });
+    html += '</table>';
+    return html;
+  }
+
+  function paintReport(){
+    reportArea.innerHTML = currentReport==='dml' ? renderDmlTable(sampleDml) : renderDdlTable(sampleDdl);
+    dmlPill.className = currentReport==='dml' ? 'action' : 'action secondary';
+    ddlPill.className = currentReport==='ddl' ? 'action' : 'action secondary';
+  }
+  dmlPill.addEventListener('click', function(){ currentReport='dml'; paintReport(); });
+  ddlPill.addEventListener('click', function(){ currentReport='ddl'; paintReport(); });
+  loadSampleBtn.addEventListener('click', paintReport);
+  paintReport();
+
+  // =========================================================
+  // TAB 4: Live pipeline simulator
+  // =========================================================
+  var liveStartBtn = document.getElementById('liveStartBtn');
+  var livePauseBtn = document.getElementById('livePauseBtn');
+  var liveResetBtn = document.getElementById('liveResetBtn');
+  var liveSpeed = document.getElementById('liveSpeed');
+  var mixDDL = document.getElementById('mixDDL');
+  var liveLog = document.getElementById('liveLog');
+  var atcBox = document.getElementById('atcBox');
+  var liveReportArea = document.getElementById('liveReportArea');
+  var trailBar = document.getElementById('trail-bar');
+  var trailSizeLbl = document.getElementById('trail-size');
+  var trailNameLbl = document.getElementById('trail-name');
+
+  var pulses = {
+    source: document.getElementById('pulse-source'),
+    extract: document.getElementById('pulse-extract'),
+    trail: document.getElementById('pulse-trail'),
+    collector: document.getElementById('pulse-collector'),
+    server: document.getElementById('pulse-server')
+  };
+  var metrics = {
+    source: document.getElementById('metric-source'),
+    extract: document.getElementById('metric-extract'),
+    collector: document.getElementById('metric-collector'),
+    server: document.getElementById('metric-server')
+  };
+
+  var liveState = {
+    running:false, timer:null, txCount:0, capCount:0, readCount:0, servCount:0,
+    trailBytesMB:0, trailFileIdx:1, maxTrailMB:100, liveRows:[]
+  };
+
+  function flashPulse(key){
+    pulses[key].classList.add('on');
+    setTimeout(function(){ pulses[key].classList.remove('on'); }, 480);
+  }
+  function appendLog(msg, cls){
+    var span = document.createElement('div');
+    span.innerHTML = '<span class="t">['+new Date().toLocaleTimeString()+']</span> '+(cls?'<span class="'+cls+'">':'')+msg+(cls?'</span>':'');
+    liveLog.appendChild(span);
+    liveLog.scrollTop = liveLog.scrollHeight;
+    while(liveLog.childNodes.length > 40){ liveLog.removeChild(liveLog.firstChild); }
+  }
+
+  function randomTx(){
+    var empnos = Object.keys(EMP);
+    var empno = empnos[Math.floor(Math.random()*empnos.length)];
+    var rec = EMP[empno];
+    var kinds = ['UPDATE','UPDATE','INSERT','DELETE'];
+    var op = kinds[Math.floor(Math.random()*kinds.length)];
+    var col, before, after;
+    if(op === 'UPDATE'){
+      col = 'SAL'; before = rec.sal; after = rec.sal + (10 + Math.floor(Math.random()*40))*10;
+    } else if(op === 'INSERT'){
+      col = '(row)'; before='—'; after = 'NEWHIRE, CLERK, 900, '+rec.deptno;
+    } else {
+      col = '(row)'; before = rec.ename+', '+rec.job+', '+rec.sal+', '+rec.deptno; after='—';
+    }
+    return {ts:nowStamp(), user:'AVGGADMIN', obj:'SCOTT.EMP', op:op, key:'EMPNO='+empno, col:col, before:String(before), after:String(after)};
+  }
+
+  function tickLive(){
+    var speed = parseInt(liveSpeed.value,10);
+    var doDDL = mixDDL.checked && Math.random() < 0.12;
+
+    liveState.txCount++;
+    metrics.source.textContent = liveState.txCount;
+    flashPulse('source');
+    appendLog('Source DB: transaction committed (SCN '+scn()+')', 't');
+
+    setTimeout(function(){
+      liveState.capCount++;
+      metrics.extract.textContent = liveState.capCount;
+      flashPulse('extract');
+      var kb = 1.2 + Math.random()*2.4;
+      appendLog('Integrated Extract: mined change vector, wrote XML record ('+kb.toFixed(1)+' KB)');
+
+      liveState.trailBytesMB += kb/1024;
+      var pct = Math.min(100, (liveState.trailBytesMB/liveState.maxTrailMB)*100);
+      trailBar.style.width = pct.toFixed(1)+'%';
+      trailSizeLbl.textContent = liveState.trailBytesMB.toFixed(2)+' / '+liveState.maxTrailMB+' MB';
+      flashPulse('trail');
+      if(liveState.trailBytesMB >= liveState.maxTrailMB){
+        liveState.trailFileIdx++;
+        liveState.trailBytesMB = 0;
+        trailBar.style.width = '0%';
+        trailSizeLbl.textContent = '0.00 / '+liveState.maxTrailMB+' MB';
+        trailNameLbl.textContent = 'subdirectory/aa'+String(liveState.trailFileIdx).padStart(6,'0');
+        appendLog('Trail rotated &rarr; new XML file '+trailNameLbl.textContent, 'w');
+      }
+
+      setTimeout(function(){
+        liveState.readCount++;
+        metrics.collector.textContent = liveState.readCount;
+        flashPulse('collector');
+        appendLog('AVDF Agent: Transaction Log collector read record from trail directory');
+        var cp = nowStamp();
+        atcBox.textContent =
+          'securedTargetType=Oracle Database\n' +
+          'SecuredTargetName=secured_target_oracle_one\n' +
+          'TrailType=TRANSACTION LOG\n' +
+          'TrailName=/foo/bar/trail_files\n' +
+          cp + ' (checkpoint, UTC)';
+
+        setTimeout(function(){
+          liveState.servCount++;
+          metrics.server.textContent = liveState.servCount;
+          flashPulse('server');
+          var row = doDDL ?
+            {ts:nowStamp(), user:'AVGGADMIN', obj:'SCOTT.EMP', op:'DDL', sql:'ALTER TABLE scott.emp MODIFY (comm NUMBER(9,2))'} :
+            randomTx();
+          liveState.liveRows.unshift(row);
+          if(liveState.liveRows.length > 8) liveState.liveRows.pop();
+          paintLiveReport();
+          appendLog('Audit Vault Server: row written to event_log, report updated', 'w');
+        }, 260/speed);
+      }, 260/speed);
+    }, 260/speed);
+  }
+
+  function paintLiveReport(){
+    var rows = liveState.liveRows;
+    if(!rows.length){ liveReportArea.innerHTML = '<p style="font-size:11.5px;color:var(--muted);margin:0;">No records delivered yet.</p>'; return; }
+    var html = '<table><tr><th>Timestamp</th><th>DB User</th><th>Object</th><th>Operation</th><th>Key / Detail</th><th>Before</th><th>After</th></tr>';
+    rows.forEach(function(r){
+      if(r.op === 'DDL'){
+        html += '<tr><td class="mono">'+r.ts+'</td><td class="mono">'+r.user+'</td><td class="mono">'+r.obj+'</td>' +
+          '<td><span class="badge-op DDL">DDL</span></td><td class="mono" colspan="3">'+r.sql+'</td></tr>';
+      } else {
+        html += '<tr><td class="mono">'+r.ts+'</td><td class="mono">'+r.user+'</td><td class="mono">'+r.obj+'</td>' +
+          '<td><span class="badge-op '+r.op+'">'+r.op+'</span></td>' +
+          '<td class="mono"><span class="keycol">'+r.key+'</span> '+r.col+'</td>' +
+          '<td class="mono">'+r.before+'</td><td class="mono">'+r.after+'</td></tr>';
+      }
+    });
+    html += '</table>';
+    liveReportArea.innerHTML = html;
+  }
+  paintLiveReport();
+
+  function startLive(){
+    if(liveState.running) return;
+    liveState.running = true;
+    liveStartBtn.disabled = true;
+    livePauseBtn.disabled = false;
+    appendLog('Simulation started.');
+    var speed = parseInt(liveSpeed.value,10);
+    liveState.timer = setInterval(tickLive, 2600 / speed);
+  }
+  function pauseLive(){
+    liveState.running = false;
+    clearInterval(liveState.timer);
+    liveStartBtn.disabled = false;
+    livePauseBtn.disabled = true;
+    appendLog('Simulation paused.');
+  }
+  function resetLive(){
+    pauseLive();
+    liveState.txCount = liveState.capCount = liveState.readCount = liveState.servCount = 0;
+    liveState.trailBytesMB = 0; liveState.trailFileIdx = 1; liveState.liveRows = [];
+    metrics.source.textContent = '0'; metrics.extract.textContent='0';
+    metrics.collector.textContent='0'; metrics.server.textContent='0';
+    trailBar.style.width='0%'; trailSizeLbl.textContent = '0.00 / '+liveState.maxTrailMB+' MB';
+    trailNameLbl.textContent = 'subdirectory/aa000001';
+    liveLog.innerHTML = 'Idle. Click Start to begin simulation.';
+    atcBox.textContent = 'securedTargetType=Oracle Database\nSecuredTargetName=secured_target_oracle_one\nTrailType=TRANSACTION LOG\nTrailName=/foo/bar/trail_files\n(no checkpoint yet)';
+    paintLiveReport();
+  }
+  liveStartBtn.addEventListener('click', startLive);
+  livePauseBtn.addEventListener('click', pauseLive);
+  liveResetBtn.addEventListener('click', resetLive);
+  liveSpeed.addEventListener('change', function(){
+    if(liveState.running){ pauseLive(); startLive(); }
+  });
+})();
+</script>
+</body>
+</html>
