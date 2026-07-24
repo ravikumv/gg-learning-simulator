@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="author" content="ravikumar.v.v@oracle.com">
+<title>Oracle GoldenGate Microservices — High Availability &amp; Disaster Recovery Simulator</title>
+<style>
+  :root{
+    --red:#C74634;
+    --red-dark:#9D3227;
+    --ink:#1B1B1B;
+    --gray:#5F6368;
+    --line:#E3E2E0;
+    --bg:#FFFFFF;
+    --panel:#FAFAF9;
+    --green:#1E8E3E;
+    --amber:#C77700;
+    --blue:#0B5CAB;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink);
+  }
+  header{
+    background:var(--ink); color:#fff; padding:18px 28px; border-bottom:4px solid var(--red);
+  }
+  header h1{margin:0; font-size:20px; font-weight:600;}
+  header p{margin:4px 0 0; font-size:13px; color:#C9C9C9;}
+  nav{
+    display:flex; flex-wrap:wrap; gap:2px; background:var(--panel);
+    border-bottom:1px solid var(--line); padding:0 20px; position:sticky; top:0; z-index:50;
+  }
+  nav button{
+    border:none; background:transparent; padding:14px 16px; font-size:13.5px; font-weight:600;
+    color:var(--gray); cursor:pointer; border-bottom:3px solid transparent;
+  }
+  nav button:hover{color:var(--ink);}
+  nav button.active{color:var(--red); border-bottom-color:var(--red);}
+  main{max-width:1180px; margin:0 auto; padding:26px 24px 60px;}
+  .tab{display:none;}
+  .tab.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+  h2{font-size:22px; margin:0 0 4px; color:var(--ink);}
+  h3{font-size:16px; margin:26px 0 10px; color:var(--red-dark); border-left:4px solid var(--red); padding-left:10px;}
+  .lede{color:var(--gray); font-size:14px; margin-bottom:18px;}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:14px;
+  }
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  @media (max-width:820px){.grid2,.grid3{grid-template-columns:1fr;}}
+  ul{margin:6px 0; padding-left:20px;}
+  li{margin:5px 0; font-size:13.8px; line-height:1.5;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:10px 0;}
+  th,td{border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top;}
+  th{background:#F3F1EE; color:var(--ink); font-weight:700;}
+  .tag{
+    display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px;
+    background:#FDECEA; color:var(--red-dark); margin-right:6px;
+  }
+  .tag.green{background:#E6F4EA;color:var(--green);}
+  .tag.blue{background:#E8F0FE;color:var(--blue);}
+  .tag.amber{background:#FFF3E0;color:var(--amber);}
+  .note{
+    background:#FFF8E6; border:1px solid #F0DDA0; border-radius:8px; padding:10px 14px; font-size:13px; margin:12px 0;
+  }
+  .note b{color:var(--red-dark);}
+  code{background:#F1F0EE; padding:1px 5px; border-radius:4px; font-size:12.5px; font-family:Menlo,Consolas,monospace;}
+  pre{background:#1E1E1E; color:#DCDCDC; padding:12px 14px; border-radius:8px; font-size:12px; overflow-x:auto;}
+
+  /* Simulator */
+  .sim-wrap{display:grid; grid-template-columns:1.4fr 1fr; gap:16px;}
+  @media (max-width:980px){.sim-wrap{grid-template-columns:1fr;}}
+  .stage{
+    background:#F5F4F2; border-radius:12px; padding:14px; border:1px solid var(--line);
+  }
+  #stageCanvas{width:100%; height:420px; display:block; border-radius:8px;}
+  .controls{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0;}
+  .btn{
+    border:none; padding:9px 14px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; color:#fff;
+  }
+  .btn.switch{background:var(--blue);}
+  .btn.fail{background:var(--red);}
+  .btn.reset{background:#5F6368;}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .btn.mode{background:#3C4043;}
+  .btn.mode.on{background:var(--ink); outline:2px solid var(--red);}
+  .log{
+    background:#FFFFFF; color:#1B1B1B; border-radius:10px; padding:12px 14px; font-family:Menlo,Consolas,monospace;
+    font-size:12px; height:420px; overflow-y:auto; border:1px solid var(--line);
+  }
+  .log .step{margin:0 0 6px; padding-bottom:6px; border-bottom:1px dashed var(--line);}
+  .log .step .t{color:var(--gray);}
+  .log .ok{color:var(--green);}
+  .log .warn{color:var(--amber);}
+  .log .bad{color:var(--red);}
+  .status-row{display:flex; gap:14px; flex-wrap:wrap; margin:10px 0;}
+  .status{
+    flex:1; min-width:150px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+  }
+  .status .k{font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:.04em;}
+  .status .v{font-size:14px; font-weight:700; margin-top:2px;}
+  .v.up{color:var(--green);} .v.down{color:var(--red);} .v.mid{color:var(--amber);}
+  footer{text-align:center; color:var(--gray); font-size:12px; padding:20px 0 30px;}
+</style>
+<script>
+/* Basic deterrents against casual view-source / copying.
+   NOTE: This does not provide real security — any determined visitor can
+   still access the page source via browser dev tools, curl, or other means. */
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('keydown', function(e){
+  var k = e.key ? e.key.toUpperCase() : '';
+  if (
+    k === 'F12' ||
+    (e.ctrlKey && k === 'U') ||
+    (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
+    (e.metaKey && e.altKey && (k === 'I' || k === 'J' || k === 'C'))
+  ) {
+    e.preventDefault();
+  }
+});
+</script>
+</head>
+<body>
+
+<header>
+  <h1>Oracle GoldenGate Microservices — High Availability &amp; Disaster Recovery Simulator</h1>
+  <p>Purpose · Requirements · Architecture · Internals · ACFS · Disaster Recovery · Live Switchover/Failover</p>
+</header>
+
+<nav id="tabNav"></nav>
+<main id="tabMain"></main>
+
+<footer>Educational simulator for internal training and customer enablement · Oracle GoldenGate Microservices Architecture · Prepared by Ravikumar Vasudevan</footer>
+
+<script>
+const TABS = ["Purpose","Requirements","Architecture","Internals","ACFS","Disaster Recovery","Live Simulator"];
+const nav = document.getElementById('tabNav');
+const main = document.getElementById('tabMain');
+
+TABS.forEach((name,i)=>{
+  const b=document.createElement('button');
+  b.textContent=name; b.dataset.i=i;
+  if(i===0) b.classList.add('active');
+  b.onclick=()=>showTab(i);
+  nav.appendChild(b);
+});
+
+function showTab(i){
+  [...nav.children].forEach((b,idx)=>b.classList.toggle('active',idx===i));
+  [...main.children].forEach((t,idx)=>t.classList.toggle('active',idx===i));
+  if(TABS[i]==='Live Simulator') requestAnimationFrame(drawFrame);
+  if(TABS[i]==='Internals') requestAnimationFrame(ckptDraw);
+}
+
+const panels = [purposeHTML(), requirementsHTML(), architectureHTML(), internalsHTML(), acfsHTML(), drHTML(), simulatorHTML()];
+panels.forEach(html=>{
+  const d=document.createElement('div'); d.className='tab'; d.innerHTML=html; main.appendChild(d);
+});
+main.children[0].classList.add('active');
+
+function purposeHTML(){return `
+  <h2>Purpose of High Availability for GoldenGate Microservices</h2>
+  <p class="lede">Why HA matters for a replication tier, and what "available" actually means for GoldenGate.</p>
+
+  <div class="card">
+    <p>Oracle GoldenGate Microservices Architecture (MA) is typically deployed as a continuously-running
+    replication layer between source and target databases — often supporting zero-downtime migrations,
+    active-active configurations, real-time reporting, or feeding data lakes and analytics platforms.
+    Because Extract and Replicat processes maintain an in-flight position (checkpoint) in the replication
+    stream, an outage of the GoldenGate host is not simply a service interruption — if checkpoint and trail
+    files are not protected, resuming correctly and without data loss or duplication becomes difficult.</p>
+  </div>
+
+  <h3>Goals of a GoldenGate HA Design</h3>
+  <div class="grid3">
+    <div class="card">
+      <span class="tag">Continuity</span>
+      <p style="font-size:13.5px;">Relocate or restart the Service Manager and its Deployments (Extract,
+      Replicat, Distribution Path, Receiver Path) on a surviving node automatically, without manual
+      re-registration of processes.</p>
+    </div>
+    <div class="card">
+      <span class="tag green">Data Integrity</span>
+      <p style="font-size:13.5px;">Resume Extract/Replicat exactly from the last persisted checkpoint —
+      no re-mining from scratch, no gaps, no duplicate delivery — by keeping checkpoint and trail files on
+      shared, cluster-visible storage.</p>
+    </div>
+    <div class="card">
+      <span class="tag blue">Transparency</span>
+      <p style="font-size:13.5px;">Clients, REST callers, and monitoring tools reconnect to the same
+      virtual endpoint (VIP) regardless of which physical node is currently hosting the deployment.</p>
+    </div>
+  </div>
+
+  <h3>Two Distinct Problems HA/DR Addresses</h3>
+  <table>
+    <tr><th>Scenario</th><th>Scope</th><th>Mechanism</th></tr>
+    <tr>
+      <td><b>High Availability</b></td>
+      <td>Node or instance failure <i>within</i> a single Oracle RAC cluster / data center</td>
+      <td>Oracle Clusterware + Grid Infrastructure Standalone Agent (XAG) relocates the GoldenGate
+      deployment, VIP, and ACFS mount to a surviving cluster node.</td>
+    </tr>
+    <tr>
+      <td><b>Disaster Recovery</b></td>
+      <td>Loss of an entire site / data center</td>
+      <td>A second GoldenGate hub at a remote site, with ACFS Replication (or DBFS/storage replication)
+      keeping deployment files in sync; a role transition promotes the standby hub to primary.</td>
+    </tr>
+  </table>
+
+  <div class="note"><b>Distinction Ravi's simulators consistently enforce:</b> HA is about surviving a
+  node failure without losing your place in the replication stream. DR is about surviving the loss of an
+  entire site by having a second, independently-hosted GoldenGate deployment ready to take over the
+  replication role.</div>
+`;}
+
+function requirementsHTML(){return `
+  <h2>Requirements</h2>
+  <p class="lede">What must already be in place before GoldenGate Microservices can be made highly available.</p>
+
+  <h3>Infrastructure Requirements</h3>
+  <div class="grid2">
+    <div class="card">
+      <ul>
+        <li><b>Oracle Grid Infrastructure</b> (Oracle Clusterware + Oracle ASM) — provides cluster
+        membership, resource management, and the storage stack ACFS depends on.</li>
+        <li><b>Oracle RAC</b> — at minimum a 2-node cluster so a surviving node is available to host the
+        relocated deployment.</li>
+        <li><b>Oracle ACFS</b> (Automatic Storage Management Cluster File System) — the shared,
+        POSIX-compliant, cluster-aware file system used to host the GoldenGate <i>deployment</i> directory.</li>
+        <li><b>Grid Infrastructure Standalone Agent (XAG)</b> version <b>10.2 or later</b> — required
+        specifically for Microservices Architecture; automates VIP, ACFS mount, and deployment
+        start/stop/relocate as a single managed resource group.</li>
+        <li><b>Application VIP</b> — a virtual IP that clients and REST callers target, independent of
+        which physical node currently owns it.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <ul>
+        <li><b>Local install directory per node</b> — the GoldenGate <i>software binaries</i> are
+        installed on local storage on each RAC node (not shared), so that patching one node does not
+        require downtime on the other.</li>
+        <li><b>Shared deployment directory</b> — created via the Configuration Assistant
+        (<code>oggca.sh</code>), placed on ACFS (or DBFS), containing configuration, security, log,
+        parameter, trail, and checkpoint files.</li>
+        <li><b>Database service configuration</b> — RAC services (and, for DR-integrated designs, Data
+        Guard role-based services) that Extract/Replicat connect through, so they follow the active
+        instance automatically.</li>
+        <li><b>Sizing for trail files</b> — Oracle recommends provisioning enough ACFS space for roughly
+        12 hours of trail file generation, so replication can continue writing trail even if the target
+        side is temporarily unreachable.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Licensing &amp; Version Notes</h3>
+  <ul>
+    <li>GoldenGate Microservices Architecture HA via XAG applies from GoldenGate 19c onward; XAG 10.2+ is
+    mandatory for MA (earlier XAG releases only supported Classic Architecture).</li>
+    <li>ACFS is bundled with Oracle Grid Infrastructure — no separate license is required to use it once
+    Grid Infrastructure and ASM are licensed.</li>
+    <li>Cross-site DR using an independent second GoldenGate hub with ACFS Replication is documented as
+    the Oracle GoldenGate Maximum Availability (MAA) Hub architecture.</li>
+  </ul>
+
+  <h3>Pre-Deployment Checklist</h3>
+  <table>
+    <tr><th>Item</th><th>Verify</th></tr>
+    <tr><td>Grid Infrastructure</td><td>Clusterware and ASM running on all nodes; same GI version across nodes</td></tr>
+    <tr><td>ACFS diskgroup/volume</td><td>Created via <code>asmcmd volcreate</code>, registered, mounted read/write on the owning node</td></tr>
+    <tr><td>XAG installed</td><td>Installed outside the GI home, on the same path on every node, added to <code>PATH</code> ahead of the GI home</td></tr>
+    <tr><td>VIP resource</td><td>Application VIP created and reachable from client networks</td></tr>
+    <tr><td>Deployment location</td><td>Deployment created with <code>oggca.sh</code> pointed at the ACFS mount, not local disk</td></tr>
+    <tr><td>Database services</td><td>RAC / role-based services created for Extract and Replicat connections</td></tr>
+  </table>
+`;}
+
+function architectureHTML(){return `
+  <h2>Architecture</h2>
+  <p class="lede">How the Microservices components map onto a highly available RAC + ACFS + XAG stack.</p>
+
+  <h3>GoldenGate Microservices Components</h3>
+  <table>
+    <tr><th>Component</th><th>Role</th></tr>
+    <tr><td>Service Manager</td><td>Top-level process; registers, starts, and monitors one or more Deployments; exposes the REST entry point</td></tr>
+    <tr><td>Administration Server</td><td>Per-deployment configuration and lifecycle management of Extract/Replicat</td></tr>
+    <tr><td>Distribution Server</td><td>Ships trail files from a source deployment to a remote Receiver Server</td></tr>
+    <tr><td>Receiver Server</td><td>Accepts incoming trail data on the target deployment</td></tr>
+    <tr><td>Performance Metrics Server (PMSRVR)</td><td>Collects and serves runtime statistics for AdminClient / monitoring</td></tr>
+    <tr><td>Extract / Replicat</td><td>The actual capture and apply processes, each with its own persisted checkpoint</td></tr>
+  </table>
+
+  <h3>Where Each Piece Lives</h3>
+  <div class="grid2">
+    <div class="card">
+      <span class="tag">Local storage — per node</span>
+      <ul>
+        <li>GoldenGate <b>installation</b> (binaries) — kept local intentionally, so rolling patches don't
+        require simultaneous downtime on both nodes.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag green">Shared ACFS — cluster-visible</span>
+      <ul>
+        <li>The <b>deployment directory</b>: configuration, security (credential store, wallets), logs,
+        parameter files, trail files, and — critically — <b>checkpoint files</b>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>XAG-Managed Resource Group</h3>
+  <p style="font-size:13.8px;">The Grid Infrastructure Standalone Agent (XAG) manages the GoldenGate
+  deployment, its ACFS filesystem dependency, and its VIP as one coordinated Clusterware resource,
+  registered roughly as:</p>
+  <pre>agctl add goldengate ogg_ms_ha \\
+  --gg_home /u01/app/oracle/goldengate \\
+  --service_manager \\
+  --config_home /ogg/sm/etc/conf \\
+  --var_home /ogg/sm/var \\
+  --vip_name ogg_vip --port 9100 \\
+  --adminuser oggadmin --user oracle --group oinstall \\
+  --filesystems ora.acfs.oggvol.acfs \\
+  --db_services ora.cdb.ogg_cdb.svc \\
+  --use_local_services</pre>
+  <p style="font-size:13px; color:var(--gray);">This single agctl-managed group is what XAG relocates as a
+  unit during a failure: stop Service Manager → unmount/remount ACFS on the target node → move the VIP →
+  start Service Manager on the new node.</p>
+
+  <h3>Logical Diagram (single cluster, 2 nodes)</h3>
+  <div class="card" style="font-family:Menlo,Consolas,monospace; font-size:12px; line-height:1.6; background:#111318; color:#D6D6D6;">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ Application VIP ]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+----------------------+----------------------+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;RAC&nbsp;Node&nbsp;1&nbsp;(ACTIVE)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RAC&nbsp;Node&nbsp;2&nbsp;(STANDBY)<br>
+&nbsp;&nbsp;Service&nbsp;Manager&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(no&nbsp;GG&nbsp;processes&nbsp;running)<br>
+&nbsp;&nbsp;Extract&nbsp;/&nbsp;Replicat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local&nbsp;GG&nbsp;binaries&nbsp;only<br>
+&nbsp;&nbsp;local&nbsp;GG&nbsp;binaries&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+----------------------+----------------------+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;Shared&nbsp;ACFS&nbsp;mount&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config&nbsp;/&nbsp;security&nbsp;/&nbsp;param&nbsp;/&nbsp;log&nbsp;/&nbsp;trail&nbsp;/&nbsp;checkpoint
+  </div>
+`;}
+
+function internalsHTML(){return `
+  <h2>Internals — What Actually Happens Under the Hood</h2>
+  <p class="lede">The mechanics that make checkpoint-accurate relocation possible.</p>
+
+  <h3>Checkpoints Are the Whole Game</h3>
+  <div class="card">
+    <p style="font-size:13.8px;">Every Extract and Replicat persists a checkpoint describing exactly how
+    far it has read (Extract) or applied (Replicat) in the trail stream. As long as that checkpoint file
+    and the trail files it references are visible from whichever node the process restarts on, the
+    process resumes precisely where it left off — no re-instantiation, no reprocessed records, no gap.
+    This is the single reason the deployment directory must sit on shared storage rather than local disk.</p>
+  </div>
+
+  <h3>Checkpoint Mechanics — Switchover vs. Failover, Step by Step</h3>
+  <p class="lede" style="margin-top:-4px;">Checkpoints are written <b>periodically</b> along the trail
+  stream — not after every single record — for performance. That interval is exactly what separates a
+  clean switchover from a crash-driven failover. Run the animation below to see it play out.</p>
+
+  <div class="status-row">
+    <div class="status"><div class="k">Current Position</div><div class="v up" id="ckStPos">0</div></div>
+    <div class="status"><div class="k">Last Persisted Checkpoint</div><div class="v up" id="ckStCkpt">0</div></div>
+    <div class="status"><div class="k">Replay Window</div><div class="v up" id="ckStReplay">0 records</div></div>
+    <div class="status"><div class="k">Outcome</div><div class="v up" id="ckStOutcome">—</div></div>
+  </div>
+
+  <div class="sim-wrap">
+    <div>
+      <div class="stage"><canvas id="ckptCanvas" width="760" height="230"></canvas></div>
+      <div class="controls">
+        <button class="btn switch" id="ckBtnStart" onclick="ckptStart()">▶ Start Processing</button>
+        <button class="btn switch" id="ckBtnSwitch" onclick="ckptSwitchover()" disabled>Trigger Switchover Here (planned)</button>
+        <button class="btn fail" id="ckBtnFail" onclick="ckptFailover()" disabled>Trigger Failover Here (crash)</button>
+        <button class="btn reset" onclick="ckptReset()">↺ Reset</button>
+      </div>
+      <div class="note" style="margin-top:2px;"><b>Switchover</b>: the stopping process performs one last
+      checkpoint flush at the exact stop position — the checkpoint marker catches up to the current
+      position, so the new process resumes with a zero-record replay window. <b>Failover</b>: the process
+      dies between two periodic checkpoints — the new process can only resume from the last one written,
+      so it re-processes the records after it. This is always safe (trail files are persisted and replay
+      is idempotent) but is <i>not</i> a zero-gap resume the way switchover is.</div>
+    </div>
+    <div class="log" id="ckptLog"></div>
+  </div>
+
+  <h3>Relocation Sequence (within one cluster)</h3>
+  <table>
+    <tr><th>Step</th><th>What XAG / Clusterware Does</th></tr>
+    <tr><td>1</td><td>Clusterware detects the resource group is unhealthy on Node 1 (or an operator issues a relocate)</td></tr>
+    <tr><td>2</td><td>Service Manager and its Deployments are stopped cleanly on Node 1, if still reachable</td></tr>
+    <tr><td>3</td><td>ACFS file system is unmounted from Node 1 and mounted on Node 2 (cache-coherent, so no data copy is needed — it's the same underlying volume)</td></tr>
+    <tr><td>4</td><td>Application VIP is relocated to Node 2</td></tr>
+    <tr><td>5</td><td>Service Manager starts on Node 2, reads the same deployment directory, and Extract/Replicat resume from their last checkpoint</td></tr>
+    <tr><td>6</td><td>Database services / role-based services reconnect Extract and Replicat sessions</td></tr>
+  </table>
+
+  <h3>Two Failure-Handling Paths ACFS Supports</h3>
+  <div class="grid2">
+    <div class="card">
+      <span class="tag blue">Planned relocation / switchover</span>
+      <p style="font-size:13.5px;">Graceful stop, clean unmount, then mount elsewhere. No data loss,
+      no risk — this is the preferred path for maintenance, patching, or rebalancing load.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Unplanned failover</span>
+      <p style="font-size:13.5px;">Since an early Grid Infrastructure release, ACFS supports unplanned
+      failover: if the node holding the primary file system dies without a clean unmount, Clusterware
+      still brings the file system up on a surviving node. This is what allows GoldenGate to recover
+      automatically from a hard node crash, not just planned maintenance.</p>
+    </div>
+  </div>
+
+  <h3>What Clients See</h3>
+  <ul>
+    <li>REST API callers and AdminClient sessions reconnect against the same VIP:port — the underlying
+    node change is transparent at the connection layer (sessions still need to reconnect, since the TCP
+    session itself is dropped).</li>
+    <li>Distribution Server / Receiver Server pairs re-establish their trail shipping connection using the
+    same configured endpoints once the deployment is back up.</li>
+    <li>Monitoring (PMSRVR) statistics resume accumulating from the restarted processes; historical
+    metrics up to the last flush are preserved on the ACFS-hosted deployment.</li>
+  </ul>
+`;}
+
+function acfsHTML(){return `
+  <h2>ACFS — Oracle Automatic Storage Management Cluster File System</h2>
+  <p class="lede">The shared storage layer that makes GoldenGate relocation and DR replication possible.</p>
+
+  <div class="card">
+    <p style="font-size:13.8px;">Oracle ACFS is a general-purpose, POSIX-compliant, cache-coherent cluster
+    file system built on top of Oracle ASM, bundled into Oracle Grid Infrastructure alongside Clusterware
+    and ASM. Because it is cache-coherent and cluster-aware, ACFS file systems are typically mounted on
+    every node in a cluster simultaneously, making them the recommended location for GoldenGate binaries
+    and, more importantly, for the trail and checkpoint files GoldenGate needs to survive a node failure.</p>
+  </div>
+
+  <h3>Why GoldenGate Uses ACFS Specifically</h3>
+  <ul>
+    <li><b>Cluster-visible from every node</b> — a Deployment's config, security, log, parameter, trail,
+    and checkpoint files are readable/writable from whichever node currently owns the resource.</li>
+    <li><b>No data copy on relocation</b> — because all nodes see the same underlying ASM-backed volume,
+    "moving" the file system between nodes at failover time is a mount/unmount operation, not a data copy.</li>
+    <li><b>File locking support</b> — with modern Grid Infrastructure releases, ACFS mounted concurrently
+    on multiple nodes supports file locking (older pre-11.2.0.3 releases required single-node mounting for
+    locking to be honored).</li>
+    <li><b>ACFS Replication for DR</b> — beyond single-cluster HA, ACFS supports asynchronous replication
+    of an entire file system to a second, geographically remote cluster — the basis of GoldenGate hub-to-hub
+    disaster recovery.</li>
+  </ul>
+
+  <h3>Provisioning Outline</h3>
+  <pre>[grid@node1]$ asmcmd volcreate -G DATAC1 -s 1200G ACFS_GG
+[grid@node1]$ asmcmd volinfo -G DATAC1 -a
+[grid@node1]$ mkfs -t acfs /dev/asm/acfs_gg-123
+[grid@node1]$ srvctl add filesystem -d /dev/asm/acfs_gg-123 -volume ACFS_GG \\
+    -diskgroup DATAC1 -mountpoint /acfs_gg
+[grid@node1]$ srvctl start filesystem -device /dev/asm/acfs_gg-123</pre>
+  <p style="font-size:13px; color:var(--gray);">Oracle recommends sizing the volume to hold roughly 12
+  hours of trail file generation, so replication can keep writing trail even during a prolonged target
+  outage without exhausting shared storage.</p>
+
+  <h3>ACFS in HA vs. ACFS in DR</h3>
+  <table>
+    <tr><th></th><th>Within one cluster (HA)</th><th>Across sites (DR)</th></tr>
+    <tr><td>Mechanism</td><td>Single ACFS volume mounted on any node in the cluster, managed by XAG</td><td>ACFS Replication ships changes from a primary file system to a standby file system on a remote cluster</td></tr>
+    <tr><td>Data path</td><td>Same physical volume — mount/unmount only</td><td>Two distinct volumes kept in sync asynchronously over the network</td></tr>
+    <tr><td>Role change</td><td>N/A — one owner at a time within the same cluster</td><td>ACFS role reversal promotes the standby file system to primary during switchover/failover</td></tr>
+  </table>
+`;}
+
+function drHTML(){return `
+  <h2>Disaster Recovery — Hub-to-Hub with ACFS Replication</h2>
+  <p class="lede">Surviving the loss of an entire site, using the Oracle GoldenGate Maximum Availability (MAA) Hub pattern.</p>
+
+  <div class="card">
+    <p style="font-size:13.8px;">In the MAA Hub architecture, GoldenGate runs off-box from the databases,
+    on its own 2-node RAC cluster ("hub"), configured for local HA exactly as described above. A second,
+    identical hub is deployed at a separate site. <b>Oracle ACFS Replication</b> keeps the deployment file
+    system on the standby hub in sync with the primary hub, so that if the primary site is lost, the
+    standby hub can be promoted with minimal disruption.</p>
+  </div>
+
+  <h3>Switchover vs. Failover — the Distinction That Matters</h3>
+  <table>
+    <tr><th></th><th>Switchover</th><th>Failover</th></tr>
+    <tr><td>Trigger</td><td>Planned — operator-initiated (maintenance, DR test, load rebalancing)</td><td>Unplanned — primary site/hub is unreachable or down</td></tr>
+    <tr><td>Primary FS state</td><td>Available and reachable at the time of the operation</td><td>Not available / not reachable</td></tr>
+    <tr><td>ACFS behavior</td><td>Graceful, zero-data-loss ACFS role reversal — the primary file system is cleanly demoted and the standby promoted, fully in sync</td><td>ACFS failover promotes the standby file system using the most recently replicated data — some very recent, not-yet-replicated changes can potentially be lost, since replication is asynchronous</td></tr>
+    <tr><td>Typical use</td><td>Planned DR drills, patching, planned site maintenance</td><td>Genuine disaster response</td></tr>
+  </table>
+
+  <div class="note"><b>Key point:</b> a switchover is always safer than a failover because it is graceful
+  and coordinated — this is exactly why DR runbooks favor switchover for any scenario where the primary
+  site is still reachable, and reserve failover for when it genuinely is not.</div>
+
+  <h3>Role-Transition Sequence (DR)</h3>
+  <table>
+    <tr><th>Step</th><th>Switchover (planned)</th><th>Failover (unplanned)</th></tr>
+    <tr><td>1</td><td>Operator confirms both hubs reachable, initiates role reversal</td><td>Monitoring detects primary hub/site is unreachable</td></tr>
+    <tr><td>2</td><td>GoldenGate deployment stopped cleanly on primary hub</td><td>Primary hub is unreachable — nothing to stop cleanly</td></tr>
+    <tr><td>3</td><td>ACFS completes final sync, then reverses roles (standby becomes primary)</td><td>ACFS promotes standby file system from last replicated state (possible small data loss window)</td></tr>
+    <tr><td>4</td><td>VIP and GoldenGate deployment start on the new primary hub</td><td>VIP and GoldenGate deployment start on the surviving hub</td></tr>
+    <tr><td>5</td><td>Extract/Replicat resume from checkpoint — fully consistent, zero data loss</td><td>Extract/Replicat resume from the last replicated checkpoint; downstream reconciliation may be needed for the unreplicated gap</td></tr>
+    <tr><td>6</td><td>Original primary can later be re-synced and reinstated as standby</td><td>Once the original site recovers, it is rebuilt as the new standby and re-synced</td></tr>
+  </table>
+
+  <h3>Combining with Data Guard</h3>
+  <ul>
+    <li>Where GoldenGate sources or targets are themselves protected by Data Guard, GoldenGate is
+    integrated via the Grid Infrastructure Agent so that during a Data Guard role transition the
+    GoldenGate processes restart automatically against the new primary database.</li>
+    <li>Extract and Replicat use role-based services and Oracle Net connect strings, so they follow the
+    active database role rather than a fixed instance.</li>
+  </ul>
+`;}
+
+function simulatorHTML(){return `
+  <h2>Live Simulator — Switchover vs. Failover</h2>
+  <p class="lede">Option 1 shows a local node switchover/failover inside one data center (High
+  Availability). Option 2 shows a full-site switchover/failover between two data centers, each running
+  its own 2-node RAC pair (Disaster Recovery).</p>
+
+  <div class="controls" style="margin-bottom:4px;">
+    <button class="btn mode on" id="modeHA" onclick="setMode('ha')">Option 1: Node Switchover/Failover — within DC1 (HA)</button>
+    <button class="btn mode" id="modeDR" onclick="setMode('dr')">Option 2: DR Switchover/Failover — DC1 (Node 1 &amp; 2) → DC2 (Node 1 &amp; 2)</button>
+  </div>
+
+  <div class="status-row">
+    <div class="status"><div class="k" id="lblActive">Active Node</div><div class="v up" id="stActive">Node 1</div></div>
+    <div class="status"><div class="k" id="lblVip">VIP Location</div><div class="v up" id="stVip">Node 1</div></div>
+    <div class="status"><div class="k" id="lblAcfs">ACFS Owner</div><div class="v up" id="stAcfs">Node 1</div></div>
+    <div class="status"><div class="k">Last Checkpoint</div><div class="v up" id="stCkpt">Preserved</div></div>
+  </div>
+
+  <div class="sim-wrap">
+    <div>
+      <div class="stage"><canvas id="stageCanvas" width="760" height="420"></canvas></div>
+      <div class="controls">
+        <button class="btn switch" id="btnSwitch" onclick="runScenario('switch')">▶ Trigger Switchover</button>
+        <button class="btn fail" id="btnFail" onclick="runScenario('fail')">⚠ Trigger Failover</button>
+        <button class="btn reset" onclick="resetSim()">↺ Reset</button>
+      </div>
+      <div class="note" id="scenarioNote" style="margin-top:2px;"></div>
+    </div>
+    <div class="log" id="logBox"></div>
+  </div>
+`;}
+
+/* ---------------- Simulator engine ---------------- */
+let simMode = 'ha'; // 'ha' | 'dr'
+let haState = { active:1, vip:1, acfs:1, node1Alive:true, running:false, dataLossRisk:false };
+let drState = { active:1, vip:1, acfs:1, dc1Alive:true, running:false, dataLossRisk:false };
+function currentState(){ return simMode==='ha' ? haState : drState; }
+
+function setMode(m){
+  simMode = m;
+  document.getElementById('modeHA').classList.toggle('on', m==='ha');
+  document.getElementById('modeDR').classList.toggle('on', m==='dr');
+  updateLabels();
+  resetSim();
+}
+
+function updateLabels(){
+  const lblA=document.getElementById('lblActive'), lblV=document.getElementById('lblVip'),
+        lblF=document.getElementById('lblAcfs'), note=document.getElementById('scenarioNote'),
+        btnS=document.getElementById('btnSwitch'), btnF=document.getElementById('btnFail');
+  if(!lblA) return;
+  if(simMode==='ha'){
+    lblA.textContent='Active Node'; lblV.textContent='VIP Location'; lblF.textContent='ACFS Owner';
+    btnS.textContent='▶ Trigger Switchover: Node 1 → Node 2 (planned)';
+    btnF.textContent='⚠ Trigger Failover: Node 1 crash (unplanned)';
+    note.innerHTML = '<b>Option 1 — High Availability:</b> Node 1 and Node 2 both sit inside DC1, sharing one ACFS-hosted deployment. <b>Switchover</b> is a graceful relocation between the two nodes with zero data loss. <b>Failover</b> is an unplanned crash of Node 1; ACFS unplanned failover brings the file system up on Node 2 from the last synced state.';
+  } else {
+    lblA.textContent='Active Site'; lblV.textContent='VIP Location'; lblF.textContent='ACFS Primary Role';
+    btnS.textContent='▶ Trigger Switchover: DC1 → DC2 (planned)';
+    btnF.textContent='⚠ Trigger Failover: DC1 lost (unplanned)';
+    note.innerHTML = '<b>Option 2 — Disaster Recovery:</b> DC1 (Node 1 &amp; Node 2) and DC2 (Node 1 &amp; Node 2) are two independent GoldenGate hubs, each a local RAC pair, kept in sync by ACFS Replication. <b>Switchover</b> is a planned, graceful role reversal from DC1 to DC2 with zero data loss. <b>Failover</b> is DC1 becoming unreachable; DC2 is promoted from the last replicated state, so a small window of unreplicated changes is possible.';
+  }
+}
+
+function logLine(msg, cls){
+  const box = document.getElementById('logBox');
+  if(!box) return;
+  const t = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  div.className='step';
+  div.innerHTML = `<span class="t">[${t}]</span> <span class="${cls||''}">${msg}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setStatus(){
+  const st = currentState();
+  const map = simMode==='ha' ? {0:'—',1:'Node 1',2:'Node 2'} : {0:'—',1:'DC1',2:'DC2'};
+  const a=document.getElementById('stActive'), v=document.getElementById('stVip'),
+        f=document.getElementById('stAcfs'), c=document.getElementById('stCkpt');
+  if(!a) return;
+  a.textContent = map[st.active]; a.className='v up';
+  v.textContent = map[st.vip]; v.className='v up';
+  f.textContent = map[st.acfs]; f.className='v up';
+  c.textContent = st.dataLossRisk ? 'Resumed (small gap possible)' : 'Preserved';
+  c.className = st.dataLossRisk ? 'v mid' : 'v up';
+}
+
+function resetSim(){
+  if(simMode==='ha'){
+    haState = { active:1, vip:1, acfs:1, node1Alive:true, running:false, dataLossRisk:false };
+  } else {
+    drState = { active:1, vip:1, acfs:1, dc1Alive:true, running:false, dataLossRisk:false };
+  }
+  const box = document.getElementById('logBox');
+  if(box) box.innerHTML='';
+  document.getElementById('btnSwitch').disabled=false;
+  document.getElementById('btnFail').disabled=false;
+  updateLabels();
+  if(simMode==='ha'){
+    logLine('Simulator reset. Node 1 is ACTIVE inside DC1, VIP on Node 1, ACFS mounted on Node 1.', 'ok');
+  } else {
+    logLine('Simulator reset. DC1 is the ACTIVE / primary site, VIP on DC1, ACFS primary role on DC1.', 'ok');
+  }
+  setStatus();
+  drawFrame();
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function runScenario(kind){
+  const st = currentState();
+  if(st.running) return;
+  st.running = true;
+  document.getElementById('btnSwitch').disabled=true;
+  document.getElementById('btnFail').disabled=true;
+
+  if(simMode==='ha') await runHAScenario(kind, st);
+  else await runDRScenario(kind, st);
+
+  st.running = false;
+  document.getElementById('btnSwitch').disabled=false;
+  document.getElementById('btnFail').disabled=false;
+}
+
+async function runHAScenario(kind, st){
+  if(kind==='switch'){
+    logLine('=== PLANNED SWITCHOVER initiated by operator: Node 1 → Node 2 (within DC1) ===','warn');
+    await sleep(500);
+    logLine('Step 1: Confirming Node 1 and Node 2 both reachable inside DC1...', '');
+    await sleep(700); drawFrame();
+    logLine('Step 2: Stopping Service Manager and Deployments cleanly on Node 1.', '');
+    st.active = 0; setStatus(); await sleep(800); drawFrame();
+    logLine('Step 3: Final checkpoint flush completed — zero data loss confirmed.', 'ok');
+    await sleep(600);
+    logLine('Step 4: ACFS graceful relocation — unmount Node 1, mount Node 2 (same volume, no data copy).', '');
+    st.acfs = 2; setStatus(); await sleep(900); drawFrame();
+    logLine('Step 5: Application VIP relocated to Node 2.', '');
+    st.vip = 2; setStatus(); await sleep(700); drawFrame();
+    logLine('Step 6: Service Manager starts on Node 2; Extract/Replicat resume from last checkpoint.', 'ok');
+    st.active = 2; st.dataLossRisk = false; setStatus(); await sleep(800); drawFrame();
+    logLine('=== SWITCHOVER COMPLETE — Node 2 is now ACTIVE inside DC1. Zero data loss. ===','ok');
+  } else {
+    logLine('=== UNPLANNED FAILOVER — Node 1 has crashed ===','bad');
+    st.node1Alive = false;
+    await sleep(400); drawFrame();
+    logLine('Step 1: Clusterware heartbeat to Node 1 lost. Resource group marked unhealthy.', 'bad');
+    await sleep(800);
+    logLine('Step 2: No clean stop possible — Node 1 unreachable. Skipping graceful shutdown.', 'warn');
+    await sleep(700); drawFrame();
+    logLine('Step 3: ACFS unplanned failover — file system brought online on Node 2 from last synced state.', 'warn');
+    st.acfs = 2; setStatus(); await sleep(900); drawFrame();
+    logLine('Step 4: Application VIP force-relocated to Node 2.', '');
+    st.vip = 2; setStatus(); await sleep(700); drawFrame();
+    logLine('Step 5: Service Manager starts on Node 2; Extract/Replicat resume from last persisted checkpoint on ACFS.', 'warn');
+    st.active = 2; st.dataLossRisk = true; setStatus(); await sleep(800); drawFrame();
+    logLine('=== FAILOVER COMPLETE — Node 2 is now ACTIVE inside DC1. Verify for any unreplicated in-flight changes. ===','bad');
+  }
+}
+
+async function runDRScenario(kind, st){
+  if(kind==='switch'){
+    logLine('=== PLANNED SWITCHOVER initiated by operator: DC1 → DC2 ===','warn');
+    await sleep(500);
+    logLine('Step 1: Confirming DC1 and DC2 hubs both reachable over the network...', '');
+    await sleep(700); drawFrame();
+    logLine('Step 2: Stopping Service Manager and Deployments cleanly on the DC1 hub (both nodes).', '');
+    st.active = 0; setStatus(); await sleep(800); drawFrame();
+    logLine('Step 3: Final checkpoint flush completed on DC1 — zero data loss confirmed.', 'ok');
+    await sleep(600);
+    logLine('Step 4: ACFS Replication completes final sync, then performs graceful role reversal — DC1 file system demoted, DC2 promoted to primary.', '');
+    st.acfs = 2; setStatus(); await sleep(900); drawFrame();
+    logLine('Step 5: Application VIP relocated from DC1 to DC2.', '');
+    st.vip = 2; setStatus(); await sleep(700); drawFrame();
+    logLine('Step 6: Service Manager starts on the DC2 hub; Extract/Replicat resume from last checkpoint.', 'ok');
+    st.active = 2; st.dataLossRisk = false; setStatus(); await sleep(800); drawFrame();
+    logLine('=== SWITCHOVER COMPLETE — DC2 is now the ACTIVE / primary site. Zero data loss. DC1 can be re-synced as the new standby. ===','ok');
+  } else {
+    logLine('=== UNPLANNED FAILOVER — DC1 (primary site) has been lost ===','bad');
+    st.dc1Alive = false;
+    await sleep(400); drawFrame();
+    logLine('Step 1: Monitoring / Clusterware heartbeat to the DC1 hub lost. Site marked unreachable.', 'bad');
+    await sleep(800);
+    logLine('Step 2: No clean stop possible — DC1 unreachable. Skipping graceful shutdown.', 'warn');
+    await sleep(700); drawFrame();
+    logLine('Step 3: ACFS unplanned failover — file system promoted to primary on DC2 from the last replicated state.', 'warn');
+    st.acfs = 2; setStatus(); await sleep(900); drawFrame();
+    logLine('Step 4: Application VIP force-relocated to the DC2 hub.', '');
+    st.vip = 2; setStatus(); await sleep(700); drawFrame();
+    logLine('Step 5: Service Manager starts on DC2; Extract/Replicat resume from last persisted checkpoint. Asynchronous replication means very recent changes may not have propagated.', 'warn');
+    st.active = 2; st.dataLossRisk = true; setStatus(); await sleep(800); drawFrame();
+    logLine('=== FAILOVER COMPLETE — DC2 is now ACTIVE. Reconcile for any unreplicated in-flight changes before treating DC1 as standby again. ===','bad');
+  }
+}
+
+/* ---------------- Canvas drawing ---------------- */
+function drawFrame(){
+  if(simMode==='ha') drawHAFrame(); else drawDRFrame();
+}
+
+function drawHAFrame(){
+  const cv = document.getElementById('stageCanvas');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#F5F4F2'; ctx.fillRect(0,0,W,H);
+
+  // Outer DC1 boundary — both nodes live in the same data center
+  ctx.save();
+  ctx.setLineDash([6,4]);
+  ctx.strokeStyle = '#9C9A95'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(30, 55, W-60, H-95);
+  ctx.restore();
+  ctx.fillStyle='#5F6368'; ctx.font='bold 12px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('Data Center — DC1 (2-node RAC cluster)', 40, 48);
+
+  const n1x = 170, n2x = 590, ny = 95, nw = 190, nh = 110;
+
+  function node(x,alive,active,label){
+    ctx.lineWidth=2;
+    ctx.strokeStyle = alive ? (active? '#1E8E3E' : '#C7C4BE') : '#C74634';
+    ctx.fillStyle = active ? 'rgba(30,142,62,0.08)' : 'rgba(0,0,0,0.02)';
+    ctx.beginPath();
+    ctx.roundRect(x-nw/2, ny, nw, nh, 10);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = alive? '#1B1B1B' : '#C74634';
+    ctx.font='bold 14px sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(label, x, ny+24);
+    ctx.font='12px monospace';
+    ctx.fillStyle = active ? '#1E8E3E' : '#5F6368';
+    ctx.fillText(active? 'Service Manager: RUNNING' : 'Service Manager: stopped', x, ny+48);
+    ctx.fillText(alive ? 'Grid Infra: UP' : 'Grid Infra: DOWN', x, ny+68);
+    if(!alive){
+      ctx.strokeStyle='#C74634'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(x-nw/2,ny); ctx.lineTo(x+nw/2,ny+nh); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+nw/2,ny); ctx.lineTo(x-nw/2,ny+nh); ctx.stroke();
+    }
+  }
+
+  node(n1x, haState.node1Alive, haState.active===1, 'Node 1');
+  node(n2x, true, haState.active===2, 'Node 2');
+
+  // Shared ACFS box
+  const ay = 250;
+  ctx.strokeStyle = '#0B5CAB'; ctx.lineWidth=2;
+  ctx.fillStyle='rgba(11,92,171,0.06)';
+  ctx.beginPath(); ctx.roundRect(W/2-160, ay, 320, 70, 10); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#0B5CAB'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Shared ACFS — Deployment Directory', W/2, ay+24);
+  ctx.font='11px monospace';
+  ctx.fillText('config · security · trail · checkpoint', W/2, ay+42);
+  ctx.fillText('Mounted on: ' + (haState.acfs===1?'Node 1':'Node 2'), W/2, ay+58);
+
+  ctx.strokeStyle = haState.acfs===1 ? 'rgba(30,142,62,0.6)' : 'rgba(150,148,143,0.4)';
+  ctx.lineWidth = haState.acfs===1?2:1;
+  ctx.beginPath(); ctx.moveTo(n1x, ny+nh); ctx.lineTo(W/2-60, ay); ctx.stroke();
+  ctx.strokeStyle = haState.acfs===2 ? 'rgba(30,142,62,0.6)' : 'rgba(150,148,143,0.4)';
+  ctx.lineWidth = haState.acfs===2?2:1;
+  ctx.beginPath(); ctx.moveTo(n2x, ny+nh); ctx.lineTo(W/2+60, ay); ctx.stroke();
+
+  const vipX = haState.vip===1? n1x : n2x;
+  ctx.fillStyle = '#C77700';
+  ctx.beginPath(); ctx.roundRect(vipX-46, ny-38, 92, 26, 6); ctx.fill();
+  ctx.fillStyle='#FFFFFF'; ctx.font='bold 11px sans-serif';
+  ctx.fillText('VIP :9100', vipX, ny-20);
+
+  ctx.fillStyle='#5F6368'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Clients / REST callers / AdminClient', W/2, 25);
+  ctx.strokeStyle='#9C9A95'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(W/2,32); ctx.lineTo(vipX, ny-38); ctx.stroke();
+}
+
+function drawDRFrame(){
+  const cv = document.getElementById('stageCanvas');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#F5F4F2'; ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle='#5F6368'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Clients / REST callers / AdminClient', W/2, 14);
+
+  const dcW = 330, dcH = 150, dcY = 40;
+  const dc1X = 20, dc2X = W-20-dcW;
+
+  function dcBox(x0, isActive, isAlive, dcLabel){
+    ctx.lineWidth=2;
+    ctx.strokeStyle = isAlive ? (isActive? '#1E8E3E' : '#0B5CAB') : '#C74634';
+    ctx.fillStyle = isActive ? 'rgba(30,142,62,0.06)' : 'rgba(11,92,171,0.04)';
+    ctx.beginPath(); ctx.roundRect(x0, dcY, dcW, dcH, 12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = isAlive? '#1B1B1B' : '#C74634';
+    ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(dcLabel + (isActive? ' — PRIMARY' : ' — STANDBY'), x0+dcW/2, dcY+22);
+
+    const subW = (dcW-45)/2, subH = 100, subY = dcY+34;
+    const sub1X = x0+15, sub2X = x0+15+subW+15;
+    [[sub1X,'Node 1'],[sub2X,'Node 2']].forEach(([sx,lbl])=>{
+      ctx.strokeStyle = isAlive ? '#B9B6B0' : '#C74634'; ctx.lineWidth=1.5;
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath(); ctx.roundRect(sx, subY, subW, subH, 8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = isAlive? '#1B1B1B' : '#C74634'; ctx.font='bold 12px sans-serif';
+      ctx.fillText(lbl, sx+subW/2, subY+20);
+      ctx.font='10px monospace';
+      ctx.fillStyle = (isActive && isAlive) ? '#1E8E3E' : '#5F6368';
+      ctx.fillText((isActive && isAlive)? 'Service Mgr: RUNNING' : 'Service Mgr: standby', sx+subW/2, subY+42);
+      ctx.fillStyle='#5F6368';
+      ctx.fillText('local RAC pair', sx+subW/2, subY+60);
+      ctx.fillText('(Option 1 HA)', sx+subW/2, subY+76);
+      if(!isAlive){
+        ctx.strokeStyle='#C74634'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(sx,subY); ctx.lineTo(sx+subW,subY+subH); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(sx+subW,subY); ctx.lineTo(sx,subY+subH); ctx.stroke();
+      }
+    });
+  }
+
+  dcBox(dc1X, drState.active===1, drState.dc1Alive, 'DC1');
+  dcBox(dc2X, drState.active===2, true, 'DC2');
+
+  // --- Two independent ACFS storage boxes, one per DC ---
+  const acfsY = dcY + dcH + 18, acfsH = 78;
+
+  function acfsBox(x0, isPrimary, isAlive, dcLabel){
+    ctx.lineWidth=2;
+    ctx.strokeStyle = isAlive ? (isPrimary? '#1E8E3E' : '#0B5CAB') : '#C74634';
+    ctx.fillStyle = isPrimary ? 'rgba(30,142,62,0.08)' : 'rgba(11,92,171,0.05)';
+    ctx.beginPath(); ctx.roundRect(x0, acfsY, dcW, acfsH, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = isAlive ? (isPrimary? '#1E8E3E' : '#0B5CAB') : '#C74634';
+    ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('ACFS Storage — ' + dcLabel, x0+dcW/2, acfsY+20);
+    ctx.font='bold 11px sans-serif';
+    ctx.fillText(isPrimary? 'ACTIVE (read/write, primary)' : 'PASSIVE (replication target)', x0+dcW/2, acfsY+38);
+    ctx.font='10px monospace'; ctx.fillStyle='#5F6368';
+    ctx.fillText('config · security · trail · checkpoint', x0+dcW/2, acfsY+56);
+    ctx.fillText(isAlive? 'Grid Infra: UP' : 'Grid Infra: DOWN', x0+dcW/2, acfsY+70);
+  }
+
+  acfsBox(dc1X, drState.acfs===1, drState.dc1Alive, 'DC1');
+  acfsBox(dc2X, drState.acfs===2, true, 'DC2');
+
+  // --- Replication link between the two ACFS storage boxes, arrow shows direction ---
+  const midY = acfsY + acfsH/2;
+  const leftX = dc1X + dcW, rightX = dc2X;
+  const fromActive = drState.acfs===1 ? leftX : rightX;
+  const toPassive = drState.acfs===1 ? rightX : leftX;
+
+  ctx.strokeStyle = '#0B5CAB'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(leftX, midY); ctx.lineTo(rightX, midY); ctx.stroke();
+
+  // arrowhead pointing toward the passive (standby) side
+  ctx.save();
+  ctx.translate(toPassive, midY);
+  const dir = toPassive > fromActive ? 1 : -1;
+  ctx.beginPath();
+  ctx.moveTo(-dir*14, -8); ctx.lineTo(0,0); ctx.lineTo(-dir*14, 8);
+  ctx.strokeStyle = '#0B5CAB'; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.restore();
+
+  ctx.fillStyle='#0B5CAB'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('ACFS Replication (async)', (leftX+rightX)/2, midY-10);
+  ctx.font='10px sans-serif'; ctx.fillStyle='#5F6368';
+  ctx.fillText(drState.acfs===1? 'DC1 → DC2' : 'DC2 → DC1', (leftX+rightX)/2, midY+18);
+
+  // legend line
+  ctx.fillStyle='#5F6368'; ctx.font='10.5px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Active ACFS accepts writes; Passive ACFS receives replicated changes and is promoted on switchover/failover', W/2, acfsY+acfsH+22);
+
+  const vipX = drState.vip===1 ? dc1X+dcW/2 : dc2X+dcW/2;
+  ctx.fillStyle = '#C77700';
+  ctx.beginPath(); ctx.roundRect(vipX-46, 22, 92, 20, 6); ctx.fill();
+  ctx.fillStyle='#FFFFFF'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('VIP :9100', vipX, 36);
+}
+
+/* ---------------- Checkpoint mechanics mini-simulator (Internals tab) ---------------- */
+let ck = {
+  pos: 0, lastCkpt: 0, maxTicks: 40, ckptInterval: 5,
+  timer: null, running: false, finished: false, replayWindow: 0, outcome: '—'
+};
+
+function ckLog(msg, cls){
+  const box = document.getElementById('ckptLog');
+  if(!box) return;
+  const t = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  div.className='step';
+  div.innerHTML = `<span class="t">[${t}]</span> <span class="${cls||''}">${msg}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function ckSetStatus(){
+  const p=document.getElementById('ckStPos'), c=document.getElementById('ckStCkpt'),
+        r=document.getElementById('ckStReplay'), o=document.getElementById('ckStOutcome');
+  if(!p) return;
+  p.textContent = ck.pos; p.className='v up';
+  c.textContent = ck.lastCkpt; c.className='v up';
+  r.textContent = ck.replayWindow + ' record' + (ck.replayWindow===1?'':'s');
+  r.className = ck.replayWindow>0 ? 'v mid' : 'v up';
+  o.textContent = ck.outcome;
+  o.className = ck.outcome==='Zero-gap resume' ? 'v up' : (ck.outcome==='—' ? 'v up' : 'v mid');
+}
+
+function ckptReset(){
+  clearInterval(ck.timer);
+  ck = { pos:0, lastCkpt:0, maxTicks:40, ckptInterval:5, timer:null, running:false, finished:false, replayWindow:0, outcome:'—' };
+  const box = document.getElementById('ckptLog');
+  if(box) box.innerHTML='';
+  document.getElementById('ckBtnStart').disabled = false;
+  document.getElementById('ckBtnSwitch').disabled = true;
+  document.getElementById('ckBtnFail').disabled = true;
+  ckLog('Reset. Extract/Replicat at position 0, checkpoint at 0.', 'ok');
+  ckSetStatus();
+  ckptDraw();
+}
+
+function ckptStart(){
+  if(ck.running || ck.finished) return;
+  ck.running = true;
+  document.getElementById('ckBtnStart').disabled = true;
+  document.getElementById('ckBtnSwitch').disabled = false;
+  document.getElementById('ckBtnFail').disabled = false;
+  ckLog('Processing started — Extract/Replicat advancing through the trail stream.', '');
+  ck.timer = setInterval(()=>{
+    if(ck.pos >= ck.maxTicks-1){
+      clearInterval(ck.timer); ck.running=false;
+      ckLog('Reached end of demo trail — trigger switchover or failover earlier next time, or Reset.', 'warn');
+      return;
+    }
+    ck.pos++;
+    if(ck.pos % ck.ckptInterval === 0){
+      ck.lastCkpt = ck.pos;
+      ckLog('Periodic checkpoint persisted to ACFS at position ' + ck.pos + '.', 'ok');
+    }
+    ckSetStatus(); ckptDraw();
+  }, 350);
+}
+
+function ckptSwitchover(){
+  if(!ck.running && !ck.finished) return;
+  clearInterval(ck.timer); ck.running=false; ck.finished=true;
+  document.getElementById('ckBtnSwitch').disabled = true;
+  document.getElementById('ckBtnFail').disabled = true;
+  ckLog('=== PLANNED SWITCHOVER triggered at position ' + ck.pos + ' ===', 'warn');
+  ckLog('Step 1: Operator/Clusterware requests a clean stop.', '');
+  ckLog('Step 2: Extract/Replicat perform a final checkpoint flush exactly at position ' + ck.pos + ' — no records left un-checkpointed.', 'ok');
+  ck.lastCkpt = ck.pos;
+  ck.replayWindow = 0;
+  ck.outcome = 'Zero-gap resume';
+  ckSetStatus(); ckptDraw();
+  ckLog('Step 3: New process starts on the surviving node/site, reads checkpoint = ' + ck.pos + ', resumes immediately at position ' + ck.pos + '.', 'ok');
+  ckLog('=== RESULT: zero replay window, zero data loss — the defining property of a graceful switchover. ===', 'ok');
+}
+
+function ckptFailover(){
+  if(!ck.running && !ck.finished) return;
+  clearInterval(ck.timer); ck.running=false; ck.finished=true;
+  document.getElementById('ckBtnSwitch').disabled = true;
+  document.getElementById('ckBtnFail').disabled = true;
+  const crashPos = ck.pos;
+  ckLog('=== UNPLANNED FAILOVER — process crashes at position ' + crashPos + ' ===', 'bad');
+  ckLog('Step 1: No time to flush a checkpoint — the crash is instantaneous.', 'bad');
+  ck.replayWindow = crashPos - ck.lastCkpt;
+  ckLog('Step 2: Last persisted checkpoint on ACFS remains at position ' + ck.lastCkpt + '.', 'warn');
+  ck.outcome = ck.replayWindow>0 ? 'Replay window, no data loss' : 'Zero-gap resume (lucky timing)';
+  ckSetStatus(); ckptDraw();
+  ckLog('Step 3: New process starts on the surviving node/site, reads checkpoint = ' + ck.lastCkpt + ', resumes from there.', 'warn');
+  if(ck.replayWindow>0){
+    ckLog('Step 4: Positions ' + (ck.lastCkpt+1) + '–' + crashPos + ' (' + ck.replayWindow + ' record' + (ck.replayWindow===1?'':'s') + ') are re-read/re-applied. This is safe — trail files are persisted and replay is idempotent — but it is not a zero-gap resume the way switchover is.', 'warn');
+  } else {
+    ckLog('Step 4: The crash happened to land exactly on a checkpoint boundary, so no replay was needed this time — not something a design should rely on.', 'ok');
+  }
+  ckLog('=== RESULT: no permanent data loss, but a small replay window that switchover avoids entirely. ===', 'bad');
+}
+
+function ckptDraw(){
+  const cv = document.getElementById('ckptCanvas');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#F5F4F2'; ctx.fillRect(0,0,W,H);
+
+  const marginX = 40, lineY = 110, lineW = W - marginX*2;
+  const tickGap = lineW / ck.maxTicks;
+
+  // trail line
+  ctx.strokeStyle = '#B9B6B0'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(marginX, lineY); ctx.lineTo(marginX+lineW, lineY); ctx.stroke();
+  ctx.fillStyle = '#5F6368'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('Trail file stream (record positions) →', marginX, lineY-16);
+
+  // periodic checkpoint tick marks (faint, every ckptInterval) for reference
+  ctx.strokeStyle = '#D8D6D2'; ctx.lineWidth=1;
+  for(let k=0;k<=ck.maxTicks;k+=ck.ckptInterval){
+    const x = marginX + k*tickGap;
+    ctx.beginPath(); ctx.moveTo(x, lineY-5); ctx.lineTo(x, lineY+5); ctx.stroke();
+  }
+
+  // replay window highlight (failover only)
+  if(ck.replayWindow>0){
+    const x1 = marginX + ck.lastCkpt*tickGap, x2 = marginX + ck.pos*tickGap;
+    ctx.fillStyle = 'rgba(199,119,0,0.18)';
+    ctx.fillRect(x1, lineY-22, x2-x1, 44);
+    ctx.fillStyle = '#C77700'; ctx.font='bold 10.5px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('replay window', (x1+x2)/2, lineY-28);
+  }
+
+  // checkpoint flag marker
+  const ckX = marginX + ck.lastCkpt*tickGap;
+  ctx.fillStyle = '#0B5CAB';
+  ctx.beginPath(); ctx.moveTo(ckX, lineY+8); ctx.lineTo(ckX, lineY+40); ctx.stroke();
+  ctx.strokeStyle='#0B5CAB'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(ckX, lineY+8); ctx.lineTo(ckX, lineY+40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ckX, lineY+8); ctx.lineTo(ckX+16, lineY+14); ctx.lineTo(ckX, lineY+20); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#0B5CAB'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Checkpoint', ckX, lineY+56);
+  ctx.font='10px monospace';
+  ctx.fillText('pos ' + ck.lastCkpt, ckX, lineY+70);
+
+  // current / crash position marker
+  const curX = marginX + ck.pos*tickGap;
+  const isCrash = ck.finished && ck.replayWindow>0 && ck.outcome.indexOf('Replay')>=0;
+  ctx.beginPath();
+  ctx.arc(curX, lineY, 8, 0, Math.PI*2);
+  ctx.fillStyle = isCrash ? '#C74634' : '#1E8E3E';
+  ctx.fill();
+  ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle = isCrash ? '#C74634' : '#1E8E3E';
+  ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(isCrash? 'Crash point' : 'Current position', curX, lineY-40);
+  ctx.font='10px monospace';
+  ctx.fillText('pos ' + ck.pos, curX, lineY-54);
+
+  // legend
+  ctx.fillStyle='#5F6368'; ctx.font='10.5px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Blue flag = last persisted checkpoint on ACFS · Dot = current read/apply position · Amber band = records replayed after failover', W/2, H-14);
+}
+
+setMode('ha');
+ckptReset();
+</script>
+</body>
+</html>
