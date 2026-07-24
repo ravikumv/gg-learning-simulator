@@ -1056,24 +1056,50 @@ body {
 #demoStartBtn:hover { background:#a83020; transform:scale(1.04); box-shadow:0 6px 28px rgba(199,70,52,0.5); }
 #demoStartBtn.running { background:#1D5FA6; box-shadow:0 4px 20px rgba(29,95,166,0.4); }
 
+
+/* Commands tab code panel */
+#cmdCode {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  font-size: 12px !important;
+  line-height: 1.9 !important;
+  white-space: pre;
+  display: block;
+}
+.step-wizard { padding: 4px 0; }
+.step-row {
+  display: flex;
+  gap: 0;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.18s;
+  align-items: flex-start;
+}
+.step-row:hover { background: var(--hover-bg); border-left-color: var(--border); }
+.step-row.s-active {
+  background: var(--apex-red-light);
+  border-left-color: var(--apex-red);
+}
+.step-row.s-active .step-title { color: var(--apex-red); font-weight: 700; }
+.step-row.s-active .step-circle {
+  background: var(--apex-red);
+  color: #fff;
+  border-color: var(--apex-red);
+}
+.step-left { display: flex; flex-direction: column; align-items: center; width: 32px; flex-shrink: 0; margin-right: 12px; }
+.step-circle {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  flex-shrink: 0; z-index: 1; transition: all 0.18s;
+}
+.step-line { width: 2px; flex: 1; min-height: 12px; background: var(--border); margin-top: 3px; }
+.step-body { flex: 1; }
+.step-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.step-desc  { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
 </style>
-<script>
-/* Basic deterrents against casual view-source / copying.
-   NOTE: This does not provide real security — any determined visitor can
-   still access the page source via browser dev tools, curl, or other means. */
-document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-document.addEventListener('keydown', function(e){
-  var k = e.key ? e.key.toUpperCase() : '';
-  if (
-    k === 'F12' ||
-    (e.ctrlKey && k === 'U') ||
-    (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
-    (e.metaKey && e.altKey && (k === 'I' || k === 'J' || k === 'C'))
-  ) {
-    e.preventDefault();
-  }
-});
-</script>
 </head>
 <body>
 
@@ -1320,78 +1346,93 @@ document.addEventListener('keydown', function(e){
         <div class="g2" style="align-items:start; margin-bottom:20px;">
 
           <!-- Step wizard -->
-          <div class="apex-region">
+          <div class="apex-region" style="height:100%;">
             <div class="apex-region-header">
               <div class="apex-region-title"><span class="apex-region-icon">📋</span> Configuration Steps</div>
             </div>
-            <div class="apex-region-body">
+            <div class="apex-region-body" style="padding:0;">
               <div class="step-wizard" id="stepWizard">
                 <div class="step-row s-active" onclick="selectStep(0)">
                   <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
-                  <div class="step-body"><div class="step-title">Check Current Status</div><div class="step-desc">Query V$DATABASE and DBA_LOG_GROUPS to verify existing state.</div></div>
+                  <div class="step-body"><div class="step-title">Check Current Status</div><div class="step-desc">Query V$DATABASE to verify ARCHIVELOG mode and existing supplemental logging state.</div></div>
                 </div>
                 <div class="step-row" onclick="selectStep(1)">
                   <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
-                  <div class="step-body"><div class="step-title">Enable Minimal Supplemental Logging</div><div class="step-desc">Foundation DB-level command. Requires SYSDBA.</div></div>
+                  <div class="step-body"><div class="step-title">Enable Minimal Suppl. Logging</div><div class="step-desc">Enable minimal DB-level supplemental logging. Requires SYSDBA privilege.</div></div>
                 </div>
                 <div class="step-row" onclick="selectStep(2)">
                   <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
-                  <div class="step-body"><div class="step-title">Enable Force Logging</div><div class="step-desc">Prevent NOLOGGING from bypassing redo generation.</div></div>
+                  <div class="step-body"><div class="step-title">Enable Force Logging</div><div class="step-desc">Enable FORCE LOGGING to prevent NOLOGGING operations bypassing redo capture.</div></div>
                 </div>
                 <div class="step-row" onclick="selectStep(3)">
                   <div class="step-left"><div class="step-circle">4</div><div class="step-line"></div></div>
-                  <div class="step-body"><div class="step-title">GGSCI / Admin Client Login</div><div class="step-desc">Connect to GoldenGate Microservices or classic GGSCI.</div></div>
+                  <div class="step-body"><div class="step-title">AdminClient Login</div><div class="step-desc">Connect to GoldenGate Microservices via AdminClient (replaces GGSCI in 26ai).</div></div>
                 </div>
                 <div class="step-row" onclick="selectStep(4)">
                   <div class="step-left"><div class="step-circle">5</div><div class="step-line"></div></div>
-                  <div class="step-body"><div class="step-title">DBLOGIN — Authenticate to Source</div><div class="step-desc">GoldenGate connects to source DB using privileged user.</div></div>
+                  <div class="step-body"><div class="step-title">DBLOGIN — Authenticate</div><div class="step-desc">Authenticate GoldenGate to the source Oracle database using DBLOGIN.</div></div>
                 </div>
                 <div class="step-row" onclick="selectStep(5)">
                   <div class="step-left"><div class="step-circle">6</div><div class="step-line"></div></div>
-                  <div class="step-body"><div class="step-title">ADD SCHEMATRANDATA</div><div class="step-desc">Schema-level logging for all tables. Recommended default.</div></div>
+                  <div class="step-body"><div class="step-title">ADD SCHEMATRANDATA</div><div class="step-desc">Apply schema-level supplemental logging for all tables in a schema.</div></div>
                 </div>
                 <div class="step-row" onclick="selectStep(6)">
                   <div class="step-left"><div class="step-circle">7</div><div class="step-line"></div></div>
-                  <div class="step-body"><div class="step-title">ADD TRANDATA (Per Table)</div><div class="step-desc">Fine-grained table-level control with specific column groups.</div></div>
+                  <div class="step-body"><div class="step-title">ADD TRANDATA (Per Table)</div><div class="step-desc">Fine-grained table-level ADD TRANDATA with PK / ALLCOLS / KEYCOLS / NOKEY.</div></div>
                 </div>
                 <div class="step-row" onclick="selectStep(7)">
                   <div class="step-left"><div class="step-circle">8</div></div>
-                  <div class="step-body"><div class="step-title">Verify Configuration</div><div class="step-desc">Confirm via INFO TRANDATA and DBA_LOG_GROUPS.</div></div>
+                  <div class="step-body"><div class="step-title">Verify Configuration</div><div class="step-desc">Verify supplemental logging via INFO TRANDATA and DBA_LOG_GROUPS dictionary view.</div></div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Code panel -->
-          <div class="apex-region" id="cmdCodePanel">
-            <div class="apex-region-header">
-              <div class="apex-region-title"><span class="apex-region-icon">💻</span> <span id="cmdPanelTitle">Step 1 — SQL*Plus</span></div>
-              <span class="badge badge-info">Oracle SQL / GGSCI</span>
+          <div class="apex-region" id="cmdCodePanel" style="height:100%;">
+            <div class="apex-region-header" style="flex-wrap:wrap;gap:8px;">
+              <div class="apex-region-title"><span class="apex-region-icon">💻</span> <span id="cmdPanelTitle">Step 1 — SQL*Plus Prompt</span></div>
+              <span class="badge badge-info" id="cmdPanelBadge">Oracle SQL / AdminClient</span>
             </div>
-            <div class="apex-region-body">
-              <div class="code-block" id="cmdCode" style="min-height:340px;">
-<span class="c-cm">-- ══════════════════════════════════</span>
-<span class="c-cm">-- STEP 1: Check Current Status</span>
+            <div class="apex-region-body" style="padding:0;">
+              <div id="cmdCode" style="
+                background:#1E2433;
+                border-radius:0 0 8px 8px;
+                padding:18px 20px;
+                font-family:'JetBrains Mono',monospace;
+                font-size:12px;
+                line-height:1.9;
+                color:#CDD5E0;
+                min-height:400px;
+                overflow-x:auto;
+                overflow-y:auto;
+                white-space:pre;
+                tab-size:4;
+              "><span class="c-cm">-- ══════════════════════════════════</span>
+<span class="c-cm">-- STEP 1: Check Current DB Status</span>
 <span class="c-cm">-- ══════════════════════════════════</span>
 
-<span class="c-kw">SELECT</span> LOG_MODE, SUPPLEMENTAL_LOG_DATA_MIN,
-       SUPPLEMENTAL_LOG_DATA_PK, SUPPLEMENTAL_LOG_DATA_UI,
+<span class="c-cm">-- SQL*Plus Prompt:</span>
+<span class="c-kw">SELECT</span> LOG_MODE,
+       SUPPLEMENTAL_LOG_DATA_MIN  <span class="c-cm">AS MIN_SUPPL</span>,
+       SUPPLEMENTAL_LOG_DATA_PK   <span class="c-cm">AS PK_SUPPL</span>,
+       SUPPLEMENTAL_LOG_DATA_UI   <span class="c-cm">AS UI_SUPPL</span>,
        FORCE_LOGGING
 <span class="c-kw">FROM</span>   V$DATABASE;
 
-<span class="c-cm">-- Check table-level log groups</span>
+<span class="c-cm">-- Check existing log groups:</span>
 <span class="c-kw">SELECT</span> OWNER, TABLE_NAME, LOG_GROUP_NAME,
        LOG_GROUP_TYPE, ALWAYS
 <span class="c-kw">FROM</span>   DBA_LOG_GROUPS
 <span class="c-kw">WHERE</span>  OWNER = <span class="c-str">'HR'</span>;
 
 <span class="c-cm">-- Expected BEFORE enabling:</span>
-<span class="c-out">LOG_MODE   MIN  PK   UI   FORCE</span>
-<span class="c-out">---------- ---  ---  ---  -----</span>
-<span class="c-out">ARCHIVELOG NO   NO   NO   NO</span>
-              </div>
+<span class="c-out">LOG_MODE   MIN_SUPPL  PK_SUPPL  FORCE</span>
+<span class="c-out">---------- ---------  --------  -----</span>
+<span class="c-out">ARCHIVELOG NO         NO        NO</span></div>
             </div>
           </div>
+
         </div>
 
         <!-- TRANDATA options -->
@@ -2505,10 +2546,29 @@ function switchTab(id){
   if(id==='internals') setTimeout(function(){},100);
 }
 function toggleCheck(el){el.classList.toggle('checked');}
+;
+var CMD_STEPS=[
+  {title:"Step 1 — SQL*Plus Prompt",badge:"Oracle SQL / AdminClient",code:"<span class=\"c-cm\">-- STEP 1: Check Current DB Status</span>\n<span class=\"c-kw\">SELECT</span> LOG_MODE,\n       SUPPLEMENTAL_LOG_DATA_MIN,\n       SUPPLEMENTAL_LOG_DATA_PK,\n       FORCE_LOGGING\n<span class=\"c-kw\">FROM</span>   V$DATABASE;\n\n<span class=\"c-cm\">-- Check existing log groups:</span>\n<span class=\"c-kw\">SELECT</span> OWNER, TABLE_NAME, LOG_GROUP_TYPE, ALWAYS\n<span class=\"c-kw\">FROM</span>   DBA_LOG_GROUPS\n<span class=\"c-kw\">WHERE</span>  OWNER = <span class=\"c-str\">'HR'</span>;\n\n<span class=\"c-out\">LOG_MODE   MIN  PK   FORCE</span>\n<span class=\"c-out\">ARCHIVELOG NO   NO   NO</span>"},
+  {title:"Step 2 — SQL*Plus Prompt",badge:"Oracle SQL / AdminClient",code:"<span class=\"c-cm\">-- STEP 2: Enable Minimal Supplemental Logging</span>\n<span class=\"c-kw\">ALTER DATABASE ADD SUPPLEMENTAL LOG DATA</span>;\n<span class=\"c-kw\">ALTER SYSTEM SWITCH LOGFILE</span>;\n\n<span class=\"c-cm\">-- Verify:</span>\n<span class=\"c-kw\">SELECT</span> SUPPLEMENTAL_LOG_DATA_MIN <span class=\"c-kw\">FROM</span> V$DATABASE;\n\n<span class=\"c-out\">SUPPLEMENTAL_LOG_DATA_MIN</span>\n<span class=\"c-out\">YES</span>\n\n<span class=\"c-cm\">-- Requires SYSDBA. Must be done BEFORE ADD TRANDATA.</span>"},
+  {title:"Step 3 — SQL*Plus Prompt",badge:"Oracle SQL / AdminClient",code:"<span class=\"c-cm\">-- STEP 3: Enable FORCE LOGGING</span>\n<span class=\"c-kw\">ALTER DATABASE FORCE LOGGING</span>;\n\n<span class=\"c-cm\">-- Verify:</span>\n<span class=\"c-kw\">SELECT</span> FORCE_LOGGING <span class=\"c-kw\">FROM</span> V$DATABASE;\n\n<span class=\"c-out\">FORCE_LOGGING</span>\n<span class=\"c-out\">YES</span>\n\n<span class=\"c-cm\">-- Prevents NOLOGGING, APPEND hints, direct path</span>\n<span class=\"c-cm\">-- loads from bypassing redo capture.</span>"},
+  {title:"Step 4 — AdminClient",badge:"Oracle SQL / AdminClient",code:"<span class=\"c-cm\">-- STEP 4: Connect via AdminClient (26ai / 21c)</span>\n<span class=\"c-out\">$ adminclient</span>\n\n<span class=\"c-kw\">CONNECT</span> https://localhost:9100 deployment/ServiceManager\n\n<span class=\"c-out\">Oracle GoldenGate Administration Client</span>\n<span class=\"c-out\">Version 21.3.0.0.0 ... Connected to ServiceManager.</span>\n\n<span class=\"c-cm\">-- Switch to specific deployment:</span>\n<span class=\"c-kw\">CONNECT</span> https://localhost:9100 deployment/Atlanta\n\n<span class=\"c-cm\">-- AdminClient replaces GGSCI in Microservices 26ai.</span>"},
+  {title:"Step 5 — AdminClient",badge:"Oracle SQL / AdminClient",code:"<span class=\"c-cm\">-- STEP 5: DBLOGIN to Source Database</span>\n<span class=\"c-cm\">-- Non-CDB:</span>\n<span class=\"c-kw\">DBLOGIN</span> USERIDALIAS GGADMIN_ALIAS\n\n<span class=\"c-cm\">-- CDB / Multitenant (c## prefix required):</span>\n<span class=\"c-kw\">DBLOGIN</span> USERIDALIAS C##GGADMIN_ALIAS <span class=\"c-kw\">SYSDBA</span>\n\n<span class=\"c-out\">Successfully logged into database.</span>\n\n<span class=\"c-cm\">-- USERIDALIAS references wallet credential.</span>\n<span class=\"c-cm\">-- Preferred over inline password for production.</span>"},
+  {title:"Step 6 — AdminClient",badge:"Oracle SQL / AdminClient",code:"<span class=\"c-cm\">-- STEP 6: ADD SCHEMATRANDATA</span>\n<span class=\"c-kw\">ADD SCHEMATRANDATA</span> HR\n\n<span class=\"c-out\">Logging of supplemental redo data enabled for schema HR.</span>\n\n<span class=\"c-cm\">-- With ALLCOLS for CDR / Lakehouse targets:</span>\n<span class=\"c-kw\">ADD SCHEMATRANDATA</span> HR <span class=\"c-kw\">ALLCOLS</span>\n\n<span class=\"c-cm\">-- Verify:</span>\n<span class=\"c-kw\">INFO SCHEMATRANDATA</span> HR\n\n<span class=\"c-cm\">-- Auto-applies to new tables. Includes scheduling</span>\n<span class=\"c-cm\">-- cols required for Parallel Replicat.</span>"},
+  {title:"Step 7 — AdminClient",badge:"Oracle SQL / AdminClient",code:"<span class=\"c-cm\">-- STEP 7: ADD TRANDATA (Per Table)</span>\n<span class=\"c-cm\">-- Primary Key only (default):</span>\n<span class=\"c-kw\">ADD TRANDATA</span> HR.EMPLOYEES\n\n<span class=\"c-cm\">-- All columns (CDR / Lakehouse / Iceberg):</span>\n<span class=\"c-kw\">ADD TRANDATA</span> HR.EMPLOYEES <span class=\"c-kw\">ALLCOLS</span>\n\n<span class=\"c-cm\">-- Custom key columns:</span>\n<span class=\"c-kw\">ADD TRANDATA</span> HR.LEGACY_EMP <span class=\"c-kw\">KEYCOLS</span> (BADGE_NO, DEPT)\n\n<span class=\"c-cm\">-- No key (ROWID fallback):</span>\n<span class=\"c-kw\">ADD TRANDATA</span> HR.AUDIT_LOG <span class=\"c-kw\">NOKEY</span>\n\n<span class=\"c-out\">Trandata added for table HR.EMPLOYEES.</span>"},
+  {title:"Step 8 — SQL*Plus &amp; AdminClient",badge:"Oracle SQL / AdminClient",code:"<span class=\"c-cm\">-- STEP 8: Verify Configuration</span>\n<span class=\"c-cm\">-- AdminClient:</span>\n<span class=\"c-kw\">INFO TRANDATA</span> HR.EMPLOYEES\n\n<span class=\"c-out\">Logging of supplemental redo log data is enabled</span>\n<span class=\"c-out\">for table HR.EMPLOYEES. Columns: EMPLOYEE_ID.</span>\n\n<span class=\"c-cm\">-- SQL*Plus Prompt:</span>\n<span class=\"c-kw\">SELECT</span> LOG_GROUP_TYPE, ALWAYS\n<span class=\"c-kw\">FROM</span>   DBA_LOG_GROUPS\n<span class=\"c-kw\">WHERE</span>  OWNER = <span class=\"c-str\">'HR'</span>\n<span class=\"c-kw\">AND</span>    TABLE_NAME = <span class=\"c-str\">'EMPLOYEES'</span>;\n\n<span class=\"c-out\">PRIMARY KEY LOGGING  ALWAYS</span>"}
+];
 function selectStep(n){
   document.querySelectorAll('.step-row').forEach(function(s,i){
     s.classList.toggle('s-active',i===n);
   });
+  var step = CMD_STEPS[n];
+  if(!step) return;
+  var titleEl = document.getElementById('cmdPanelTitle');
+  var badgeEl = document.getElementById('cmdPanelBadge');
+  var codeEl  = document.getElementById('cmdCode');
+  if(titleEl) titleEl.textContent = step.title;
+  if(badgeEl) badgeEl.textContent = step.badge;
+  if(codeEl)  codeEl.innerHTML    = step.code;
 }
 var suppEnabled = false;
 function toggleSupp(){
